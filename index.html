@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solução Completa — Desafio Petrobras Cibersegurança e Ética Digital</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1c1c1c;
+    --border: #262626;
+    --text: #e5e5e5;
+    --text-muted: #888;
+    --accent: #3b82f6;
+    --accent-soft: rgba(59,130,246,0.12);
+    --green: #22c55e;
+    --green-soft: rgba(34,197,94,0.12);
+    --yellow: #eab308;
+    --yellow-soft: rgba(234,179,8,0.12);
+    --red: #ef4444;
+    --red-soft: rgba(239,68,68,0.12);
+    --purple: #a855f7;
+    --purple-soft: rgba(168,85,247,0.12);
+    --orange: #f97316;
+    --orange-soft: rgba(249,115,22,0.12);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 15px; line-height: 1.7; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 0 32px; }
+
+  /* HEADER */
+  .hero { padding: 80px 0 60px; border-bottom: 1px solid var(--border); }
+  .hero-label { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; font-weight: 600; }
+  .hero h1 { font-size: 38px; font-weight: 700; line-height: 1.15; margin-bottom: 20px; }
+  .hero h1 span { color: var(--accent); }
+  .hero-enunciado {
+    background: var(--surface);
+    border-left: 3px solid var(--accent);
+    padding: 20px 24px;
+    font-size: 15px;
+    color: #ccc;
+    font-style: italic;
+    margin-top: 24px;
+    border-radius: 0 6px 6px 0;
+  }
+  .hero-meta { display: flex; gap: 24px; margin-top: 20px; font-size: 13px; color: var(--text-muted); }
+  .hero-meta span { display: flex; align-items: center; gap: 6px; }
+
+  /* SECTIONS */
+  .section { padding: 56px 0; border-bottom: 1px solid var(--border); }
+  .section-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
+  .section h2 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .section-desc { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+
+  /* DT PHASES */
+  .dt-phase { margin-bottom: 36px; }
+  .dt-phase-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px 8px 0 0;
+    border-bottom: none;
+  }
+  .dt-phase-num {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
+  }
+  .dt-phase-header h3 { font-size: 16px; font-weight: 700; }
+  .dt-phase-header .dt-sub { font-size: 13px; color: var(--text-muted); margin-left: auto; }
+  .dt-phase-body {
+    border: 1px solid var(--border);
+    border-radius: 0 0 8px 8px;
+    padding: 20px 24px;
+    background: var(--surface2);
+  }
+
+  .persona-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .persona {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 18px;
+  }
+  .persona-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .persona-role { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+  .persona-pain { font-size: 13px; color: #bbb; }
+  .persona-pain strong { color: var(--red); font-weight: 600; }
+
+  .problem-list { list-style: none; }
+  .problem-list li {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .problem-list li:last-child { border-bottom: none; }
+  .problem-list .tag {
+    font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 4px; flex-shrink: 0; margin-top: 2px;
+  }
+
+  .idea-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .idea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .idea-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 8px; }
+  .idea-desc { font-size: 13px; color: #aaa; }
+  .idea-viability {
+    margin-top: 8px; font-size: 11px; font-weight: 600;
+    padding: 2px 8px; border-radius: 4px; display: inline-block;
+  }
+
+  /* SOLUTION BOX */
+  .solution-hero {
+    background: linear-gradient(135deg, var(--accent-soft), var(--purple-soft));
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 10px;
+    padding: 32px;
+    margin: 32px 0;
+  }
+  .solution-hero h3 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .solution-hero .tagline { font-size: 15px; color: #bbb; margin-bottom: 20px; }
+  .pillar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 20px; }
+  .pillar {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+  }
+  .pillar-icon { font-size: 24px; margin-bottom: 8px; }
+  .pillar h4 { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .pillar p { font-size: 12px; color: #999; }
+
+  /* PROTOTYPE */
+  .proto-flow { display: flex; gap: 0; margin: 20px 0; }
+  .proto-step {
+    flex: 1;
+    padding: 18px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .proto-step:first-child { border-radius: 8px 0 0 8px; }
+  .proto-step:last-child { border-radius: 0 8px 8px 0; }
+  .proto-step .step-n { font-size: 11px; font-weight: 700; letter-spacing: 2px; margin-bottom: 6px; }
+  .proto-step h4 { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .proto-step p { font-size: 11px; color: var(--text-muted); }
+  .proto-step .tool-tag { font-size: 10px; color: var(--accent); font-weight: 600; margin-top: 8px; }
+
+  .test-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .test-metric {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+  }
+  .test-metric .value { font-size: 28px; font-weight: 700; }
+  .test-metric .label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ANALYTICAL */
+  .analysis-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .analysis-block h4 { font-size: 15px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+  .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border-radius: 8px; overflow: hidden; }
+  .swot-cell { background: var(--surface2); padding: 20px; }
+  .swot-cell h4 { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+  .swot-cell ul { list-style: none; }
+  .swot-cell ul li { font-size: 13px; color: #bbb; padding: 4px 0; }
+  .swot-cell ul li::before { content: "• "; }
+
+  .risk-table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  .risk-table th, .risk-table td { padding: 10px 14px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .risk-table th { color: var(--text-muted); font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+  .risk-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+
+  .competitors { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .competitor {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+  }
+  .competitor h5 { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+  .competitor .comp-type { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .competitor .comp-diff { font-size: 12px; color: var(--green); }
+
+  /* CANVAS */
+  .canvas-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 1px;
+    background: var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 20px 0;
+  }
+  .canvas-cell {
+    background: var(--surface);
+    padding: 16px;
+    min-height: 120px;
+  }
+  .canvas-cell.span2 { grid-row: span 2; }
+  .canvas-cell.full-width { grid-column: span 5; }
+  .canvas-cell.half-width { grid-column: span 2; }
+  .canvas-cell .cell-title {
+    font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 10px;
+  }
+  .canvas-cell .cell-content { font-size: 12px; color: #bbb; line-height: 1.6; }
+  .canvas-cell .cell-content strong { color: var(--text); }
+
+  /* PITCH */
+  .pitch-block {
+    position: relative;
+    padding: 20px 24px;
+    padding-left: 48px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+  }
+  .pitch-block::before {
+    content: '';
+    position: absolute;
+    left: 24px; top: 0; bottom: 0;
+    width: 3px; border-radius: 2px;
+  }
+  .pitch-block .time { font-size: 11px; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+  .pitch-block h4 { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+  .pitch-block .script { font-size: 14px; color: #ccc; font-style: italic; line-height: 1.7; }
+  .pitch-block .tip { font-size: 12px; color: var(--yellow); margin-top: 12px; padding: 8px 12px; background: var(--yellow-soft); border-radius: 6px; }
+
+  .pitch-block.red::before { background: var(--red); }
+  .pitch-block.yellow::before { background: var(--yellow); }
+  .pitch-block.green::before { background: var(--green); }
+  .pitch-block.blue::before { background: var(--accent); }
+  .pitch-block.purple::before { background: var(--purple); }
+
+  /* UTILS */
+  .callout {
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    margin: 20px 0;
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .callout-blue { background: var(--accent-soft); border: 1px solid rgba(59,130,246,0.2); }
+  .callout-yellow { background: var(--yellow-soft); border: 1px solid rgba(234,179,8,0.2); }
+  .callout-icon { font-size: 18px; flex-shrink: 0; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+
+  .footer { padding: 32px 0; text-align: center; font-size: 12px; color: #444; border-top: 1px solid var(--border); }
+
+  .flow-diagram { display: flex; align-items: center; gap: 0; margin: 20px 0; flex-wrap: wrap; }
+  .flow-node {
+    padding: 12px 18px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 12px; font-weight: 600; text-align: center; min-width: 120px;
+  }
+  .flow-arrow { color: var(--text-muted); font-size: 18px; padding: 0 4px; }
+
+  .tech-stack { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+  .tech-item {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px 14px; font-size: 12px;
+  }
+  .tech-item .tech-name { font-weight: 700; margin-bottom: 3px; }
+  .tech-item .tech-use { color: var(--text-muted); font-size: 11px; }
+
+  @media (max-width: 768px) {
+    .container { padding: 0 16px; }
+    .persona-grid, .idea-grid, .pillar-grid, .test-grid, .competitors, .tech-stack { grid-template-columns: 1fr; }
+    .proto-flow { flex-direction: column; }
+    .proto-step { border-radius: 0 !important; }
+    .swot-grid { grid-template-columns: 1fr; }
+    .canvas-wrapper { grid-template-columns: 1fr; }
+    .canvas-cell.span2, .canvas-cell.half-width, .canvas-cell.full-width { grid-column: span 1; grid-row: span 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--                  HERO                      -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="container">
+  <div class="hero">
+    <div class="hero-label">Grand Prix SENAI de Inovação 2026 — Desafio Petrobras</div>
+    <h1>Cibersegurança e Ética Digital:<br><span>Acesso Seguro via Realidade Aumentada</span></h1>
+    <div class="hero-meta">
+      <span>📋 Tema: Cibersegurança e Ética Digital</span>
+      <span>🏢 Empresa: Petrobras</span>
+      <span>🎯 Premiação: Imersão na empresa</span>
+    </div>
+    <div class="hero-enunciado">
+      "Como podemos garantir o acesso seguro a sistemas corporativos baseados em inteligência artificial por meio de óculos de realidade aumentada, assegurando a autenticação confiável do usuário, a proteção dos dados durante toda a comunicação e processamento, e a prevenção de vazamento de informações sensíveis, mesmo com o uso de redes e serviços de terceiros?"
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--          ETAPA 1: DESIGN THINKING          -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="container">
+  <div class="section">
+    <div class="section-label" style="color: var(--accent);">Etapa 1</div>
+    <h2>Design Thinking</h2>
+    <p class="section-desc">Compreensão profunda do problema, das pessoas afetadas e construção da solução centrada no usuário.</p>
+
+    <!-- FASE 1: EMPATIA -->
+    <div class="dt-phase">
+      <div class="dt-phase-header">
+        <div class="dt-phase-num" style="background: var(--red-soft); color: var(--red);">1</div>
+        <div>
+          <h3>Empatia</h3>
+        </div>
+        <div class="dt-sub">Quem são as pessoas afetadas por esse problema?</div>
+      </div>
+      <div class="dt-phase-body">
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">Principais personas impactadas pelo uso de óculos AR para acesso a sistemas de IA corporativos em ambientes industriais:</p>
+        <div class="persona-grid">
+          <div class="persona">
+            <div class="persona-name">👷 Técnico de Manutenção de Campo</div>
+            <div class="persona-role">Operação em plataformas offshore e refinarias</div>
+            <div class="persona-pain">Precisa consultar diagnósticos de IA de equipamentos em tempo real, muitas vezes em áreas remotas com conectividade limitada (satélite, redes de terceiros). <strong>Dor: se o óculos trava por excesso de segurança, ele perde produtividade e pode atrasar manutenção crítica.</strong></div>
+          </div>
+          <div class="persona">
+            <div class="persona-name">🔒 Analista de Segurança da Informação</div>
+            <div class="persona-role">Equipe de cibersegurança corporativa</div>
+            <div class="persona-pain">Responsável por garantir que novos dispositivos (óculos AR) não se tornem vetores de ataque. <strong>Dor: não tem visibilidade sobre o que trafega entre os óculos e os sistemas de IA — é um ponto cego na rede.</strong></div>
+          </div>
+          <div class="persona">
+            <div class="persona-name">🧑‍💼 Gestor de Operações</div>
+            <div class="persona-role">Coordenação de equipes industriais</div>
+            <div class="persona-pain">Quer que a equipe ganhe agilidade com óculos AR, mas teme vazamento de informações estratégicas (dados de produção, projetos). <strong>Dor: não sabe quem acessou o quê, quando e de onde.</strong></div>
+          </div>
+          <div class="persona">
+            <div class="persona-name">⚖️ Responsável por Compliance/LGPD</div>
+            <div class="persona-role">Jurídico e governança de dados</div>
+            <div class="persona-pain">Precisa garantir conformidade com LGPD e políticas internas quando dados biométricos (íris, face) são usados para autenticação. <strong>Dor: dispositivos vestíveis criam zonas cinzentas legais — quem controla os dados capturados pelas câmeras?</strong></div>
+          </div>
+        </div>
+
+        <div class="callout callout-blue" style="margin-top: 20px;">
+          <div class="callout-icon">🔑</div>
+          <div><strong>Insight central da empatia:</strong> A segurança não pode ser um obstáculo à operação. A solução precisa ser invisível para o técnico de campo (experiência fluida) e ao mesmo tempo dar visibilidade total ao time de segurança. Se a autenticação atrasar 30 segundos, ninguém vai usar.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FASE 2: DEFINIÇÃO -->
+    <div class="dt-phase">
+      <div class="dt-phase-header">
+        <div class="dt-phase-num" style="background: var(--yellow-soft); color: var(--yellow);">2</div>
+        <div>
+          <h3>Definição do Problema</h3>
+        </div>
+        <div class="dt-sub">Qual é a raiz real do desafio?</div>
+      </div>
+      <div class="dt-phase-body">
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">Decomposição do enunciado em 4 problemas-raiz:</p>
+        <ul class="problem-list">
+          <li>
+            <span class="tag" style="background: var(--red-soft); color: var(--red);">Autenticação</span>
+            <div>
+              <strong>Como provar que é o usuário certo usando os óculos?</strong><br>
+              <span style="color: var(--text-muted); font-size: 13px;">Óculos AR não possuem teclado nem leitor de digital. Métodos tradicionais (senha, token) são impraticáveis. O dispositivo pode ser emprestado, roubado ou usado por outra pessoa. A autenticação precisa ser contínua, não apenas no login.</span>
+            </div>
+          </li>
+          <li>
+            <span class="tag" style="background: var(--accent-soft); color: var(--accent);">Dados em trânsito</span>
+            <div>
+              <strong>Como proteger a comunicação óculos ↔ IA em redes inseguras?</strong><br>
+              <span style="color: var(--text-muted); font-size: 13px;">Os dados trafegam do óculos até os servidores de IA passando por redes Wi-Fi, satélite ou celulares de terceiros. Sem criptografia ponta a ponta, qualquer intermediário pode interceptar informações sensíveis (dados de produção, diagnósticos de equipamentos, projetos).</span>
+            </div>
+          </li>
+          <li>
+            <span class="tag" style="background: var(--orange-soft); color: var(--orange);">Vazamento</span>
+            <div>
+              <strong>Como evitar que informações sensíveis escapem pelo óculos?</strong><br>
+              <span style="color: var(--text-muted); font-size: 13px;">Óculos AR exibem informações projetadas no campo de visão — qualquer pessoa ao redor pode ver. Capturas de tela, gravações e até o reflexo das lentes são vetores de vazamento. Além disso, o próprio sistema de IA pode gerar respostas com dados sensíveis sem contexto de classificação.</span>
+            </div>
+          </li>
+          <li>
+            <span class="tag" style="background: var(--green-soft); color: var(--green);">Redes de 3ºs</span>
+            <div>
+              <strong>Como manter a segurança quando a infraestrutura não é da Petrobras?</strong><br>
+              <span style="color: var(--text-muted); font-size: 13px;">Técnicos em deslocamento, fornecedores parceiros e operações internacionais dependem de redes externas. A solução não pode exigir que toda a infraestrutura seja controlada — precisa criar um perímetro de segurança no próprio dispositivo.</span>
+            </div>
+          </li>
+        </ul>
+
+        <div class="callout callout-yellow" style="margin-top: 20px;">
+          <div class="callout-icon">📐</div>
+          <div><strong>Definição sintetizada (Point of View):</strong> Colaboradores da Petrobras em campo precisam de uma forma de acessar sistemas de IA através de óculos AR que seja segura por padrão — autenticação sem fricção, dados criptografados de ponta a ponta, e prevenção de vazamento automática — sem depender da rede ou do ambiente em que estão.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FASE 3: IDEAÇÃO -->
+    <div class="dt-phase">
+      <div class="dt-phase-header">
+        <div class="dt-phase-num" style="background: var(--green-soft); color: var(--green);">3</div>
+        <div>
+          <h3>Ideação</h3>
+        </div>
+        <div class="dt-sub">Quais soluções são possíveis para cada problema-raiz?</div>
+      </div>
+      <div class="dt-phase-body">
+        <div class="idea-grid">
+          <div class="idea">
+            <div class="idea-title">🔐 Autenticação por padrão de íris</div>
+            <div class="idea-desc">A câmera interna do óculos captura a íris do usuário no momento de colocar o dispositivo. Autenticação contínua por microverificações periódicas — se o óculos detecta que saiu do rosto, trava automaticamente.</div>
+            <div class="idea-viability" style="background: var(--green-soft); color: var(--green);">Alta viabilidade — hardware já existe</div>
+          </div>
+          <div class="idea">
+            <div class="idea-title">🧬 Multi-fator contextual</div>
+            <div class="idea-desc">Combinar biometria (íris) + posse (dispositivo pareado, ex: smartwatch) + contexto (localização GPS — está na refinaria? está em área autorizada?). Três fatores sem digitar nada.</div>
+            <div class="idea-viability" style="background: var(--green-soft); color: var(--green);">Alta viabilidade</div>
+          </div>
+          <div class="idea">
+            <div class="idea-title">🔒 Túnel criptografado automático</div>
+            <div class="idea-desc">VPN/mTLS que se ativa automaticamente ao ligar os óculos. Todo o tráfego entre óculos e backend da Petrobras é criptografado — independente da rede subjacente (Wi-Fi público, satélite, 5G de terceiro).</div>
+            <div class="idea-viability" style="background: var(--green-soft); color: var(--green);">Alta viabilidade — padrão WireGuard</div>
+          </div>
+          <div class="idea">
+            <div class="idea-title">🛡️ DLP adaptativo no óculos</div>
+            <div class="idea-desc">Classificar automaticamente o conteúdo antes de exibir: dados públicos aparecem normalmente, dados sensíveis recebem watermark dinâmico (nome do usuário + hora) e timeout por inatividade.</div>
+            <div class="idea-viability" style="background: var(--yellow-soft); color: var(--yellow);">Média — requer integração com IA</div>
+          </div>
+          <div class="idea">
+            <div class="idea-title">👁️ Detecção de observador</div>
+            <div class="idea-desc">Câmera frontal do óculos usa visão computacional para detectar rostos não autorizados no campo visual. Se alguém está olhando por cima — dados sensíveis são borrados automaticamente.</div>
+            <div class="idea-viability" style="background: var(--yellow-soft); color: var(--yellow);">Média — modelo leve necessário</div>
+          </div>
+          <div class="idea">
+            <div class="idea-title">📊 Painel de governança (auditoria)</div>
+            <div class="idea-desc">Dashboard central mostrando: quem acessou, o quê, quando, de qual localização, com que nível de autenticação, e se houve algum alerta de segurança. Rastreabilidade total para compliance e LGPD.</div>
+            <div class="idea-viability" style="background: var(--green-soft); color: var(--green);">Alta viabilidade</div>
+          </div>
+          <div class="idea">
+            <div class="idea-title">✈️ Modo offline seguro</div>
+            <div class="idea-desc">Cache criptografado local com dados essenciais para operar quando não há rede. Dados expiram automaticamente e são apagados se o dispositivo for comprometido (remote wipe).</div>
+            <div class="idea-viability" style="background: var(--green-soft); color: var(--green);">Alta viabilidade</div>
+          </div>
+          <div class="idea">
+            <div class="idea-title">📍 Geofencing inteligente</div>
+            <div class="idea-desc">Dados mais sensíveis só ficam acessíveis em localizações autorizadas (refinaria, plataforma, escritórios). Fora dessas áreas, o sistema bloqueia acesso a informações classificadas como confidenciais.</div>
+            <div class="idea-viability" style="background: var(--green-soft); color: var(--green);">Alta viabilidade</div>
+          </div>
+        </div>
+
+        <div class="callout callout-blue" style="margin-top: 20px;">
+          <div class="callout-icon">⭐</div>
+          <div><strong>Solução convergida:</strong> Combinar as ideias em uma plataforma integrada — um "middleware de segurança" que fica entre o óculos AR e os sistemas de IA da Petrobras, gerenciando autenticação, criptografia, prevenção de vazamento e auditoria de forma transparente.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SOLUÇÃO CONVERGIDA -->
+    <div class="solution-hero">
+      <h3>🛡️ SecureVision</h3>
+      <div class="tagline">Camada de segurança inteligente para acesso a sistemas de IA via realidade aumentada</div>
+      <p style="font-size: 14px; color: #ccc; margin-bottom: 20px;">
+        O SecureVision é um middleware de segurança que se posiciona entre os óculos de realidade aumentada e os sistemas corporativos de IA da Petrobras. Ele garante que toda interação seja autenticada, criptografada, auditável e resistente a vazamento — sem importar onde o colaborador esteja ou qual rede esteja usando.
+      </p>
+      <div class="pillar-grid">
+        <div class="pillar">
+          <div class="pillar-icon">🔐</div>
+          <h4>Pilar 1 — Identidade Contínua</h4>
+          <p>Autenticação biométrica por íris ao vestir os óculos + verificação contínua por micro-escaneamento periódico. Se o óculos sai do rosto, sessão travada. MFA contextual com localização + dispositivo pareado.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🔒</div>
+          <h4>Pilar 2 — Canal Blindado</h4>
+          <p>Túnel criptografado (WireGuard/mTLS) ativado automaticamente. Zero Trust: cada requisição é verificada individualmente. Funciona em qualquer rede — Wi-Fi público, satélite, 5G de terceiros.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">👁️</div>
+          <h4>Pilar 3 — Proteção Visual</h4>
+          <p>DLP (Data Loss Prevention) direto no óculos: dados sensíveis com watermark dinâmico, borramento automático quando rostos não autorizados são detectados pela câmera frontal, e bloqueio de captura de tela.</p>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">📊</div>
+          <h4>Pilar 4 — Governança e Ética</h4>
+          <p>Painel central de auditoria com log de todo acesso. Consentimento explícito para dados biométricos (LGPD). Geofencing para dados classificados. Relatórios de conformidade automáticos.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FASE 4: PROTÓTIPO -->
+    <div class="dt-phase">
+      <div class="dt-phase-header">
+        <div class="dt-phase-num" style="background: var(--purple-soft); color: var(--purple);">4</div>
+        <div>
+          <h3>Protótipo</h3>
+        </div>
+        <div class="dt-sub">O que construir para demonstrar a solução?</div>
+      </div>
+      <div class="dt-phase-body">
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">Fluxo do protótipo demonstrável — o que o avaliador vai ver:</p>
+
+        <div class="proto-flow">
+          <div class="proto-step">
+            <div class="step-n" style="color: var(--accent);">PASSO 1</div>
+            <h4>Tela de autenticação (visão do óculos)</h4>
+            <p>Simulação da interface AR: escaneamento de íris animado → confirmação de identidade → verificação de localização (geofencing) → sessão aberta.</p>
+            <div class="tool-tag">Figma ou HTML+CSS+JS</div>
+          </div>
+          <div class="proto-step">
+            <div class="step-n" style="color: var(--accent);">PASSO 2</div>
+            <h4>Consulta ao sistema de IA</h4>
+            <p>Usuário consulta diagnóstico de equipamento via óculos. A IA retorna dados com classificação de sensibilidade. Dados confidenciais aparecem com watermark dinâmico.</p>
+            <div class="tool-tag">HTML+JS (simulação)</div>
+          </div>
+          <div class="proto-step">
+            <div class="step-n" style="color: var(--accent);">PASSO 3</div>
+            <h4>Detecção de ameaça</h4>
+            <p>Simulação: pessoa não autorizada se aproxima → câmera frontal detecta → dados sensíveis são borrados automaticamente → alerta enviado ao SOC.</p>
+            <div class="tool-tag">Animação/vídeo curto</div>
+          </div>
+          <div class="proto-step">
+            <div class="step-n" style="color: var(--accent);">PASSO 4</div>
+            <h4>Painel de governança</h4>
+            <p>Dashboard web mostrando: sessões ativas, log de acessos, alertas de segurança, status de criptografia, conformidade LGPD.</p>
+            <div class="tool-tag">HTML+Chart.js</div>
+          </div>
+        </div>
+
+        <div class="callout callout-yellow">
+          <div class="callout-icon">⚡</div>
+          <div><strong>Foco do protótipo:</strong> Não precisam construir um óculos funcional. O objetivo é demonstrar o FLUXO COMPLETO de segurança — desde o momento que o colaborador veste o óculos até o gestor auditar o acesso no dashboard. Usem simulação visual (HTML/Figma) para a visão do óculos e um dashboard web real para a governança.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FASE 5: TESTE -->
+    <div class="dt-phase">
+      <div class="dt-phase-header">
+        <div class="dt-phase-num" style="background: var(--orange-soft); color: var(--orange);">5</div>
+        <div>
+          <h3>Teste e Validação</h3>
+        </div>
+        <div class="dt-sub">Como medir se a solução resolve o problema?</div>
+      </div>
+      <div class="dt-phase-body">
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;">Métricas de sucesso da solução SecureVision:</p>
+        <div class="test-grid">
+          <div class="test-metric">
+            <div class="value" style="color: var(--green);">&lt; 3s</div>
+            <div class="label">Tempo de autenticação<br>(vestir óculos → sessão ativa)</div>
+          </div>
+          <div class="test-metric">
+            <div class="value" style="color: var(--accent);">100%</div>
+            <div class="label">Tráfego criptografado<br>(mesmo em rede de terceiro)</div>
+          </div>
+          <div class="test-metric">
+            <div class="value" style="color: var(--purple);">0</div>
+            <div class="label">Vazamentos visuais<br>(com detecção de observador ativa)</div>
+          </div>
+        </div>
+        <div class="test-grid" style="margin-top: 12px;">
+          <div class="test-metric">
+            <div class="value" style="color: var(--yellow);">&lt; 0.5s</div>
+            <div class="label">Tempo de bloqueio<br>(óculos removido → sessão travada)</div>
+          </div>
+          <div class="test-metric">
+            <div class="value" style="color: var(--green);">100%</div>
+            <div class="label">Acessos auditáveis<br>(log completo para compliance)</div>
+          </div>
+          <div class="test-metric">
+            <div class="value" style="color: var(--red);">0</div>
+            <div class="label">Dependência de rede específica<br>(funcionamento agnóstico)</div>
+          </div>
+        </div>
+
+        <p style="font-size: 13px; color: var(--text-muted); margin-top: 20px;"><strong style="color: var(--text);">Como testar durante a maratona:</strong> Peçam para alguém de outra equipe tentar "usar" o protótipo. Testem o fluxo de autenticação, vejam se a narrativa faz sentido, e cronometrem o pitch pelo menos 3 vezes.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--       ETAPA 2: PENSAMENTO ANALÍTICO        -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="container">
+  <div class="section">
+    <div class="section-label" style="color: var(--yellow);">Etapa 2</div>
+    <h2>Pensamento Analítico</h2>
+    <p class="section-desc">Análise estratégica, viabilidade, riscos e diferenciação da solução.</p>
+
+    <!-- SWOT -->
+    <div class="analysis-block">
+      <h4>📊 Análise SWOT — SecureVision</h4>
+      <div class="swot-grid">
+        <div class="swot-cell">
+          <h4 style="color: var(--green);">Forças (S)</h4>
+          <ul>
+            <li>Autenticação biométrica sem fricção — aproveita hardware nativo dos óculos AR</li>
+            <li>Segurança transparente para o usuário final (não atrapalha a operação)</li>
+            <li>Funciona em qualquer rede, incluindo de terceiros</li>
+            <li>Conformidade nativa com LGPD (consentimento, auditoria, minimização de dados)</li>
+            <li>Abordagem Zero Trust alinhada com padrões modernos (NIST, ISO 27001)</li>
+          </ul>
+        </div>
+        <div class="swot-cell">
+          <h4 style="color: var(--red);">Fraquezas (W)</h4>
+          <ul>
+            <li>Dependência de câmera interna dos óculos (nem todos os modelos possuem)</li>
+            <li>Detecção de observador pode gerar falsos positivos em ambientes lotados</li>
+            <li>Processamento de visão computacional consome bateria do dispositivo</li>
+            <li>Necessidade de treinamento inicial para cadastro biométrico</li>
+            <li>Complexidade de integração com sistemas legados de IA</li>
+          </ul>
+        </div>
+        <div class="swot-cell">
+          <h4 style="color: var(--accent);">Oportunidades (O)</h4>
+          <ul>
+            <li>Mercado de AR corporativo projetado em US$ 198 bi até 2028 (crescimento explosivo)</li>
+            <li>Regulamentações crescentes (LGPD, AI Act europeu) exigem soluções como essa</li>
+            <li>Petrobras opera em 40+ países — escalabilidade global</li>
+            <li>Pouquíssimos concorrentes focados em segurança AR para ambientes industriais</li>
+            <li>Pode evoluir para proteger outros dispositivos IoT industriais</li>
+          </ul>
+        </div>
+        <div class="swot-cell">
+          <h4 style="color: var(--yellow);">Ameaças (T)</h4>
+          <ul>
+            <li>Fabricantes de óculos (Apple, Meta, Google) podem integrar segurança nativa</li>
+            <li>Falhas de biometria (spoofing de íris) evoluem junto com a tecnologia</li>
+            <li>Resistência cultural de colaboradores ao uso de biometria</li>
+            <li>Custo de implantação pode atrasar adoção em larga escala</li>
+            <li>Latência em redes de satélite pode impactar a autenticação em tempo real</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- RISCOS -->
+    <div class="analysis-block">
+      <h4>⚠️ Matriz de Riscos</h4>
+      <table class="risk-table">
+        <tr>
+          <th>Risco</th>
+          <th>Probabilidade</th>
+          <th>Impacto</th>
+          <th>Mitigação</th>
+        </tr>
+        <tr>
+          <td>Spoofing de biometria (íris falsa)</td>
+          <td><span class="risk-badge" style="background: var(--yellow-soft); color: var(--yellow);">Média</span></td>
+          <td><span class="risk-badge" style="background: var(--red-soft); color: var(--red);">Crítico</span></td>
+          <td>Liveness detection (verificação de pupila viva) + MFA contextual como segundo fator</td>
+        </tr>
+        <tr>
+          <td>Óculos roubado com sessão ativa</td>
+          <td><span class="risk-badge" style="background: var(--yellow-soft); color: var(--yellow);">Média</span></td>
+          <td><span class="risk-badge" style="background: var(--red-soft); color: var(--red);">Crítico</span></td>
+          <td>Lock instantâneo ao sair do rosto (sensor infravermelho) + remote wipe</td>
+        </tr>
+        <tr>
+          <td>Queda de conectividade em campo</td>
+          <td><span class="risk-badge" style="background: var(--red-soft); color: var(--red);">Alta</span></td>
+          <td><span class="risk-badge" style="background: var(--yellow-soft); color: var(--yellow);">Médio</span></td>
+          <td>Modo offline seguro com cache criptografado local e expiração automática</td>
+        </tr>
+        <tr>
+          <td>Falsos positivos na detecção de observador</td>
+          <td><span class="risk-badge" style="background: var(--yellow-soft); color: var(--yellow);">Média</span></td>
+          <td><span class="risk-badge" style="background: var(--green-soft); color: var(--green);">Baixo</span></td>
+          <td>Whitelist de colegas autorizados por time + sensibilidade ajustável por contexto</td>
+        </tr>
+        <tr>
+          <td>Resistência dos colaboradores (privacidade)</td>
+          <td><span class="risk-badge" style="background: var(--yellow-soft); color: var(--yellow);">Média</span></td>
+          <td><span class="risk-badge" style="background: var(--yellow-soft); color: var(--yellow);">Médio</span></td>
+          <td>Transparência total: dados biométricos processados localmente no dispositivo, nunca armazenados em servidor</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- VIABILIDADE TÉCNICA -->
+    <div class="analysis-block">
+      <h4>🔧 Viabilidade Técnica — Tecnologias Reais</h4>
+      <div class="tech-stack">
+        <div class="tech-item">
+          <div class="tech-name">WireGuard VPN</div>
+          <div class="tech-use">Túnel criptografado leve, ideal para dispositivos móveis e baixa latência</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">mTLS (mutual TLS)</div>
+          <div class="tech-use">Autenticação mútua entre óculos e servidor — ambos provam identidade</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">OpenCV / MediaPipe</div>
+          <div class="tech-use">Detecção de faces leve, roda em edge computing no próprio dispositivo</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">TEE (Trusted Execution Environment)</div>
+          <div class="tech-use">Processamento de dados biométricos em enclave seguro do hardware</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">ZTNA (Zero Trust Network Access)</div>
+          <div class="tech-use">Cada requisição verificada individualmente — nunca assume rede confiável</div>
+        </div>
+        <div class="tech-item">
+          <div class="tech-name">Microsoft HoloLens / Magic Leap</div>
+          <div class="tech-use">Óculos AR corporativos com câmara interna de íris e suporte a apps empresariais</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLUXO DE ARQUITETURA -->
+    <div class="analysis-block">
+      <h4>🏗️ Arquitetura da Solução</h4>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Fluxo de comunicação end-to-end:</p>
+      <div class="flow-diagram">
+        <div class="flow-node" style="border-color: var(--accent);">👓 Óculos AR<br><small style="color:var(--text-muted)">Scan de íris + DLP local</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="border-color: var(--green);">🔒 Túnel WireGuard<br><small style="color:var(--text-muted)">Criptografia ponta a ponta</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="border-color: var(--yellow);">🛡️ SecureVision Gateway<br><small style="color:var(--text-muted)">Validação ZTNA + Policy</small></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="border-color: var(--purple);">🤖 Sistemas de IA Petrobras<br><small style="color:var(--text-muted)">Classificação de dados + Resposta</small></div>
+      </div>
+      <div class="flow-diagram" style="justify-content: center; margin-top: -8px;">
+        <div class="flow-node" style="border-color: var(--orange); min-width: 200px;">📊 Dashboard de Governança<br><small style="color:var(--text-muted)">Logs, alertas, conformidade LGPD</small></div>
+      </div>
+    </div>
+
+    <!-- ANÁLISE ÉTICA -->
+    <div class="analysis-block">
+      <h4>⚖️ Análise Ética e LGPD</h4>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">O desafio pede explicitamente "ética digital" — como o SecureVision endereça:</p>
+      <table class="risk-table">
+        <tr>
+          <th>Princípio Ético</th>
+          <th>Como a solução atende</th>
+        </tr>
+        <tr>
+          <td><strong>Consentimento informado (LGPD Art. 7°)</strong></td>
+          <td>Usuário dá consentimento explícito para uso de biometria no primeiro uso. Pode revogar a qualquer momento. Termo claro exibido nos óculos antes do cadastro.</td>
+        </tr>
+        <tr>
+          <td><strong>Minimização de dados (LGPD Art. 6°)</strong></td>
+          <td>Dados biométricos são processados localmente no óculos (TEE) e convertidos em hash criptográfico. A imagem da íris NUNCA sai do dispositivo.</td>
+        </tr>
+        <tr>
+          <td><strong>Transparência</strong></td>
+          <td>O colaborador sabe exatamente o que é coletado, por quê, e por quanto tempo. Dashboard de governança é acessível também ao indivíduo (seus próprios acessos).</td>
+        </tr>
+        <tr>
+          <td><strong>Proporcionalidade</strong></td>
+          <td>O nível de proteção escala com a sensibilidade do dado. Informação pública não requer autenticação extra. Dados confidenciais exigem geofencing + verificação adicional.</td>
+        </tr>
+        <tr>
+          <td><strong>Não-discriminação</strong></td>
+          <td>Biometria de íris funciona independente de cor de pele, iluminação ou uso de óculos de grau. Alternativa de autenticação por voz para acessibilidade.</td>
+        </tr>
+        <tr>
+          <td><strong>Direito ao esquecimento (LGPD Art. 18°)</strong></td>
+          <td>Ao descadastrar, todos os dados biométricos e logs pessoais são apagados irrecuperavelmente — com certificado de exclusão.</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- DIFERENCIAÇÃO -->
+    <div class="analysis-block">
+      <h4>🎯 Diferenciação Competitiva</h4>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">O que existe hoje vs. o que o SecureVision oferece:</p>
+      <div class="competitors">
+        <div class="competitor">
+          <h5>MDM Tradicional</h5>
+          <div class="comp-type">Microsoft Intune, VMware Workspace</div>
+          <div style="font-size: 12px; color: #999; margin: 8px 0;">Gerencia dispositivos, mas não protege o conteúdo visual exibido em óculos AR. Sem detecção de observador. Sem DLP contextualizado a AR.</div>
+          <div class="comp-diff">SecureVision: proteção na camada visual, não só no dispositivo</div>
+        </div>
+        <div class="competitor">
+          <h5>VPN Corporativa</h5>
+          <div class="comp-type">Cisco AnyConnect, Palo Alto GlobalProtect</div>
+          <div style="font-size: 12px; color: #999; margin: 8px 0;">Criptografa o tráfego, mas não verifica identidade contínua. Se alguém roubar o dispositivo após login, tem acesso total.</div>
+          <div class="comp-diff">SecureVision: autenticação contínua + lock automático biométrico</div>
+        </div>
+        <div class="competitor">
+          <h5>IAM Padrão</h5>
+          <div class="comp-type">Okta, Azure AD</div>
+          <div style="font-size: 12px; color: #999; margin: 8px 0;">Autenticação forte, mas pensada para teclado/tela touch. Não funciona bem em dispositivos AR sem input manual.</div>
+          <div class="comp-diff">SecureVision: autenticação nativa para AR, sem necessidade de teclado</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--        ETAPA 3: BUSINESS MODEL CANVAS      -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="container">
+  <div class="section">
+    <div class="section-label" style="color: var(--green);">Etapa 3</div>
+    <h2>Business Model Canvas</h2>
+    <p class="section-desc">Modelo de negócio completo da solução SecureVision.</p>
+
+    <div class="canvas-wrapper">
+      <!-- Linha 1: Parceiros | Atividades | Proposta de Valor | Relacionamento | Segmentos -->
+      <div class="canvas-cell">
+        <div class="cell-title">Parceiros-Chave</div>
+        <div class="cell-content">
+          <strong>• Fabricantes de óculos AR</strong> (Microsoft HoloLens, Magic Leap) — integração SDK<br>
+          <strong>• Times de TI/OT da Petrobras</strong> — validação de requisitos industriais<br>
+          <strong>• SENAI</strong> — pesquisa e desenvolvimento contínuo<br>
+          • Provedores de cloud segura (Azure Gov, AWS GovCloud)<br>
+          • Consultorias de cibersegurança industrial
+        </div>
+      </div>
+      <div class="canvas-cell">
+        <div class="cell-title">Atividades-Chave</div>
+        <div class="cell-content">
+          <strong>• Desenvolvimento do middleware de segurança</strong> (SDK para óculos AR)<br>
+          <strong>• Manutenção do motor de autenticação biométrica</strong><br>
+          • Atualização de políticas de DLP e classificação<br>
+          • Integração com novos modelos de óculos AR<br>
+          • Atualização contínua com legislação (LGPD, AI Act)
+        </div>
+      </div>
+      <div class="canvas-cell span2">
+        <div class="cell-title">Proposta de Valor</div>
+        <div class="cell-content">
+          <strong style="font-size: 14px;">Garantir acesso seguro, ético e auditável a sistemas de IA via óculos de realidade aumentada — em qualquer rede, em qualquer lugar.</strong><br><br>
+          → Autenticação biométrica sem fricção (íris)<br>
+          → Criptografia ponta a ponta independente da rede<br>
+          → Prevenção de vazamento visual inteligente<br>
+          → Conformidade automática com LGPD<br>
+          → Auditoria completa para gestores e compliance<br><br>
+          <strong>Resultado: a Petrobras ganha agilidade com óculos AR sem abrir mão da segurança.</strong>
+        </div>
+      </div>
+      <div class="canvas-cell">
+        <div class="cell-title">Relacionamento com Clientes</div>
+        <div class="cell-content">
+          <strong>• Dashboard de governança</strong> em tempo real para gestores<br>
+          <strong>• Alertas automáticos</strong> de incidentes ao SOC<br>
+          • Relatórios de conformidade periódicos (LGPD)<br>
+          • Portal de autoatendimento para colaboradores (ver seus acessos)<br>
+          • Suporte técnico 24/7 com SLA industrial
+        </div>
+      </div>
+      <div class="canvas-cell">
+        <div class="cell-title">Segmentos de Clientes</div>
+        <div class="cell-content">
+          <strong>Principal:</strong><br>
+          • Petrobras — refinarias, plataformas offshore, escritórios, operações internacionais<br><br>
+          <strong>Expansão:</strong><br>
+          • Outras empresas de energia (Eletrobras, Ecopetrol)<br>
+          • Indústria 4.0 com uso de AR (mineração, aviação, saúde)<br>
+          • Qualquer organização com dados sensíveis + AR
+        </div>
+      </div>
+
+      <!-- Linha 2: Recursos | Canais -->
+      <div class="canvas-cell">
+        <div class="cell-title">Recursos-Chave</div>
+        <div class="cell-content">
+          <strong>• SDK SecureVision</strong> (middleware de segurança)<br>
+          <strong>• Motor de autenticação biométrica</strong> (íris + liveness)<br>
+          • Infraestrutura de VPN/ZTNA<br>
+          • Motor de DLP com classificação de dados<br>
+          • Modelo de detecção de observador (visão computacional)<br>
+          • Equipe de especialistas em cibersegurança + AR
+        </div>
+      </div>
+      <div class="canvas-cell">
+        <div class="cell-title">Canais</div>
+        <div class="cell-content">
+          <strong>• Integração direta</strong> via SDK nos óculos AR corporativos<br>
+          <strong>• Gateway SecureVision</strong> on-premise na infraestrutura Petrobras<br>
+          • Dashboard web para gestores e compliance<br>
+          • API REST para integração com SIEM existente<br>
+          • Treinamento presencial para equipes de segurança
+        </div>
+      </div>
+
+      <!-- Linha 3: Custos | Receitas -->
+      <div class="canvas-cell half-width">
+        <div class="cell-title">Estrutura de Custos</div>
+        <div class="cell-content">
+          <strong>Fixos:</strong> equipe de desenvolvimento, infraestrutura cloud, pesquisa de segurança<br><br>
+          <strong>Variáveis:</strong> licenças de SDKs de terceiros, custos de VPN por usuário, atualizações de compliance por jurisdição<br><br>
+          <strong>Investimento inicial estimado:</strong> desenvolvimento do MVP + certificações de segurança
+        </div>
+      </div>
+
+      <!-- spacer cells -->
+      <div class="canvas-cell" style="grid-column: 3; background: transparent; min-height: 0;"></div>
+
+      <div class="canvas-cell half-width">
+        <div class="cell-title">Fontes de Receita</div>
+        <div class="cell-content">
+          <strong>• Licença por dispositivo ativo/mês</strong> (modelo SaaS)<br>
+          <strong>• Gateway on-premise</strong> — licença anual por unidade industrial<br>
+          • Módulo de relatórios de conformidade (add-on para compliance)<br>
+          • Consultoria de implantação e integração<br>
+          • Treinamento e certificação de equipes de segurança
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--            ETAPA 4: PITCH                  -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="container">
+  <div class="section">
+    <div class="section-label" style="color: var(--purple);">Etapa 4</div>
+    <h2>Roteiro de Pitch — 3 minutos</h2>
+    <p class="section-desc">Estrutura narrativa completa com falas sugeridas, marcações de tempo e dicas de apresentação.</p>
+
+    <div class="callout callout-blue" style="margin-bottom: 24px;">
+      <div class="callout-icon">🎤</div>
+      <div><strong>Antes de começar:</strong> Ensaiem com cronômetro. 3 minutos é curto — cada segundo conta. A pessoa que abre deve ser a mesma que fecha (arco narrativo). Quem apresenta o protótipo deve estar com a tela pronta antes do pitch começar. Sem papel na mão.</div>
+    </div>
+
+    <!-- BLOCO 1 -->
+    <div class="pitch-block red">
+      <div class="time" style="color: var(--red);">0:00 – 0:30 · ABERTURA — A DOR</div>
+      <h4>O clique que ninguém viu</h4>
+      <div class="script">
+        "Um técnico numa plataforma offshore no mar do Rio de Janeiro coloca seus óculos de realidade aumentada para consultar o diagnóstico da IA sobre uma válvula com suspeita de falha. Ele está conectado por satélite — uma rede que não é da Petrobras. Os dados que aparecem na lente dele incluem pressão do duto, histórico de manutenção e parâmetros operacionais classificados como confidenciais. Nesse momento, três perguntas surgem: Como garantir que é realmente ele? Como garantir que ninguém interceptou essas informações? E como garantir que ninguém mais está olhando?"
+      </div>
+      <div class="tip">Dica: abra com voz firme, ritmo pausado. Olhe direto para os avaliadores. A cena visual é tudo.</div>
+    </div>
+
+    <!-- BLOCO 2 -->
+    <div class="pitch-block yellow">
+      <div class="time" style="color: var(--yellow);">0:30 – 1:00 · O PROBLEMA</div>
+      <h4>A realidade aumentada aumentou os riscos</h4>
+      <div class="script">
+        "Óculos de realidade aumentada são o futuro do trabalho industrial — a própria Petrobras já explora essa tecnologia. Mas eles criam três brechas de segurança que não existiam antes. Primeira: não dá para digitar senha num óculos — como autenticar o usuário? Segunda: os dados trafegam pelo ar, muitas vezes em redes de terceiros — como proteger essa comunicação? Terceira: diferente de uma tela de computador, tudo que aparece no óculos é visível para quem está ao lado — como evitar vazamento de dados sensíveis? Nenhuma ferramenta de segurança tradicional resolve esses três problemas juntos."
+      </div>
+    </div>
+
+    <!-- BLOCO 3 -->
+    <div class="pitch-block green">
+      <div class="time" style="color: var(--green);">1:00 – 2:00 · A SOLUÇÃO</div>
+      <h4>SecureVision — Segurança invisível, proteção total</h4>
+      <div class="script">
+        "Apresentamos o SecureVision: uma camada de segurança inteligente entre os óculos AR e os sistemas de IA da Petrobras. Funciona em quatro pilares:<br><br>
+        Primeiro — <strong>Identidade Contínua</strong>. Quando o colaborador coloca os óculos, a câmera interna identifica sua íris em menos de 3 segundos. Sem digitar nada. E a verificação não para: se os óculos saem do rosto — um colega pediu emprestado, por exemplo — a sessão trava instantaneamente.<br><br>
+        Segundo — <strong>Canal Blindado</strong>. Um túnel criptografado se ativa automaticamente. Não importa se a rede é Wi-Fi de aeroporto, satélite de plataforma ou 5G de fornecedor. Os dados nunca trafegam em texto aberto.<br><br>
+        Terceiro — <strong>Proteção Visual</strong>. Dados sensíveis aparecem com marca d'água personalizada. E a câmera frontal do óculos detecta rostos não autorizados se aproximando — se alguém olha por cima do ombro, os dados são borrados automaticamente.<br><br>
+        Quarto — <strong>Governança</strong>. Tudo é registrado: quem acessou, o quê, quando, de onde. Um dashboard de auditoria em tempo real para gestores e compliance. Conformidade com LGPD garantida — os dados biométricos nunca saem do dispositivo."
+      </div>
+      <div class="tip">Dica: é aqui que vocês mostram o protótipo. Troquem o apresentador — quem demonstra a tela fala enquanto navega. 15-20 segundos de demo visual valem mais que 1 minuto de explicação oral.</div>
+    </div>
+
+    <!-- BLOCO 4 -->
+    <div class="pitch-block blue">
+      <div class="time" style="color: var(--accent);">2:00 – 2:35 · MERCADO E MODELO</div>
+      <h4>Por que isso importa para a Petrobras</h4>
+      <div class="script">
+        "O mercado de realidade aumentada corporativa deve alcançar 198 bilhões de dólares até 2028. A Petrobras opera em mais de 40 países, com milhares de colaboradores e fornecedores acessando sistemas críticos remotamente. O custo médio de um vazamento de dados em infraestrutura de energia ultrapassa 4,7 milhões de dólares.<br><br>
+        O SecureVision opera como licença por dispositivo ativo por mês, com um gateway dedicado por unidade industrial. A implantação é não-invasiva — integra com os óculos AR já em uso ou planejados, sem modificar os sistemas de IA existentes."
+      </div>
+    </div>
+
+    <!-- BLOCO 5 -->
+    <div class="pitch-block purple">
+      <div class="time" style="color: var(--purple);">2:35 – 3:00 · FECHAMENTO</div>
+      <h4>A frase que fica</h4>
+      <div class="script">
+        "A realidade aumentada vai transformar o trabalho na indústria de energia. Mas sem segurança, ela não aumenta a realidade — ela aumenta o risco.<br><br>
+        O SecureVision garante que cada colaborador da Petrobras possa vestir seus óculos e acessar a inteligência artificial da empresa com uma certeza: é ele, é seguro, e ninguém mais está vendo.<br><br>
+        Somos a [nome da equipe], do SENAI [unidade]. Obrigado."
+      </div>
+      <div class="tip">Dica: a mesma pessoa que abriu o pitch fecha. Última frase dita devagar, com contato visual direto. Não diga "é isso" — encerre com confiança.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--          RESUMO EXECUTIVO FINAL            -->
+<!-- ═══════════════════════════════════════════ -->
+<div class="container">
+  <div class="section" style="border-bottom: none;">
+    <div class="section-label" style="color: var(--orange);">Resumo</div>
+    <h2>Visão Geral da Solução</h2>
+
+    <div class="callout callout-blue">
+      <div class="callout-icon">🎯</div>
+      <div>
+        <strong>Resposta direta ao enunciado:</strong><br><br>
+        <strong>Autenticação confiável:</strong> Biometria de íris com verificação contínua + MFA contextual (localização + dispositivo pareado)<br><br>
+        <strong>Proteção de dados:</strong> Túnel criptografado automático (WireGuard/mTLS) + ZTNA — funciona em qualquer rede, incluindo de terceiros<br><br>
+        <strong>Prevenção de vazamento:</strong> DLP visual com watermark + detecção de observador + bloqueio de captura + geofencing por nível de classificação<br><br>
+        <strong>Ética digital:</strong> Conformidade LGPD nativa — consentimento, minimização, transparência, direito ao esquecimento. Biometria processada localmente, nunca enviada a servidores.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="container">
+    Grand Prix SENAI de Inovação 2026 — Desafio Petrobras — Cibersegurança e Ética Digital
+  </div>
+</div>
+
+</body>
+</html>
