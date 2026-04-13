@@ -1,741 +1,741 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SecureVision — Protótipo Interativo</title>
-<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<style>
-:root {
-  --bg: #09090b;
-  --surface: #131316;
-  --surface2: #1a1a1f;
-  --border: #27272a;
-  --text: #e4e4e7;
-  --muted: #71717a;
-  --accent: #2563eb;
-  --accent2: #3b82f6;
-  --green: #22c55e;
-  --yellow: #eab308;
-  --orange: #f97316;
-  --red: #ef4444;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden; height:100vh; }
-
-/* NAV */
-.nav { display:flex; align-items:center; height:48px; padding:0 20px; background:var(--surface); border-bottom:1px solid var(--border); gap:16px; }
-.nav-logo { font-weight:800; font-size:15px; letter-spacing:-0.5px; }
-.nav-logo span { color:var(--accent2); }
-.nav-tabs { display:flex; gap:2px; margin-left:24px; }
-.nav-tab { padding:6px 16px; font-size:13px; border-radius:6px; cursor:pointer; color:var(--muted); transition:all .15s; border:none; background:none; }
-.nav-tab:hover { color:var(--text); background:var(--surface2); }
-.nav-tab.active { color:var(--text); background:var(--accent); }
-.nav-right { margin-left:auto; display:flex; align-items:center; gap:14px; }
-.nav-level { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:1px; }
-.nav-user { font-size:12px; color:var(--muted); }
-
-/* LAYOUT */
-.app { display:flex; height:calc(100vh - 48px); }
-.sidebar { width:260px; background:var(--surface); border-right:1px solid var(--border); padding:16px; overflow-y:auto; flex-shrink:0; }
-.main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
-
-/* SIDEBAR */
-.sb-title { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
-.sb-section { margin-bottom:20px; }
-
-/* CAMERA */
-.cam-box { position:relative; width:100%; aspect-ratio:4/3; background:#000; border-radius:8px; overflow:hidden; border:2px solid var(--border); }
-.cam-box video { width:100%; height:100%; object-fit:cover; }
-.cam-box canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
-.cam-status { position:absolute; bottom:0; left:0; right:0; padding:6px 10px; font-size:11px; font-weight:600; text-align:center; }
-.cam-status.ok { background:rgba(34,197,94,0.85); color:#fff; }
-.cam-status.warn { background:rgba(249,115,22,0.85); color:#fff; }
-.cam-status.locked { background:rgba(239,68,68,0.9); color:#fff; }
-.cam-status.loading { background:rgba(37,99,235,0.85); color:#fff; }
-
-/* USER INFO */
-.user-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px; margin-top:10px; }
-.user-card .name { font-weight:700; font-size:14px; }
-.user-card .role { font-size:12px; color:var(--muted); }
-.user-card .meta { font-size:11px; color:var(--muted); margin-top:6px; }
-
-/* LEVEL BUTTONS */
-.level-btns { display:flex; flex-direction:column; gap:4px; }
-.level-btn { padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--surface2); color:var(--text); font-size:12px; cursor:pointer; text-align:left; transition:all .15s; display:flex; align-items:center; gap:8px; }
-.level-btn:hover { border-color:var(--accent); }
-.level-btn.active { border-color:var(--accent); background:rgba(37,99,235,0.1); }
-.level-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-
-/* CHAT */
-.chat-area { flex:1; display:flex; flex-direction:column; overflow:hidden; }
-.chat-messages { flex:1; overflow-y:auto; padding:20px; }
-.chat-msg { max-width:85%; margin-bottom:14px; animation:fadeIn .3s; }
-@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
-.chat-msg.user { margin-left:auto; }
-.chat-msg.ai { margin-right:auto; }
-.msg-bubble { padding:12px 16px; border-radius:12px; font-size:13px; line-height:1.6; }
-.msg-bubble.user { background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
-.msg-bubble.ai { background:var(--surface); border:1px solid var(--border); border-bottom-left-radius:4px; }
-.msg-label { font-size:10px; color:var(--muted); margin-bottom:3px; font-weight:600; letter-spacing:1px; }
-.msg-filtered { font-size:10px; color:var(--yellow); margin-top:6px; padding:4px 8px; background:rgba(234,179,8,0.08); border-radius:4px; display:inline-block; }
-.msg-blocked { font-size:10px; color:var(--red); margin-top:6px; padding:4px 8px; background:rgba(239,68,68,0.08); border-radius:4px; display:inline-block; }
-.msg-blurred .msg-bubble.ai { filter:blur(8px); user-select:none; pointer-events:none; }
-
-/* WATERMARK */
-.watermark { position:fixed; bottom:8px; right:12px; font-size:10px; color:rgba(255,255,255,0.15); pointer-events:none; z-index:999; letter-spacing:1px; font-weight:600; }
-
-/* CHAT INPUT */
-.chat-input-area { padding:12px 20px; border-top:1px solid var(--border); background:var(--surface); }
-.chat-input-row { display:flex; gap:8px; }
-.chat-input { flex:1; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:13px; outline:none; }
-.chat-input:focus { border-color:var(--accent); }
-.chat-send { padding:10px 18px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:13px; font-weight:600; cursor:pointer; }
-.chat-send:hover { background:var(--accent2); }
-.chat-send:disabled { opacity:.4; cursor:not-allowed; }
-.quick-questions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
-.quick-q { padding:5px 12px; border-radius:20px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-size:11px; cursor:pointer; transition:all .15s; }
-.quick-q:hover { border-color:var(--accent); color:var(--text); }
-
-/* LOCKED OVERLAY */
-.locked-overlay { position:absolute; inset:0; background:rgba(239,68,68,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:100; }
-.locked-overlay .icon { font-size:64px; margin-bottom:16px; }
-.locked-overlay h2 { font-size:22px; font-weight:800; color:#fff; margin-bottom:6px; }
-.locked-overlay p { font-size:13px; color:rgba(255,255,255,0.8); }
-
-/* DASHBOARD */
-.dash { padding:24px; overflow-y:auto; flex:1; }
-.dash-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
-.dash-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px; }
-.dash-card .num { font-size:32px; font-weight:800; }
-.dash-card .label { font-size:12px; color:var(--muted); margin-top:2px; }
-.dash-charts { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
-.chart-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px; }
-.chart-card h3 { font-size:14px; font-weight:700; margin-bottom:12px; }
-.chart-card canvas { max-height:200px; }
-.log-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px; }
-.log-card h3 { font-size:14px; font-weight:700; margin-bottom:12px; }
-.log-entry { padding:6px 0; border-bottom:1px solid var(--border); font-size:12px; display:flex; gap:10px; }
-.log-entry:last-child { border-bottom:none; }
-.log-time { color:var(--muted); font-family:monospace; flex-shrink:0; }
-.log-icon { flex-shrink:0; }
-.log-text { color:#a1a1aa; }
-
-/* TABS VISIBILITY */
-.tab-content { display:none; flex:1; overflow:hidden; }
-.tab-content.active { display:flex; flex-direction:column; }
-
-/* OBSERVER ALERT */
-.observer-alert { position:fixed; top:56px; left:50%; transform:translateX(-50%); padding:10px 24px; background:var(--orange); color:#fff; font-size:13px; font-weight:700; border-radius:8px; z-index:200; display:none; animation:slideDown .3s; }
-@keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-20px)} to{opacity:1;transform:translateX(-50%) none} }
-
-/* SESSION LOCKED BIG */
-.session-locked-big { display:none; }
-.session-locked-big.show { display:flex !important; position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.92); flex-direction:column; align-items:center; justify-content:center; }
-.session-locked-big .icon { font-size:80px; margin-bottom:20px; }
-.session-locked-big h2 { font-size:28px; font-weight:800; color:var(--red); margin-bottom:8px; }
-.session-locked-big p { font-size:15px; color:var(--muted); }
-</style>
-</head>
-<body>
-
-<!-- NAV -->
-<div class="nav">
-  <div class="nav-logo">🛡️ Secure<span>Vision</span></div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="switchTab('assistant')">Assistente IA</button>
-    <button class="nav-tab" onclick="switchTab('dashboard')">Dashboard</button>
-  </div>
-  <div class="nav-right">
-    <div class="nav-level" id="navLevel" style="background:rgba(34,197,94,0.15);color:var(--green);">NÍVEL 1</div>
-    <div class="nav-user" id="navUser">Carregando...</div>
-  </div>
-</div>
-
-<!-- OBSERVER ALERT -->
-<div class="observer-alert" id="observerAlert">⚠️ OBSERVADOR DETECTADO — Dados protegidos automaticamente</div>
-
-<!-- SESSION LOCKED -->
-<div class="session-locked-big" id="sessionLocked">
-  <div class="icon">🔒</div>
-  <h2>SESSÃO TRAVADA</h2>
-  <p>Rosto não detectado — aproxime-se da câmera para desbloquear</p>
-  <p style="font-size:12px;color:var(--red);margin-top:12px;">Alerta enviado ao SOC — Sentinel</p>
-</div>
-
-<!-- WATERMARK -->
-<div class="watermark" id="watermark"></div>
-
-<div class="app">
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="sb-section">
-      <div class="sb-title">Câmera do Dispositivo</div>
-      <div class="cam-box">
-        <video id="video" autoplay muted playsinline></video>
-        <canvas id="overlay"></canvas>
-        <div class="cam-status loading" id="camStatus">Iniciando câmera...</div>
-      </div>
-      <div class="user-card" id="userCard" style="display:none;">
-        <div class="name" id="userName">Pedro Diniz</div>
-        <div class="role">Técnico de Manutenção — Petrobras</div>
-        <div class="meta" id="userMeta"></div>
-      </div>
-    </div>
-
-    <div class="sb-section">
-      <div class="sb-title">Simular Contexto</div>
-      <div class="level-btns">
-        <button class="level-btn active" onclick="setLevel(1)">
-          <div class="level-dot" style="background:var(--green)"></div>
-          Nv.1 — Sala segura + Rede interna
-        </button>
-        <button class="level-btn" onclick="setLevel(2)">
-          <div class="level-dot" style="background:var(--accent2)"></div>
-          Nv.2 — Área de trabalho + Interna
-        </button>
-        <button class="level-btn" onclick="setLevel(3)">
-          <div class="level-dot" style="background:var(--yellow)"></div>
-          Nv.3 — Campo + Rede de terceiro
-        </button>
-        <button class="level-btn" onclick="setLevel(4)">
-          <div class="level-dot" style="background:var(--orange)"></div>
-          Nv.4 — Área pública
-        </button>
-        <button class="level-btn" onclick="setLevel(5)">
-          <div class="level-dot" style="background:var(--red)"></div>
-          Nv.5 — Dispositivo comprometido
-        </button>
-      </div>
-    </div>
-
-    <div class="sb-section">
-      <div class="sb-title">Status de Segurança</div>
-      <div style="font-size:12px; color:var(--muted); line-height:1.8;">
-        <div>🔒 VPN WireGuard: <span style="color:var(--green);">Ativo</span></div>
-        <div>🔐 Criptografia: <span style="color:var(--green);">ChaCha20</span></div>
-        <div>👁️ Auth contínua: <span id="authContinuous" style="color:var(--green);">Ativo</span></div>
-        <div>📊 Sentinel: <span style="color:var(--green);">Conectado</span></div>
-        <div id="networkStatus">🌐 Rede: <span style="color:var(--green);">Interna (segura)</span></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MAIN -->
-  <div class="main">
-    <!-- TAB: ASSISTANT -->
-    <div class="tab-content active" id="tab-assistant">
-      <div class="chat-area">
-        <div class="chat-messages" id="chatMessages">
-          <div class="chat-msg ai">
-            <div class="msg-label">SECUREVISION IA</div>
-            <div class="msg-bubble ai">
-              Olá! Sou o assistente de IA da Petrobras, protegido pelo SecureVision. Seu nível de segurança atual é <strong>1 (Verde)</strong> — dados completos disponíveis.<br><br>
-              Como posso ajudar?
-            </div>
-          </div>
-        </div>
-        <div class="chat-input-area">
-          <div class="chat-input-row">
-            <input class="chat-input" id="chatInput" placeholder="Faça uma pergunta ao assistente de IA..." onkeydown="if(event.key==='Enter')sendMessage()">
-            <button class="chat-send" onclick="sendMessage()" id="sendBtn">Enviar</button>
-          </div>
-          <div class="quick-questions">
-            <button class="quick-q" onclick="askQuick(0)">Pressão do poço P-47</button>
-            <button class="quick-q" onclick="askQuick(1)">Dados de produção do mês</button>
-            <button class="quick-q" onclick="askQuick(2)">Responsável da plataforma</button>
-            <button class="quick-q" onclick="askQuick(3)">Status dos equipamentos</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: DASHBOARD -->
-    <div class="tab-content" id="tab-dashboard">
-      <div class="dash">
-        <div class="dash-grid">
-          <div class="dash-card">
-            <div class="num" style="color:var(--green);" id="dashDevices">1</div>
-            <div class="label">Dispositivos ativos</div>
-          </div>
-          <div class="dash-card">
-            <div class="num" style="color:var(--orange);" id="dashAlerts">0</div>
-            <div class="label">Alertas de segurança</div>
-          </div>
-          <div class="dash-card">
-            <div class="num" style="color:var(--accent2);" id="dashQueries">0</div>
-            <div class="label">Consultas à IA hoje</div>
-          </div>
-        </div>
-        <div class="dash-charts">
-          <div class="chart-card">
-            <h3>Distribuição por Nível de Segurança</h3>
-            <canvas id="chartLevel"></canvas>
-          </div>
-          <div class="chart-card">
-            <h3>Acessos por Hora</h3>
-            <canvas id="chartTime"></canvas>
-          </div>
-        </div>
-        <div class="log-card">
-          <h3>Log de Eventos em Tempo Real</h3>
-          <div id="logEntries"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-// ══════════════════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════════════════
-let currentLevel = 1;
-let isAuthenticated = false;
-let isLocked = false;
-let faceDetected = false;
-let observerDetected = false;
-let queryCount = 0;
-let alertCount = 0;
-let levelCounts = [0,0,0,0,0];
-let hourlyCounts = new Array(24).fill(0);
-let eventLog = [];
-let faceApiLoaded = false;
-let detectionInterval = null;
-
-const LEVEL_CONFIG = {
-  1: { name:'NÍVEL 1', color:'#22c55e', bg:'rgba(34,197,94,0.15)', label:'Sala segura — Rede Interna', network:'Interna (segura)' },
-  2: { name:'NÍVEL 2', color:'#3b82f6', bg:'rgba(59,130,246,0.15)', label:'Área de trabalho — Rede Interna', network:'Corporativa' },
-  3: { name:'NÍVEL 3', color:'#eab308', bg:'rgba(234,179,8,0.15)', label:'Campo — Rede de Terceiro', network:'Terceiro (Wi-Fi externo)' },
-  4: { name:'NÍVEL 4', color:'#f97316', bg:'rgba(249,115,22,0.15)', label:'Área pública — Observador', network:'Pública (insegura)' },
-  5: { name:'NÍVEL 5', color:'#ef4444', bg:'rgba(239,68,68,0.15)', label:'Dispositivo comprometido', network:'DESCONECTADO' }
-};
-
-// AI responses per level per question
-const AI_RESPONSES = {
-  0: { // Pressão poço P-47
-    1: `A pressão atual do poço P-47 é de <strong>42.7 bar</strong>, dentro da faixa operacional (38-45 bar).<br><br>📊 Última leitura: ${getTime()}<br>👤 Responsável: João Silva (ID: 28471)<br>🔧 Última manutenção: 10/04/2026<br>✅ Status: Normal — manter monitoramento padrão.`,
-    2: `A pressão atual do poço P-47 é de <strong>42.7 bar</strong> — dentro da faixa operacional.<br><br>Status: ✅ Normal<br>Recomendação: manter monitoramento padrão.`,
-    3: `A pressão do poço P-47 está <strong>dentro dos parâmetros normais</strong> de operação. Não foram identificadas anomalias.<br><br>⚠️ <em>Para dados detalhados, conecte-se a uma rede segura.</em>`,
-    4: `Informação disponível apenas em ambiente autorizado.<br><br>🔒 <em>Mova-se para uma área segura para acessar dados operacionais.</em>`,
-    5: `❌ Acesso negado. Sessão bloqueada.`
-  },
-  1: { // Dados de produção
-    1: `📊 <strong>Dados de produção — Março/2026</strong><br><br>Petróleo: <strong>2.15 milhões bpd</strong> (↑ 3.2%)<br>Gás natural: <strong>580 mil m³/dia</strong><br>Derivados: <strong>1.89 milhões bpd</strong><br><br>Meta trimestral: 92.4% atingida<br>Plataformas operando: 47/52<br>Eficiência operacional: 96.7%<br><br>Top performer: P-76 (105% da meta)`,
-    2: `📊 <strong>Resumo de produção — Março/2026</strong><br><br>Petróleo: <strong>2.15M bpd</strong> (↑ 3.2%)<br>Meta: 92.4% atingida<br>Status geral: ✅ Normal`,
-    3: `A produção do mês está <strong>acima da meta</strong> estabelecida. Performance geral classificada como <strong>satisfatória</strong>.<br><br>⚠️ <em>Valores detalhados disponíveis em rede segura.</em>`,
-    4: `Dados de produção requerem nível de segurança superior.<br><br>🔒 <em>Acesse em uma área autorizada.</em>`,
-    5: `❌ Acesso negado. Sessão bloqueada.`
-  },
-  2: { // Responsável plataforma
-    1: `👤 <strong>Responsável — Plataforma P-76</strong><br><br>Nome: Eng. Carlos Mendes (ID: 15832)<br>Cargo: Gerente de Plataforma<br>Contato: c.mendes@petrobras.com.br<br>Plantão: 06:00-18:00 (turno A)<br><br>Substituto: Maria Santos (ID: 22491)<br>Último briefing de segurança: 12/04/2026`,
-    2: `👤 <strong>Responsável P-76:</strong> Carlos Mendes<br>Turno atual: A (06:00-18:00)<br>Substituto disponível: sim`,
-    3: `O responsável pela plataforma está <strong>em turno ativo</strong>. Contato disponível via canais internos.<br><br>⚠️ <em>Dados pessoais protegidos neste nível.</em>`,
-    4: `Informações de pessoal requerem ambiente seguro.<br><br>🔒 <em>Dados pessoais não são exibidos em áreas públicas.</em>`,
-    5: `❌ Acesso negado. Sessão bloqueada.`
-  },
-  3: { // Status equipamentos
-    1: `🔧 <strong>Status dos Equipamentos — P-76</strong><br><br>✅ Compressor A: Normal (98.2% eficiência)<br>⚠️ Bomba de injeção B3: Vibração elevada (0.42mm/s → limite: 0.5mm/s)<br>✅ Turbogerador 1: Normal<br>✅ Turbogerador 2: Normal<br>❌ Válvula PSV-102: Manutenção programada 15/04<br><br>Total: 47 equipamentos | 44 OK | 2 atenção | 1 manutenção<br>Próxima parada programada: 20/04/2026`,
-    2: `🔧 <strong>Resumo de Equipamentos — P-76</strong><br><br>✅ Normal: 44 equipamentos<br>⚠️ Atenção: 2 (vibração elevada)<br>🔧 Manutenção: 1 (programada)<br><br>Eficiência geral: 96.3%`,
-    3: `Os equipamentos da plataforma operam com <strong>eficiência dentro do esperado</strong>. Há itens em monitoramento preventivo.<br><br>⚠️ <em>Detalhes por equipamento disponíveis em rede segura.</em>`,
-    4: `Status de equipamentos requer ambiente autorizado.<br><br>🔒 <em>Acesse em área segura para ver detalhes técnicos.</em>`,
-    5: `❌ Acesso negado. Sessão bloqueada.`
-  }
-};
-
-// Generic response for custom questions
-const GENERIC_RESPONSES = {
-  1: `Processando sua consulta com dados completos (Nível 1)...<br><br>Com base nos dados disponíveis, a análise indica que os parâmetros estão dentro das especificações operacionais. Todas as informações detalhadas estão acessíveis no seu nível de segurança atual.`,
-  2: `Sua consulta foi processada com filtro de Nível 2.<br><br>Os dados principais estão disponíveis. Informações classificadas como sensíveis incluem watermark de rastreabilidade.`,
-  3: `Sua consulta foi processada com filtro de Nível 3 (rede de terceiro).<br><br>Informações gerais: os indicadores estão dentro dos parâmetros esperados.<br><br>⚠️ <em>Para dados detalhados, conecte-se a uma rede segura.</em>`,
-  4: `Consulta recebida, mas o nível de segurança atual não permite exibição de dados.<br><br>🔒 <em>Mova-se para uma área autorizada para acessar estas informações.</em>`,
-  5: `❌ Acesso negado. Sessão bloqueada.`
-};
-
-function getTime() {
-  const d = new Date();
-  return d.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-}
-
-function getDateTime() {
-  const d = new Date();
-  return d.toLocaleDateString('pt-BR') + ' ' + getTime();
-}
-
-// ══════════════════════════════════════════════════════════════
-//  TABS
-// ══════════════════════════════════════════════════════════════
-function switchTab(tab) {
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelector(`#tab-${tab}`).classList.add('active');
-  event.target.classList.add('active');
-  if(tab === 'dashboard') updateDashboard();
-}
-
-// ══════════════════════════════════════════════════════════════
-//  LEVEL SYSTEM
-// ══════════════════════════════════════════════════════════════
-function setLevel(level) {
-  const prevLevel = currentLevel;
-  currentLevel = level;
-  const cfg = LEVEL_CONFIG[level];
-
-  // Update nav
-  document.getElementById('navLevel').style.background = cfg.bg;
-  document.getElementById('navLevel').style.color = cfg.color;
-  document.getElementById('navLevel').textContent = cfg.name;
-
-  // Update buttons
-  document.querySelectorAll('.level-btn').forEach((btn,i) => {
-    btn.classList.toggle('active', i+1 === level);
-  });
-
-  // Network status
-  document.getElementById('networkStatus').innerHTML = `🌐 Rede: <span style="color:${cfg.color}">${cfg.network}</span>`;
-
-  // Level count
-  levelCounts[level-1]++;
-
-  // Log
-  if(prevLevel !== level) {
-    addLog('⚠️', `Nível alterado: ${LEVEL_CONFIG[prevLevel].name} → ${cfg.name}`, cfg.color);
-  }
-
-  // Level 5 = locked
-  if(level === 5) {
-    lockSession();
-  } else {
-    unlockSession();
-  }
-
-  updateWatermark();
-}
-
-// ══════════════════════════════════════════════════════════════
-//  LOCK / UNLOCK
-// ══════════════════════════════════════════════════════════════
-function lockSession() {
-  isLocked = true;
-  document.getElementById('sessionLocked').classList.add('show');
-  alertCount++;
-  addLog('🚨', 'SESSÃO TRAVADA — Alerta enviado ao SOC', '#ef4444');
-}
-
-function unlockSession() {
-  isLocked = false;
-  document.getElementById('sessionLocked').classList.remove('show');
-}
-
-// ══════════════════════════════════════════════════════════════
-//  CHAT
-// ══════════════════════════════════════════════════════════════
-function sendMessage() {
-  const input = document.getElementById('chatInput');
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-  processChat(text, -1);
-}
-
-function askQuick(idx) {
-  const questions = [
-    'Qual a pressão atual do poço P-47?',
-    'Mostre os dados de produção do mês',
-    'Quem é o responsável pela plataforma?',
-    'Qual o status dos equipamentos?'
-  ];
-  processChat(questions[idx], idx);
-}
-
-function processChat(question, qIdx) {
-  const msgs = document.getElementById('chatMessages');
-
-  // Add user message
-  const userDiv = document.createElement('div');
-  userDiv.className = 'chat-msg user';
-  userDiv.innerHTML = `<div class="msg-label" style="text-align:right;">VOCÊ</div><div class="msg-bubble user">${escapeHtml(question)}</div>`;
-  msgs.appendChild(userDiv);
-
-  // Get AI response
-  let response;
-  if (qIdx >= 0 && AI_RESPONSES[qIdx]) {
-    response = AI_RESPONSES[qIdx][currentLevel] || GENERIC_RESPONSES[currentLevel];
-  } else {
-    response = GENERIC_RESPONSES[currentLevel];
-  }
-
-  // Add AI response with delay
-  setTimeout(() => {
-    const aiDiv = document.createElement('div');
-    aiDiv.className = 'chat-msg ai';
-    if (observerDetected && currentLevel >= 4) {
-      aiDiv.classList.add('msg-blurred');
-    }
-
-    let filterTag = '';
-    if (currentLevel === 1) filterTag = '';
-    else if (currentLevel === 2) filterTag = '<div class="msg-filtered">🔒 Watermark aplicado — dados rastreáveis</div>';
-    else if (currentLevel === 3) filterTag = '<div class="msg-filtered">⚠️ Dados filtrados — valores exatos omitidos (Nível 3)</div>';
-    else if (currentLevel === 4) filterTag = '<div class="msg-blocked">🚫 Dados protegidos — observador/área pública (Nível 4)</div>';
-    else filterTag = '<div class="msg-blocked">❌ Sessão bloqueada (Nível 5)</div>';
-
-    aiDiv.innerHTML = `<div class="msg-label">SECUREVISION IA — ${LEVEL_CONFIG[currentLevel].name}</div><div class="msg-bubble ai">${response}${filterTag}</div>`;
-    msgs.appendChild(aiDiv);
-    msgs.scrollTop = msgs.scrollHeight;
-
-    // Update stats
-    queryCount++;
-    hourlyCounts[new Date().getHours()]++;
-    addLog('📋', `Query: "${escapeHtml(question.substring(0,40))}..." — ${LEVEL_CONFIG[currentLevel].name}`, LEVEL_CONFIG[currentLevel].color);
-  }, 600);
-
-  msgs.scrollTop = msgs.scrollHeight;
-}
-
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// ══════════════════════════════════════════════════════════════
-//  WATERMARK
-// ══════════════════════════════════════════════════════════════
-function updateWatermark() {
-  const wm = document.getElementById('watermark');
-  wm.textContent = `Pedro Diniz | ${getDateTime()} | ${LEVEL_CONFIG[currentLevel].name} | SecureVision`;
-}
-setInterval(updateWatermark, 1000);
-
-// ══════════════════════════════════════════════════════════════
-//  EVENT LOG
-// ══════════════════════════════════════════════════════════════
-function addLog(icon, text, color) {
-  eventLog.unshift({ time: getTime(), icon, text, color });
-  if (eventLog.length > 50) eventLog.pop();
-  renderLog();
-}
-
-function renderLog() {
-  const el = document.getElementById('logEntries');
-  if (!el) return;
-  el.innerHTML = eventLog.map(e =>
-    `<div class="log-entry"><span class="log-time">${e.time}</span><span class="log-icon">${e.icon}</span><span class="log-text" style="color:${e.color || '#a1a1aa'}">${e.text}</span></div>`
-  ).join('');
-}
-
-// ══════════════════════════════════════════════════════════════
-//  DASHBOARD
-// ══════════════════════════════════════════════════════════════
-let chartLevel = null, chartTime = null;
-
-function updateDashboard() {
-  document.getElementById('dashDevices').textContent = '1';
-  document.getElementById('dashAlerts').textContent = alertCount;
-  document.getElementById('dashQueries').textContent = queryCount;
-  renderLog();
-
-  // Level chart
-  const ctxL = document.getElementById('chartLevel');
-  if (chartLevel) chartLevel.destroy();
-  chartLevel = new Chart(ctxL, {
-    type: 'doughnut',
-    data: {
-      labels: ['Nível 1','Nível 2','Nível 3','Nível 4','Nível 5'],
-      datasets: [{
-        data: levelCounts.map(c => c || 0),
-        backgroundColor: ['#22c55e','#3b82f6','#eab308','#f97316','#ef4444'],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position:'bottom', labels: { color:'#a1a1aa', font:{size:11} } } }
-    }
-  });
-
-  // Time chart
-  const ctxT = document.getElementById('chartTime');
-  if (chartTime) chartTime.destroy();
-  const h = new Date().getHours();
-  const hours = [];
-  const vals = [];
-  for (let i = Math.max(0,h-5); i <= h; i++) {
-    hours.push(i + ':00');
-    vals.push(hourlyCounts[i]);
-  }
-  chartTime = new Chart(ctxT, {
-    type: 'bar',
-    data: {
-      labels: hours,
-      datasets: [{ label:'Consultas', data:vals, backgroundColor:'rgba(37,99,235,0.6)', borderRadius:4 }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: { beginAtZero:true, ticks:{color:'#71717a',stepSize:1}, grid:{color:'#27272a'} },
-        x: { ticks:{color:'#71717a'}, grid:{color:'#27272a'} }
-      },
-      plugins: { legend: { display:false } }
-    }
-  });
-}
-
-// ══════════════════════════════════════════════════════════════
-//  FACE DETECTION
-// ══════════════════════════════════════════════════════════════
-async function initCamera() {
-  const video = document.getElementById('video');
-  const status = document.getElementById('camStatus');
-
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:320, height:240 } });
-    video.srcObject = stream;
-
-    status.textContent = 'Carregando modelos de detecção...';
-    status.className = 'cam-status loading';
-
-    // Load face-api models from CDN
-    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
-    try {
-      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-      faceApiLoaded = true;
-      status.textContent = 'Modelo carregado — detectando rosto...';
-      startDetection();
-    } catch(e) {
-      console.warn('face-api models failed, using fallback detection', e);
-      // Fallback: simple motion-based "detection" simulation
-      startFallbackDetection();
-    }
-  } catch(e) {
-    status.textContent = 'Câmera não disponível — use simulação manual';
-    status.className = 'cam-status warn';
-    simulateAuth();
-  }
-}
-
-function startDetection() {
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('overlay');
-  const status = document.getElementById('camStatus');
-  let noFaceFrames = 0;
-  let prevFaceCount = 0;
-
-  detectionInterval = setInterval(async () => {
-    if (!video.videoWidth) return;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }));
-
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (detections.length >= 1) {
-      noFaceFrames = 0;
-
-      // Draw face box
-      const d = detections[0];
-      const box = d.box;
-      ctx.strokeStyle = LEVEL_CONFIG[currentLevel].color;
-      ctx.lineWidth = 2;
-      ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-      if (!isAuthenticated) {
-        isAuthenticated = true;
-        faceDetected = true;
-        status.textContent = '✓ Identidade verificada';
-        status.className = 'cam-status ok';
-        document.getElementById('userCard').style.display = 'block';
-        document.getElementById('navUser').textContent = 'Pedro Diniz — Autenticado';
-        document.getElementById('userMeta').textContent = `Autenticado: ${getTime()} | Nível: ${currentLevel}`;
-        addLog('✅', 'Autenticação facial bem-sucedida — Pedro Diniz', '#22c55e');
-        levelCounts[0]++;
-      }
-
-      if (isLocked && currentLevel !== 5) {
-        unlockSession();
-        addLog('🔓', 'Sessão desbloqueada — rosto detectado', '#22c55e');
-      }
-
-      // Observer detection: more than 1 face
-      if (detections.length > 1) {
-        if (!observerDetected) {
-          observerDetected = true;
-          document.getElementById('observerAlert').style.display = 'block';
-          if (currentLevel < 4) setLevel(4);
-          addLog('🚨', `Observador detectado (${detections.length} rostos) — Nível elevado para 4`, '#f97316');
-          alertCount++;
-
-          // Draw observer boxes
-          for (let i = 1; i < detections.length; i++) {
-            const ob = detections[i].box;
-            ctx.strokeStyle = '#f97316';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(ob.x, ob.y, ob.width, ob.height);
-            ctx.fillStyle = 'rgba(249,115,22,0.3)';
-            ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
-          }
-        }
-      } else {
-        if (observerDetected) {
-          observerDetected = false;
-          document.getElementById('observerAlert').style.display = 'none';
-          addLog('✅', 'Observador não detectado — nível restaurado', '#22c55e');
-        }
-      }
-    } else {
-      noFaceFrames++;
-      if (noFaceFrames > 5 && isAuthenticated && !isLocked) {
-        faceDetected = false;
-        status.textContent = '⚠ Rosto não detectado';
-        status.className = 'cam-status locked';
-        if (noFaceFrames > 12) {
-          lockSession();
-        }
-      }
-    }
-  }, 500);
-}
-
-function startFallbackDetection() {
-  // If face-api models fail, do a simple simulation
-  const status = document.getElementById('camStatus');
-  status.textContent = 'Modo simulado — clique para autenticar';
-  status.className = 'cam-status warn';
-  status.style.cursor = 'pointer';
-  status.onclick = () => {
-    simulateAuth();
-    status.onclick = null;
-    status.style.cursor = 'default';
-  };
-}
-
-function simulateAuth() {
-  const status = document.getElementById('camStatus');
-  isAuthenticated = true;
-  faceDetected = true;
-  status.textContent = '✓ Identidade verificada (simulado)';
-  status.className = 'cam-status ok';
-  document.getElementById('userCard').style.display = 'block';
-  document.getElementById('navUser').textContent = 'Pedro Diniz — Autenticado';
-  document.getElementById('userMeta').textContent = `Autenticado: ${getTime()} | Nível: ${currentLevel}`;
-  addLog('✅', 'Autenticação simulada — Pedro Diniz', '#22c55e');
-  levelCounts[0]++;
-}
-
-// ══════════════════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
-  updateWatermark();
-  addLog('🔒', 'VPN WireGuard estabelecida — túnel criptografado ativo', '#22c55e');
-  addLog('📡', 'Microsoft Sentinel conectado — logs ativos', '#3b82f6');
-  addLog('🛡️', 'SecureVision Gateway iniciado', '#3b82f6');
-  initCamera();
-});
-</script>
-</body>
-</html>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlindAR — Protótipo Interativo</title>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #09090b;
+  --surface: #131316;
+  --surface2: #1a1a1f;
+  --border: #27272a;
+  --text: #e4e4e7;
+  --muted: #71717a;
+  --accent: #2563eb;
+  --accent2: #3b82f6;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --orange: #f97316;
+  --red: #ef4444;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden; height:100vh; }
+
+/* NAV */
+.nav { display:flex; align-items:center; height:48px; padding:0 20px; background:var(--surface); border-bottom:1px solid var(--border); gap:16px; }
+.nav-logo { font-weight:800; font-size:15px; letter-spacing:-0.5px; }
+.nav-logo span { color:var(--accent2); }
+.nav-tabs { display:flex; gap:2px; margin-left:24px; }
+.nav-tab { padding:6px 16px; font-size:13px; border-radius:6px; cursor:pointer; color:var(--muted); transition:all .15s; border:none; background:none; }
+.nav-tab:hover { color:var(--text); background:var(--surface2); }
+.nav-tab.active { color:var(--text); background:var(--accent); }
+.nav-right { margin-left:auto; display:flex; align-items:center; gap:14px; }
+.nav-level { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:1px; }
+.nav-user { font-size:12px; color:var(--muted); }
+
+/* LAYOUT */
+.app { display:flex; height:calc(100vh - 48px); }
+.sidebar { width:260px; background:var(--surface); border-right:1px solid var(--border); padding:16px; overflow-y:auto; flex-shrink:0; }
+.main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+/* SIDEBAR */
+.sb-title { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:10px; }
+.sb-section { margin-bottom:20px; }
+
+/* CAMERA */
+.cam-box { position:relative; width:100%; aspect-ratio:4/3; background:#000; border-radius:8px; overflow:hidden; border:2px solid var(--border); }
+.cam-box video { width:100%; height:100%; object-fit:cover; }
+.cam-box canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
+.cam-status { position:absolute; bottom:0; left:0; right:0; padding:6px 10px; font-size:11px; font-weight:600; text-align:center; }
+.cam-status.ok { background:rgba(34,197,94,0.85); color:#fff; }
+.cam-status.warn { background:rgba(249,115,22,0.85); color:#fff; }
+.cam-status.locked { background:rgba(239,68,68,0.9); color:#fff; }
+.cam-status.loading { background:rgba(37,99,235,0.85); color:#fff; }
+
+/* USER INFO */
+.user-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:12px; margin-top:10px; }
+.user-card .name { font-weight:700; font-size:14px; }
+.user-card .role { font-size:12px; color:var(--muted); }
+.user-card .meta { font-size:11px; color:var(--muted); margin-top:6px; }
+
+/* LEVEL BUTTONS */
+.level-btns { display:flex; flex-direction:column; gap:4px; }
+.level-btn { padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--surface2); color:var(--text); font-size:12px; cursor:pointer; text-align:left; transition:all .15s; display:flex; align-items:center; gap:8px; }
+.level-btn:hover { border-color:var(--accent); }
+.level-btn.active { border-color:var(--accent); background:rgba(37,99,235,0.1); }
+.level-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+/* CHAT */
+.chat-area { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.chat-messages { flex:1; overflow-y:auto; padding:20px; }
+.chat-msg { max-width:85%; margin-bottom:14px; animation:fadeIn .3s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+.chat-msg.user { margin-left:auto; }
+.chat-msg.ai { margin-right:auto; }
+.msg-bubble { padding:12px 16px; border-radius:12px; font-size:13px; line-height:1.6; }
+.msg-bubble.user { background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
+.msg-bubble.ai { background:var(--surface); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.msg-label { font-size:10px; color:var(--muted); margin-bottom:3px; font-weight:600; letter-spacing:1px; }
+.msg-filtered { font-size:10px; color:var(--yellow); margin-top:6px; padding:4px 8px; background:rgba(234,179,8,0.08); border-radius:4px; display:inline-block; }
+.msg-blocked { font-size:10px; color:var(--red); margin-top:6px; padding:4px 8px; background:rgba(239,68,68,0.08); border-radius:4px; display:inline-block; }
+.msg-blurred .msg-bubble.ai { filter:blur(8px); user-select:none; pointer-events:none; }
+
+/* WATERMARK */
+.watermark { position:fixed; bottom:8px; right:12px; font-size:10px; color:rgba(255,255,255,0.15); pointer-events:none; z-index:999; letter-spacing:1px; font-weight:600; }
+
+/* CHAT INPUT */
+.chat-input-area { padding:12px 20px; border-top:1px solid var(--border); background:var(--surface); }
+.chat-input-row { display:flex; gap:8px; }
+.chat-input { flex:1; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:13px; outline:none; }
+.chat-input:focus { border-color:var(--accent); }
+.chat-send { padding:10px 18px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:13px; font-weight:600; cursor:pointer; }
+.chat-send:hover { background:var(--accent2); }
+.chat-send:disabled { opacity:.4; cursor:not-allowed; }
+.quick-questions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.quick-q { padding:5px 12px; border-radius:20px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-size:11px; cursor:pointer; transition:all .15s; }
+.quick-q:hover { border-color:var(--accent); color:var(--text); }
+
+/* LOCKED OVERLAY */
+.locked-overlay { position:absolute; inset:0; background:rgba(239,68,68,0.95); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:100; }
+.locked-overlay .icon { font-size:64px; margin-bottom:16px; }
+.locked-overlay h2 { font-size:22px; font-weight:800; color:#fff; margin-bottom:6px; }
+.locked-overlay p { font-size:13px; color:rgba(255,255,255,0.8); }
+
+/* DASHBOARD */
+.dash { padding:24px; overflow-y:auto; flex:1; }
+.dash-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+.dash-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px; }
+.dash-card .num { font-size:32px; font-weight:800; }
+.dash-card .label { font-size:12px; color:var(--muted); margin-top:2px; }
+.dash-charts { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+.chart-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px; }
+.chart-card h3 { font-size:14px; font-weight:700; margin-bottom:12px; }
+.chart-card canvas { max-height:200px; }
+.log-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px; }
+.log-card h3 { font-size:14px; font-weight:700; margin-bottom:12px; }
+.log-entry { padding:6px 0; border-bottom:1px solid var(--border); font-size:12px; display:flex; gap:10px; }
+.log-entry:last-child { border-bottom:none; }
+.log-time { color:var(--muted); font-family:monospace; flex-shrink:0; }
+.log-icon { flex-shrink:0; }
+.log-text { color:#a1a1aa; }
+
+/* TABS VISIBILITY */
+.tab-content { display:none; flex:1; overflow:hidden; }
+.tab-content.active { display:flex; flex-direction:column; }
+
+/* OBSERVER ALERT */
+.observer-alert { position:fixed; top:56px; left:50%; transform:translateX(-50%); padding:10px 24px; background:var(--orange); color:#fff; font-size:13px; font-weight:700; border-radius:8px; z-index:200; display:none; animation:slideDown .3s; }
+@keyframes slideDown { from{opacity:0;transform:translateX(-50%) translateY(-20px)} to{opacity:1;transform:translateX(-50%) none} }
+
+/* SESSION LOCKED BIG */
+.session-locked-big { display:none; }
+.session-locked-big.show { display:flex !important; position:fixed; inset:0; z-index:500; background:rgba(0,0,0,0.92); flex-direction:column; align-items:center; justify-content:center; }
+.session-locked-big .icon { font-size:80px; margin-bottom:20px; }
+.session-locked-big h2 { font-size:28px; font-weight:800; color:var(--red); margin-bottom:8px; }
+.session-locked-big p { font-size:15px; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-logo">🛡️ Blind<span>AR</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('assistant')">Assistente IA</button>
+    <button class="nav-tab" onclick="switchTab('dashboard')">Dashboard</button>
+  </div>
+  <div class="nav-right">
+    <div class="nav-level" id="navLevel" style="background:rgba(34,197,94,0.15);color:var(--green);">NÍVEL 1</div>
+    <div class="nav-user" id="navUser">Carregando...</div>
+  </div>
+</div>
+
+<!-- OBSERVER ALERT -->
+<div class="observer-alert" id="observerAlert">⚠️ OBSERVADOR DETECTADO — Dados protegidos automaticamente</div>
+
+<!-- SESSION LOCKED -->
+<div class="session-locked-big" id="sessionLocked">
+  <div class="icon">🔒</div>
+  <h2>SESSÃO TRAVADA</h2>
+  <p>Rosto não detectado — aproxime-se da câmera para desbloquear</p>
+  <p style="font-size:12px;color:var(--red);margin-top:12px;">Alerta enviado ao SOC — Sentinel</p>
+</div>
+
+<!-- WATERMARK -->
+<div class="watermark" id="watermark"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-section">
+      <div class="sb-title">Câmera do Dispositivo</div>
+      <div class="cam-box">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="overlay"></canvas>
+        <div class="cam-status loading" id="camStatus">Iniciando câmera...</div>
+      </div>
+      <div class="user-card" id="userCard" style="display:none;">
+        <div class="name" id="userName">Pedro Diniz</div>
+        <div class="role">Técnico de Manutenção — Petrobras</div>
+        <div class="meta" id="userMeta"></div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-title">Simular Contexto</div>
+      <div class="level-btns">
+        <button class="level-btn active" onclick="setLevel(1)">
+          <div class="level-dot" style="background:var(--green)"></div>
+          Nv.1 — Sala segura + Rede interna
+        </button>
+        <button class="level-btn" onclick="setLevel(2)">
+          <div class="level-dot" style="background:var(--accent2)"></div>
+          Nv.2 — Área de trabalho + Interna
+        </button>
+        <button class="level-btn" onclick="setLevel(3)">
+          <div class="level-dot" style="background:var(--yellow)"></div>
+          Nv.3 — Campo + Rede de terceiro
+        </button>
+        <button class="level-btn" onclick="setLevel(4)">
+          <div class="level-dot" style="background:var(--orange)"></div>
+          Nv.4 — Área pública
+        </button>
+        <button class="level-btn" onclick="setLevel(5)">
+          <div class="level-dot" style="background:var(--red)"></div>
+          Nv.5 — Dispositivo comprometido
+        </button>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-title">Status de Segurança</div>
+      <div style="font-size:12px; color:var(--muted); line-height:1.8;">
+        <div>🔒 VPN WireGuard: <span style="color:var(--green);">Ativo</span></div>
+        <div>🔐 Criptografia: <span style="color:var(--green);">ChaCha20</span></div>
+        <div>👁️ Auth contínua: <span id="authContinuous" style="color:var(--green);">Ativo</span></div>
+        <div>📊 Sentinel: <span style="color:var(--green);">Conectado</span></div>
+        <div id="networkStatus">🌐 Rede: <span style="color:var(--green);">Interna (segura)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TAB: ASSISTANT -->
+    <div class="tab-content active" id="tab-assistant">
+      <div class="chat-area">
+        <div class="chat-messages" id="chatMessages">
+          <div class="chat-msg ai">
+            <div class="msg-label">BLINDAR IA</div>
+            <div class="msg-bubble ai">
+              Olá! Sou o assistente de IA da Petrobras, protegido pelo BlindAR. Seu nível de segurança atual é <strong>1 (Verde)</strong> — dados completos disponíveis.<br><br>
+              Como posso ajudar?
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <div class="chat-input-row">
+            <input class="chat-input" id="chatInput" placeholder="Faça uma pergunta ao assistente de IA..." onkeydown="if(event.key==='Enter')sendMessage()">
+            <button class="chat-send" onclick="sendMessage()" id="sendBtn">Enviar</button>
+          </div>
+          <div class="quick-questions">
+            <button class="quick-q" onclick="askQuick(0)">Pressão do poço P-47</button>
+            <button class="quick-q" onclick="askQuick(1)">Dados de produção do mês</button>
+            <button class="quick-q" onclick="askQuick(2)">Responsável da plataforma</button>
+            <button class="quick-q" onclick="askQuick(3)">Status dos equipamentos</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: DASHBOARD -->
+    <div class="tab-content" id="tab-dashboard">
+      <div class="dash">
+        <div class="dash-grid">
+          <div class="dash-card">
+            <div class="num" style="color:var(--green);" id="dashDevices">1</div>
+            <div class="label">Dispositivos ativos</div>
+          </div>
+          <div class="dash-card">
+            <div class="num" style="color:var(--orange);" id="dashAlerts">0</div>
+            <div class="label">Alertas de segurança</div>
+          </div>
+          <div class="dash-card">
+            <div class="num" style="color:var(--accent2);" id="dashQueries">0</div>
+            <div class="label">Consultas à IA hoje</div>
+          </div>
+        </div>
+        <div class="dash-charts">
+          <div class="chart-card">
+            <h3>Distribuição por Nível de Segurança</h3>
+            <canvas id="chartLevel"></canvas>
+          </div>
+          <div class="chart-card">
+            <h3>Acessos por Hora</h3>
+            <canvas id="chartTime"></canvas>
+          </div>
+        </div>
+        <div class="log-card">
+          <h3>Log de Eventos em Tempo Real</h3>
+          <div id="logEntries"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════════════
+let currentLevel = 1;
+let isAuthenticated = false;
+let isLocked = false;
+let faceDetected = false;
+let observerDetected = false;
+let queryCount = 0;
+let alertCount = 0;
+let levelCounts = [0,0,0,0,0];
+let hourlyCounts = new Array(24).fill(0);
+let eventLog = [];
+let faceApiLoaded = false;
+let detectionInterval = null;
+
+const LEVEL_CONFIG = {
+  1: { name:'NÍVEL 1', color:'#22c55e', bg:'rgba(34,197,94,0.15)', label:'Sala segura — Rede Interna', network:'Interna (segura)' },
+  2: { name:'NÍVEL 2', color:'#3b82f6', bg:'rgba(59,130,246,0.15)', label:'Área de trabalho — Rede Interna', network:'Corporativa' },
+  3: { name:'NÍVEL 3', color:'#eab308', bg:'rgba(234,179,8,0.15)', label:'Campo — Rede de Terceiro', network:'Terceiro (Wi-Fi externo)' },
+  4: { name:'NÍVEL 4', color:'#f97316', bg:'rgba(249,115,22,0.15)', label:'Área pública — Observador', network:'Pública (insegura)' },
+  5: { name:'NÍVEL 5', color:'#ef4444', bg:'rgba(239,68,68,0.15)', label:'Dispositivo comprometido', network:'DESCONECTADO' }
+};
+
+// AI responses per level per question
+const AI_RESPONSES = {
+  0: { // Pressão poço P-47
+    1: `A pressão atual do poço P-47 é de <strong>42.7 bar</strong>, dentro da faixa operacional (38-45 bar).<br><br>📊 Última leitura: ${getTime()}<br>👤 Responsável: João Silva (ID: 28471)<br>🔧 Última manutenção: 10/04/2026<br>✅ Status: Normal — manter monitoramento padrão.`,
+    2: `A pressão atual do poço P-47 é de <strong>42.7 bar</strong> — dentro da faixa operacional.<br><br>Status: ✅ Normal<br>Recomendação: manter monitoramento padrão.`,
+    3: `A pressão do poço P-47 está <strong>dentro dos parâmetros normais</strong> de operação. Não foram identificadas anomalias.<br><br>⚠️ <em>Para dados detalhados, conecte-se a uma rede segura.</em>`,
+    4: `Informação disponível apenas em ambiente autorizado.<br><br>🔒 <em>Mova-se para uma área segura para acessar dados operacionais.</em>`,
+    5: `❌ Acesso negado. Sessão bloqueada.`
+  },
+  1: { // Dados de produção
+    1: `📊 <strong>Dados de produção — Março/2026</strong><br><br>Petróleo: <strong>2.15 milhões bpd</strong> (↑ 3.2%)<br>Gás natural: <strong>580 mil m³/dia</strong><br>Derivados: <strong>1.89 milhões bpd</strong><br><br>Meta trimestral: 92.4% atingida<br>Plataformas operando: 47/52<br>Eficiência operacional: 96.7%<br><br>Top performer: P-76 (105% da meta)`,
+    2: `📊 <strong>Resumo de produção — Março/2026</strong><br><br>Petróleo: <strong>2.15M bpd</strong> (↑ 3.2%)<br>Meta: 92.4% atingida<br>Status geral: ✅ Normal`,
+    3: `A produção do mês está <strong>acima da meta</strong> estabelecida. Performance geral classificada como <strong>satisfatória</strong>.<br><br>⚠️ <em>Valores detalhados disponíveis em rede segura.</em>`,
+    4: `Dados de produção requerem nível de segurança superior.<br><br>🔒 <em>Acesse em uma área autorizada.</em>`,
+    5: `❌ Acesso negado. Sessão bloqueada.`
+  },
+  2: { // Responsável plataforma
+    1: `👤 <strong>Responsável — Plataforma P-76</strong><br><br>Nome: Eng. Carlos Mendes (ID: 15832)<br>Cargo: Gerente de Plataforma<br>Contato: c.mendes@petrobras.com.br<br>Plantão: 06:00-18:00 (turno A)<br><br>Substituto: Maria Santos (ID: 22491)<br>Último briefing de segurança: 12/04/2026`,
+    2: `👤 <strong>Responsável P-76:</strong> Carlos Mendes<br>Turno atual: A (06:00-18:00)<br>Substituto disponível: sim`,
+    3: `O responsável pela plataforma está <strong>em turno ativo</strong>. Contato disponível via canais internos.<br><br>⚠️ <em>Dados pessoais protegidos neste nível.</em>`,
+    4: `Informações de pessoal requerem ambiente seguro.<br><br>🔒 <em>Dados pessoais não são exibidos em áreas públicas.</em>`,
+    5: `❌ Acesso negado. Sessão bloqueada.`
+  },
+  3: { // Status equipamentos
+    1: `🔧 <strong>Status dos Equipamentos — P-76</strong><br><br>✅ Compressor A: Normal (98.2% eficiência)<br>⚠️ Bomba de injeção B3: Vibração elevada (0.42mm/s → limite: 0.5mm/s)<br>✅ Turbogerador 1: Normal<br>✅ Turbogerador 2: Normal<br>❌ Válvula PSV-102: Manutenção programada 15/04<br><br>Total: 47 equipamentos | 44 OK | 2 atenção | 1 manutenção<br>Próxima parada programada: 20/04/2026`,
+    2: `🔧 <strong>Resumo de Equipamentos — P-76</strong><br><br>✅ Normal: 44 equipamentos<br>⚠️ Atenção: 2 (vibração elevada)<br>🔧 Manutenção: 1 (programada)<br><br>Eficiência geral: 96.3%`,
+    3: `Os equipamentos da plataforma operam com <strong>eficiência dentro do esperado</strong>. Há itens em monitoramento preventivo.<br><br>⚠️ <em>Detalhes por equipamento disponíveis em rede segura.</em>`,
+    4: `Status de equipamentos requer ambiente autorizado.<br><br>🔒 <em>Acesse em área segura para ver detalhes técnicos.</em>`,
+    5: `❌ Acesso negado. Sessão bloqueada.`
+  }
+};
+
+// Generic response for custom questions
+const GENERIC_RESPONSES = {
+  1: `Processando sua consulta com dados completos (Nível 1)...<br><br>Com base nos dados disponíveis, a análise indica que os parâmetros estão dentro das especificações operacionais. Todas as informações detalhadas estão acessíveis no seu nível de segurança atual.`,
+  2: `Sua consulta foi processada com filtro de Nível 2.<br><br>Os dados principais estão disponíveis. Informações classificadas como sensíveis incluem watermark de rastreabilidade.`,
+  3: `Sua consulta foi processada com filtro de Nível 3 (rede de terceiro).<br><br>Informações gerais: os indicadores estão dentro dos parâmetros esperados.<br><br>⚠️ <em>Para dados detalhados, conecte-se a uma rede segura.</em>`,
+  4: `Consulta recebida, mas o nível de segurança atual não permite exibição de dados.<br><br>🔒 <em>Mova-se para uma área autorizada para acessar estas informações.</em>`,
+  5: `❌ Acesso negado. Sessão bloqueada.`
+};
+
+function getTime() {
+  const d = new Date();
+  return d.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function getDateTime() {
+  const d = new Date();
+  return d.toLocaleDateString('pt-BR') + ' ' + getTime();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelector(`#tab-${tab}`).classList.add('active');
+  event.target.classList.add('active');
+  if(tab === 'dashboard') updateDashboard();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LEVEL SYSTEM
+// ══════════════════════════════════════════════════════════════
+function setLevel(level) {
+  const prevLevel = currentLevel;
+  currentLevel = level;
+  const cfg = LEVEL_CONFIG[level];
+
+  // Update nav
+  document.getElementById('navLevel').style.background = cfg.bg;
+  document.getElementById('navLevel').style.color = cfg.color;
+  document.getElementById('navLevel').textContent = cfg.name;
+
+  // Update buttons
+  document.querySelectorAll('.level-btn').forEach((btn,i) => {
+    btn.classList.toggle('active', i+1 === level);
+  });
+
+  // Network status
+  document.getElementById('networkStatus').innerHTML = `🌐 Rede: <span style="color:${cfg.color}">${cfg.network}</span>`;
+
+  // Level count
+  levelCounts[level-1]++;
+
+  // Log
+  if(prevLevel !== level) {
+    addLog('⚠️', `Nível alterado: ${LEVEL_CONFIG[prevLevel].name} → ${cfg.name}`, cfg.color);
+  }
+
+  // Level 5 = locked
+  if(level === 5) {
+    lockSession();
+  } else {
+    unlockSession();
+  }
+
+  updateWatermark();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LOCK / UNLOCK
+// ══════════════════════════════════════════════════════════════
+function lockSession() {
+  isLocked = true;
+  document.getElementById('sessionLocked').classList.add('show');
+  alertCount++;
+  addLog('🚨', 'SESSÃO TRAVADA — Alerta enviado ao SOC', '#ef4444');
+}
+
+function unlockSession() {
+  isLocked = false;
+  document.getElementById('sessionLocked').classList.remove('show');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CHAT
+// ══════════════════════════════════════════════════════════════
+function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  processChat(text, -1);
+}
+
+function askQuick(idx) {
+  const questions = [
+    'Qual a pressão atual do poço P-47?',
+    'Mostre os dados de produção do mês',
+    'Quem é o responsável pela plataforma?',
+    'Qual o status dos equipamentos?'
+  ];
+  processChat(questions[idx], idx);
+}
+
+function processChat(question, qIdx) {
+  const msgs = document.getElementById('chatMessages');
+
+  // Add user message
+  const userDiv = document.createElement('div');
+  userDiv.className = 'chat-msg user';
+  userDiv.innerHTML = `<div class="msg-label" style="text-align:right;">VOCÊ</div><div class="msg-bubble user">${escapeHtml(question)}</div>`;
+  msgs.appendChild(userDiv);
+
+  // Get AI response
+  let response;
+  if (qIdx >= 0 && AI_RESPONSES[qIdx]) {
+    response = AI_RESPONSES[qIdx][currentLevel] || GENERIC_RESPONSES[currentLevel];
+  } else {
+    response = GENERIC_RESPONSES[currentLevel];
+  }
+
+  // Add AI response with delay
+  setTimeout(() => {
+    const aiDiv = document.createElement('div');
+    aiDiv.className = 'chat-msg ai';
+    if (observerDetected && currentLevel >= 4) {
+      aiDiv.classList.add('msg-blurred');
+    }
+
+    let filterTag = '';
+    if (currentLevel === 1) filterTag = '';
+    else if (currentLevel === 2) filterTag = '<div class="msg-filtered">🔒 Watermark aplicado — dados rastreáveis</div>';
+    else if (currentLevel === 3) filterTag = '<div class="msg-filtered">⚠️ Dados filtrados — valores exatos omitidos (Nível 3)</div>';
+    else if (currentLevel === 4) filterTag = '<div class="msg-blocked">🚫 Dados protegidos — observador/área pública (Nível 4)</div>';
+    else filterTag = '<div class="msg-blocked">❌ Sessão bloqueada (Nível 5)</div>';
+
+    aiDiv.innerHTML = `<div class="msg-label">BLINDAR IA — ${LEVEL_CONFIG[currentLevel].name}</div><div class="msg-bubble ai">${response}${filterTag}</div>`;
+    msgs.appendChild(aiDiv);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    // Update stats
+    queryCount++;
+    hourlyCounts[new Date().getHours()]++;
+    addLog('📋', `Query: "${escapeHtml(question.substring(0,40))}..." — ${LEVEL_CONFIG[currentLevel].name}`, LEVEL_CONFIG[currentLevel].color);
+  }, 600);
+
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  WATERMARK
+// ══════════════════════════════════════════════════════════════
+function updateWatermark() {
+  const wm = document.getElementById('watermark');
+  wm.textContent = `Pedro Diniz | ${getDateTime()} | ${LEVEL_CONFIG[currentLevel].name} | BlindAR`;
+}
+setInterval(updateWatermark, 1000);
+
+// ══════════════════════════════════════════════════════════════
+//  EVENT LOG
+// ══════════════════════════════════════════════════════════════
+function addLog(icon, text, color) {
+  eventLog.unshift({ time: getTime(), icon, text, color });
+  if (eventLog.length > 50) eventLog.pop();
+  renderLog();
+}
+
+function renderLog() {
+  const el = document.getElementById('logEntries');
+  if (!el) return;
+  el.innerHTML = eventLog.map(e =>
+    `<div class="log-entry"><span class="log-time">${e.time}</span><span class="log-icon">${e.icon}</span><span class="log-text" style="color:${e.color || '#a1a1aa'}">${e.text}</span></div>`
+  ).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ══════════════════════════════════════════════════════════════
+let chartLevel = null, chartTime = null;
+
+function updateDashboard() {
+  document.getElementById('dashDevices').textContent = '1';
+  document.getElementById('dashAlerts').textContent = alertCount;
+  document.getElementById('dashQueries').textContent = queryCount;
+  renderLog();
+
+  // Level chart
+  const ctxL = document.getElementById('chartLevel');
+  if (chartLevel) chartLevel.destroy();
+  chartLevel = new Chart(ctxL, {
+    type: 'doughnut',
+    data: {
+      labels: ['Nível 1','Nível 2','Nível 3','Nível 4','Nível 5'],
+      datasets: [{
+        data: levelCounts.map(c => c || 0),
+        backgroundColor: ['#22c55e','#3b82f6','#eab308','#f97316','#ef4444'],
+        borderWidth: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position:'bottom', labels: { color:'#a1a1aa', font:{size:11} } } }
+    }
+  });
+
+  // Time chart
+  const ctxT = document.getElementById('chartTime');
+  if (chartTime) chartTime.destroy();
+  const h = new Date().getHours();
+  const hours = [];
+  const vals = [];
+  for (let i = Math.max(0,h-5); i <= h; i++) {
+    hours.push(i + ':00');
+    vals.push(hourlyCounts[i]);
+  }
+  chartTime = new Chart(ctxT, {
+    type: 'bar',
+    data: {
+      labels: hours,
+      datasets: [{ label:'Consultas', data:vals, backgroundColor:'rgba(37,99,235,0.6)', borderRadius:4 }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero:true, ticks:{color:'#71717a',stepSize:1}, grid:{color:'#27272a'} },
+        x: { ticks:{color:'#71717a'}, grid:{color:'#27272a'} }
+      },
+      plugins: { legend: { display:false } }
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  FACE DETECTION
+// ══════════════════════════════════════════════════════════════
+async function initCamera() {
+  const video = document.getElementById('video');
+  const status = document.getElementById('camStatus');
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:320, height:240 } });
+    video.srcObject = stream;
+
+    status.textContent = 'Carregando modelos de detecção...';
+    status.className = 'cam-status loading';
+
+    // Load face-api models from CDN
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/model/';
+    try {
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      faceApiLoaded = true;
+      status.textContent = 'Modelo carregado — detectando rosto...';
+      startDetection();
+    } catch(e) {
+      console.warn('face-api models failed, using fallback detection', e);
+      // Fallback: simple motion-based "detection" simulation
+      startFallbackDetection();
+    }
+  } catch(e) {
+    status.textContent = 'Câmera não disponível — use simulação manual';
+    status.className = 'cam-status warn';
+    simulateAuth();
+  }
+}
+
+function startDetection() {
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('overlay');
+  const status = document.getElementById('camStatus');
+  let noFaceFrames = 0;
+  let prevFaceCount = 0;
+
+  detectionInterval = setInterval(async () => {
+    if (!video.videoWidth) return;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }));
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (detections.length >= 1) {
+      noFaceFrames = 0;
+
+      // Draw face box
+      const d = detections[0];
+      const box = d.box;
+      ctx.strokeStyle = LEVEL_CONFIG[currentLevel].color;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+      if (!isAuthenticated) {
+        isAuthenticated = true;
+        faceDetected = true;
+        status.textContent = '✓ Identidade verificada';
+        status.className = 'cam-status ok';
+        document.getElementById('userCard').style.display = 'block';
+        document.getElementById('navUser').textContent = 'Pedro Diniz — Autenticado';
+        document.getElementById('userMeta').textContent = `Autenticado: ${getTime()} | Nível: ${currentLevel}`;
+        addLog('✅', 'Autenticação facial bem-sucedida — Pedro Diniz', '#22c55e');
+        levelCounts[0]++;
+      }
+
+      if (isLocked && currentLevel !== 5) {
+        unlockSession();
+        addLog('🔓', 'Sessão desbloqueada — rosto detectado', '#22c55e');
+      }
+
+      // Observer detection: more than 1 face
+      if (detections.length > 1) {
+        if (!observerDetected) {
+          observerDetected = true;
+          document.getElementById('observerAlert').style.display = 'block';
+          if (currentLevel < 4) setLevel(4);
+          addLog('🚨', `Observador detectado (${detections.length} rostos) — Nível elevado para 4`, '#f97316');
+          alertCount++;
+
+          // Draw observer boxes
+          for (let i = 1; i < detections.length; i++) {
+            const ob = detections[i].box;
+            ctx.strokeStyle = '#f97316';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(ob.x, ob.y, ob.width, ob.height);
+            ctx.fillStyle = 'rgba(249,115,22,0.3)';
+            ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+          }
+        }
+      } else {
+        if (observerDetected) {
+          observerDetected = false;
+          document.getElementById('observerAlert').style.display = 'none';
+          addLog('✅', 'Observador não detectado — nível restaurado', '#22c55e');
+        }
+      }
+    } else {
+      noFaceFrames++;
+      if (noFaceFrames > 5 && isAuthenticated && !isLocked) {
+        faceDetected = false;
+        status.textContent = '⚠ Rosto não detectado';
+        status.className = 'cam-status locked';
+        if (noFaceFrames > 12) {
+          lockSession();
+        }
+      }
+    }
+  }, 500);
+}
+
+function startFallbackDetection() {
+  // If face-api models fail, do a simple simulation
+  const status = document.getElementById('camStatus');
+  status.textContent = 'Modo simulado — clique para autenticar';
+  status.className = 'cam-status warn';
+  status.style.cursor = 'pointer';
+  status.onclick = () => {
+    simulateAuth();
+    status.onclick = null;
+    status.style.cursor = 'default';
+  };
+}
+
+function simulateAuth() {
+  const status = document.getElementById('camStatus');
+  isAuthenticated = true;
+  faceDetected = true;
+  status.textContent = '✓ Identidade verificada (simulado)';
+  status.className = 'cam-status ok';
+  document.getElementById('userCard').style.display = 'block';
+  document.getElementById('navUser').textContent = 'Pedro Diniz — Autenticado';
+  document.getElementById('userMeta').textContent = `Autenticado: ${getTime()} | Nível: ${currentLevel}`;
+  addLog('✅', 'Autenticação simulada — Pedro Diniz', '#22c55e');
+  levelCounts[0]++;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  updateWatermark();
+  addLog('🔒', 'VPN WireGuard estabelecida — túnel criptografado ativo', '#22c55e');
+  addLog('📡', 'Microsoft Sentinel conectado — logs ativos', '#3b82f6');
+  addLog('🛡️', 'BlindAR Gateway iniciado', '#3b82f6');
+  initCamera();
+});
+</script>
+</body>
+</html>

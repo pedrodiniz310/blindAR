@@ -1,874 +1,874 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SecureVision — Desafio Petrobras GP SENAI 2026</title>
-<style>
-:root {
-  --bg: #09090b;
-  --surface: #131316;
-  --surface2: #1a1a1f;
-  --border: #27272a;
-  --text: #e4e4e7;
-  --muted: #71717a;
-  --accent: #2563eb;
-  --accent2: #3b82f6;
-  --accent-soft: rgba(37,99,235,0.10);
-  --green: #16a34a;
-  --green-soft: rgba(22,163,74,0.10);
-  --yellow: #ca8a04;
-  --yellow-soft: rgba(202,138,4,0.10);
-  --red: #dc2626;
-  --red-soft: rgba(220,38,38,0.10);
-  --purple: #9333ea;
-  --purple-soft: rgba(147,51,234,0.10);
-  --orange: #ea580c;
-  --orange-soft: rgba(234,88,12,0.10);
-  --cyan: #0891b2;
-  --cyan-soft: rgba(8,145,178,0.10);
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,-apple-system,sans-serif; font-size:15px; line-height:1.7; }
-.ctn { max-width:940px; margin:0 auto; padding:0 28px; }
-
-/* ── HERO ── */
-.hero { padding:72px 0 52px; border-bottom:1px solid var(--border); }
-.tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--accent2); margin-bottom:14px; }
-.hero h1 { font-size:36px; font-weight:800; line-height:1.12; margin-bottom:10px; }
-.hero h1 em { font-style:normal; color:var(--accent2); }
-.hero-sub { color:var(--muted); font-size:14px; margin-bottom:22px; }
-.enunciado { background:var(--surface); border-left:3px solid var(--accent); padding:18px 22px; font-size:14px; color:#a1a1aa; font-style:italic; border-radius:0 6px 6px 0; margin-top:18px; }
-.badges { display:flex; gap:16px; flex-wrap:wrap; margin-top:18px; }
-.badge { font-size:12px; padding:5px 14px; border:1px solid var(--border); border-radius:6px; color:var(--muted); }
-.badge b { color:var(--text); }
-
-/* ── SECTIONS ── */
-.sec { padding:52px 0; border-bottom:1px solid var(--border); }
-.sec-tag { font-size:10px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; margin-bottom:6px; }
-.sec h2 { font-size:24px; font-weight:700; margin-bottom:4px; }
-.sec-desc { color:var(--muted); font-size:13px; margin-bottom:28px; }
-
-/* ── CARDS ── */
-.card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:22px; margin-bottom:16px; }
-.card h3 { font-size:16px; font-weight:700; margin-bottom:8px; }
-.card h4 { font-size:14px; font-weight:700; margin-bottom:6px; }
-.card p, .card li { font-size:13px; color:#a1a1aa; }
-.card ul { list-style:none; }
-.card ul li { padding:4px 0; }
-.card ul li::before { content:"→ "; color:var(--muted); }
-
-/* ── GRID LAYOUTS ── */
-.g2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
-.g4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; }
-.g5 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:0; }
-
-/* ── DT PHASE ── */
-.dt { margin-bottom:28px; }
-.dt-head { display:flex; align-items:center; gap:12px; padding:12px 18px; background:var(--surface); border:1px solid var(--border); border-radius:8px 8px 0 0; border-bottom:none; }
-.dt-num { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
-.dt-head h3 { font-size:15px; font-weight:700; }
-.dt-head .dt-sub { font-size:12px; color:var(--muted); margin-left:auto; }
-.dt-body { border:1px solid var(--border); border-radius:0 0 8px 8px; padding:18px 22px; background:var(--surface2); }
-
-/* ── SOLUTION BOX ── */
-.sol-hero { background:linear-gradient(135deg,var(--accent-soft),var(--purple-soft)); border:1px solid rgba(37,99,235,0.2); border-radius:10px; padding:28px; margin:28px 0; }
-.sol-hero h3 { font-size:22px; font-weight:800; margin-bottom:6px; }
-.sol-hero .tagline { font-size:14px; color:#a1a1aa; margin-bottom:18px; }
-
-.pillar { background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; padding:16px; }
-.pillar-icon { font-size:22px; margin-bottom:6px; }
-.pillar h4 { font-size:13px; font-weight:700; margin-bottom:5px; }
-.pillar p { font-size:11px; color:#888; }
-
-/* ── CALLOUT ── */
-.callout { padding:14px 18px; border-radius:8px; font-size:13px; margin:18px 0; display:flex; gap:10px; align-items:flex-start; }
-.callout-blue { background:var(--accent-soft); border:1px solid rgba(37,99,235,0.18); }
-.callout-yellow { background:var(--yellow-soft); border:1px solid rgba(202,138,4,0.18); }
-.callout-green { background:var(--green-soft); border:1px solid rgba(22,163,74,0.18); }
-.callout-icon { font-size:16px; flex-shrink:0; }
-
-/* ── TABLE ── */
-.tbl { width:100%; border-collapse:collapse; margin:12px 0; }
-.tbl th,.tbl td { padding:10px 14px; text-align:left; font-size:13px; border-bottom:1px solid var(--border); }
-.tbl th { color:var(--muted); font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
-.tbl td strong { color:var(--text); }
-.risk-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; display:inline-block; }
-
-/* ── LEAN CANVAS ── */
-.canvas { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; grid-template-rows:auto auto auto; gap:1px; background:var(--border); border-radius:8px; overflow:hidden; margin:18px 0; }
-.canvas-cell { background:var(--surface); padding:14px 16px; min-height:110px; }
-.canvas-cell.span2r { grid-row:span 2; }
-.canvas-cell.span5c { grid-column:span 5; }
-.canvas-cell.span2c { grid-column:span 2; }
-.canvas-cell.span3c { grid-column:span 3; }
-.cell-t { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
-.cell-c { font-size:12px; color:#a1a1aa; line-height:1.6; }
-.cell-c strong { color:var(--text); }
-
-/* ── PITCH ── */
-.pitch { position:relative; padding:18px 22px 18px 44px; background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:14px; }
-.pitch::before { content:''; position:absolute; left:22px; top:0; bottom:0; width:3px; border-radius:2px; }
-.pitch .time { font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:3px; }
-.pitch h4 { font-size:15px; font-weight:700; margin-bottom:8px; }
-.pitch .script { font-size:13px; color:#b4b4b4; font-style:italic; line-height:1.7; }
-.pitch .tip { font-size:12px; color:var(--yellow); margin-top:10px; padding:6px 10px; background:var(--yellow-soft); border-radius:6px; }
-.pitch.red::before { background:var(--red); }
-.pitch.yellow::before { background:var(--yellow); }
-.pitch.green::before { background:var(--green); }
-.pitch.blue::before { background:var(--accent); }
-.pitch.purple::before { background:var(--purple); }
-
-/* ── FLOW ── */
-.flow { display:flex; align-items:center; gap:0; margin:18px 0; flex-wrap:wrap; justify-content:center; }
-.flow-n { padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:12px; font-weight:600; text-align:center; min-width:130px; }
-.flow-a { color:var(--muted); font-size:18px; padding:0 6px; }
-
-/* ── PROTO ── */
-.proto { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
-.proto-s { padding:16px; background:var(--surface); border-right:1px solid var(--border); }
-.proto-s:last-child { border-right:none; }
-.proto-s .sn { font-size:10px; font-weight:700; letter-spacing:2px; margin-bottom:5px; }
-.proto-s h4 { font-size:12px; font-weight:700; margin-bottom:5px; }
-.proto-s p { font-size:11px; color:var(--muted); }
-.proto-s .tool { font-size:10px; color:var(--accent2); font-weight:600; margin-top:7px; }
-
-/* ── LEVEL TABLE ── */
-.level-grid { border:1px solid var(--border); border-radius:8px; overflow:hidden; margin:16px 0; }
-.level-row { display:grid; grid-template-columns:60px 1fr 1fr 1fr; border-bottom:1px solid var(--border); }
-.level-row:last-child { border-bottom:none; }
-.level-row.header { background:var(--surface2); }
-.level-row.header > div { font-size:11px; font-weight:600; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
-.level-row > div { padding:12px 14px; font-size:13px; background:var(--surface); }
-.level-num { font-weight:700; display:flex; align-items:center; justify-content:center; }
-
-/* ── FOOTER ── */
-.footer { padding:28px 0; text-align:center; font-size:11px; color:#333; letter-spacing:1px; }
-
-@media(max-width:768px) {
-  .g2,.g3,.g4 { grid-template-columns:1fr; }
-  .proto { grid-template-columns:1fr 1fr; }
-  .canvas { grid-template-columns:1fr; }
-  .canvas-cell.span2r,.canvas-cell.span5c,.canvas-cell.span2c,.canvas-cell.span3c { grid-column:span 1; grid-row:span 1; }
-  .level-row { grid-template-columns:40px 1fr; }
-  .level-row > div:nth-child(3),.level-row > div:nth-child(4) { display:none; }
-  .flow { flex-direction:column; }
-}
-</style>
-</head>
-<body>
-
-<!-- ════════════════════════════════════════ -->
-<!--                HERO                     -->
-<!-- ════════════════════════════════════════ -->
-<div class="ctn">
-<div class="hero">
-  <div class="tag">Grand Prix SENAI de Inovação 2026 — Desafio Petrobras</div>
-  <h1>SecureVision:<br><em>Acesso Seguro a IA via Dispositivos Vestíveis</em></h1>
-  <p class="hero-sub">Arquitetura de segurança testável com soluções de mercado — autenticação, proteção de dados e prevenção de vazamento para óculos de realidade aumentada.</p>
-  <div class="badges">
-    <div class="badge"><b>Entregável 1:</b> LEAN Canvas</div>
-    <div class="badge"><b>Entregável 2:</b> Protótipo Conceito (vídeo 2min)</div>
-    <div class="badge"><b>Entregável 3:</b> Pitch (vídeo 3min)</div>
-  </div>
-  <div class="enunciado">
-    "Como podemos garantir o acesso seguro a sistemas corporativos baseados em inteligência artificial por meio de óculos de realidade aumentada, assegurando a autenticação confiável do usuário, a proteção dos dados durante toda a comunicação e processamento, e a prevenção de vazamento de informações sensíveis, mesmo com o uso de redes e serviços de terceiros?"
-  </div>
-  <div class="callout callout-blue" style="margin-top:18px;">
-    <div class="callout-icon">🎯</div>
-    <div><strong>Métrica principal:</strong> Ter uma arquitetura que possa ser testada usando soluções já disponíveis no mercado, garantindo autenticação do usuário e retenção de dados (risco de vazamento).</div>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════════════════ -->
-<!--       ETAPA 1 — DESIGN THINKING        -->
-<!-- ════════════════════════════════════════ -->
-<div class="ctn">
-<div class="sec">
-  <div class="sec-tag" style="color:var(--accent2)">Etapa 1</div>
-  <h2>Design Thinking</h2>
-  <p class="sec-desc">Entendimento profundo do problema, das pessoas impactadas e construção da solução.</p>
-
-  <!-- EMPATIA -->
-  <div class="dt">
-    <div class="dt-head">
-      <div class="dt-num" style="background:var(--red-soft);color:var(--red);">1</div>
-      <h3>Empatia</h3>
-      <div class="dt-sub">Quem é afetado por esse problema?</div>
-    </div>
-    <div class="dt-body">
-      <div class="g2">
-        <div class="card">
-          <h4>👷 Técnico de Campo</h4>
-          <p>Trabalha em plataformas offshore e refinarias. Precisa consultar diagnósticos de IA sobre equipamentos em tempo real, muitas vezes conectado por satélite ou rede de terceiros.</p>
-          <p style="color:var(--red);margin-top:6px;"><strong>Dor:</strong> Se a segurança travar os óculos ou demorar para autenticar, perde produtividade em manutenção crítica.</p>
-        </div>
-        <div class="card">
-          <h4>🔒 Analista de Cibersegurança</h4>
-          <p>Responsável por garantir que dispositivos vestíveis não sejam vetores de ataque. Hoje, os óculos AR são um ponto cego na infraestrutura de segurança.</p>
-          <p style="color:var(--red);margin-top:6px;"><strong>Dor:</strong> Não tem visibilidade do que trafega entre os óculos e a IA. Não sabe quem acessou o quê.</p>
-        </div>
-        <div class="card">
-          <h4>🧑‍💼 Gestor de Operações</h4>
-          <p>Quer que a equipe ganhe agilidade com óculos AR, mas teme vazamento de informações estratégicas (dados de produção, projetos classificados).</p>
-          <p style="color:var(--red);margin-top:6px;"><strong>Dor:</strong> Se um dado sensível vazar por screenshot ou observação, a responsabilidade recai sobre a gestão.</p>
-        </div>
-        <div class="card">
-          <h4>⚖️ Compliance / LGPD</h4>
-          <p>Precisa garantir conformidade legal quando dados biométricos (íris, face) e dados corporativos sensíveis são usados em dispositivos vestíveis.</p>
-          <p style="color:var(--red);margin-top:6px;"><strong>Dor:</strong> Óculos capturam imagem, áudio e localização — cada sensor é um risco regulatório.</p>
-        </div>
-      </div>
-      <div class="callout callout-blue">
-        <div class="callout-icon">💡</div>
-        <div><strong>Insight:</strong> A segurança precisa ser invisível para o técnico de campo (sem fricção) e ao mesmo tempo dar visibilidade total ao time de segurança. Se autenticar demora mais de 3 segundos, ninguém usa.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- DEFINIÇÃO -->
-  <div class="dt">
-    <div class="dt-head">
-      <div class="dt-num" style="background:var(--yellow-soft);color:var(--yellow);">2</div>
-      <h3>Definição do Problema</h3>
-      <div class="dt-sub">Decomposição do enunciado em problemas-raiz</div>
-    </div>
-    <div class="dt-body">
-      <div class="g2">
-        <div class="card" style="border-left:3px solid var(--red);">
-          <h4>🔐 Problema 1 — Autenticação</h4>
-          <p>Óculos AR não têm teclado nem leitor de digital. Como provar que é o usuário certo? E como garantir que continua sendo ele durante toda a sessão (e não emprestou o dispositivo)?</p>
-        </div>
-        <div class="card" style="border-left:3px solid var(--accent);">
-          <h4>🔒 Problema 2 — Proteção de Dados</h4>
-          <p>Os dados trafegam do óculos até os servidores de IA por redes potencialmente inseguras (Wi-Fi, satélite, 5G de terceiros). Além disso, os óculos capturam e processam dados sensíveis como imagem, áudio e localização.</p>
-        </div>
-        <div class="card" style="border-left:3px solid var(--orange);">
-          <h4>👁️ Problema 3 — Vazamento Visual</h4>
-          <p>Óculos AR projetam informações no campo de visão — qualquer pessoa ao redor pode ver. Screenshots, gravações e até reflexo das lentes são vetores de vazamento. A IA pode retornar dados sensíveis sem classificação.</p>
-        </div>
-        <div class="card" style="border-left:3px solid var(--green);">
-          <h4>🌐 Problema 4 — Redes de Terceiros</h4>
-          <p>Técnicos usam redes de satélite, Wi-Fi de fornecedores, 5G público. A solução não pode exigir infraestrutura 100% da Petrobras — precisa funcionar em qualquer rede mantendo a segurança.</p>
-        </div>
-      </div>
-      <div class="callout callout-yellow">
-        <div class="callout-icon">📐</div>
-        <div><strong>POV (Point of View):</strong> Colaboradores da Petrobras em campo precisam acessar sistemas de IA através de óculos AR de forma segura por padrão — autenticação sem fricção, dados criptografados, prevenção de vazamento automática — sem depender da rede ou do ambiente em que estão.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- IDEAÇÃO -->
-  <div class="dt">
-    <div class="dt-head">
-      <div class="dt-num" style="background:var(--green-soft);color:var(--green);">3</div>
-      <h3>Ideação</h3>
-      <div class="dt-sub">Soluções convergidas para cada problema-raiz</div>
-    </div>
-    <div class="dt-body">
-      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">A solução SecureVision combina 3 conceitos complementares numa arquitetura única:</p>
-
-      <div class="g3">
-        <div class="card" style="border-top:3px solid var(--accent);">
-          <h4>🏗️ Conceito 1: Gateway Zero Trust</h4>
-          <p style="margin-bottom:8px;">Arquitetura 100% testável usando soluções de mercado já disponíveis (Azure AD, WireGuard, Azure OpenAI com RBAC).</p>
-          <ul>
-            <li>Autenticação facial via Windows Hello / câmera do dispositivo</li>
-            <li>Túnel criptografado automático (WireGuard)</li>
-            <li>Cada requisição à IA verificada individualmente (ZTNA)</li>
-            <li>Controle de acesso por função (RBAC)</li>
-          </ul>
-        </div>
-        <div class="card" style="border-top:3px solid var(--green);">
-          <h4>🎚️ Conceito 2: Níveis Contextuais</h4>
-          <p style="margin-bottom:8px;">5 níveis de segurança que se ajustam automaticamente ao contexto do ambiente:</p>
-          <ul>
-            <li>Nível avalia: localização + tipo de rede + autenticação + ambiente</li>
-            <li>IA adapta resposta ao nível (mais ou menos detalhada)</li>
-            <li>Em área pública → dados genéricos</li>
-            <li>Em sala segura + rede interna → dados completos</li>
-          </ul>
-        </div>
-        <div class="card" style="border-top:3px solid var(--purple);">
-          <h4>🔄 Conceito 3: Transformação de Dados</h4>
-          <p style="margin-bottom:8px;">Camada de IA que analisa a resposta do assistente ANTES de exibir e transforma dados sensíveis:</p>
-          <ul>
-            <li>Números exatos → gráficos relativos ("acima da média")</li>
-            <li>Nomes classificados → códigos</li>
-            <li>Watermark dinâmico (nome + hora)</li>
-            <li>Detecção de observador via câmera frontal</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SOLUÇÃO CONVERGIDA -->
-  <div class="sol-hero">
-    <h3>🛡️ SecureVision</h3>
-    <div class="tagline">Gateway de segurança inteligente para acesso a IA via dispositivos vestíveis</div>
-    <p style="font-size:13px;color:#b4b4b4;margin-bottom:18px;">
-      O SecureVision é um middleware que se posiciona entre o dispositivo vestível (óculos AR ou smartphone simulador) e os sistemas de IA da Petrobras. Ele garante autenticação contínua, criptografia ponta a ponta, classificação e transformação de dados sensíveis, e auditoria completa — funcionando em qualquer rede.
-    </p>
-
-    <h4 style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Os 5 Níveis de Segurança Contextual</h4>
-    <div class="level-grid">
-      <div class="level-row header">
-        <div>Nível</div>
-        <div>Contexto detectado</div>
-        <div>O que a IA exibe</div>
-        <div>Exemplo</div>
-      </div>
-      <div class="level-row">
-        <div class="level-num" style="color:var(--green);">🟢 1</div>
-        <div>Sala segura + rede interna + biometria OK</div>
-        <div>Dados completos, sem filtro</div>
-        <div>Engenheiro no escritório acessando relatório de produção</div>
-      </div>
-      <div class="level-row">
-        <div class="level-num" style="color:var(--accent2);">🔵 2</div>
-        <div>Área de trabalho + rede interna</div>
-        <div>Dados com watermark dinâmico</div>
-        <div>Técnico na refinaria consultando diagnóstico de válvula</div>
-      </div>
-      <div class="level-row">
-        <div class="level-num" style="color:var(--yellow);">🟡 3</div>
-        <div>Campo + rede de terceiro</div>
-        <div>Dados genéricos (sem valores exatos)</div>
-        <div>Técnico offshore via satélite — vê "pressão acima do normal" em vez de "42.7 bar"</div>
-      </div>
-      <div class="level-row">
-        <div class="level-num" style="color:var(--orange);">🟠 4</div>
-        <div>Área pública ou observador detectado</div>
-        <div>Apenas alertas e instruções gerais</div>
-        <div>Colaborador em aeroporto — IA responde: "vá a uma área segura para ver esses dados"</div>
-      </div>
-      <div class="level-row">
-        <div class="level-num" style="color:var(--red);">🔴 5</div>
-        <div>Auth falha, dispositivo comprometido ou removido</div>
-        <div>Tela bloqueada + alerta ao SOC</div>
-        <div>Óculos removido do rosto ou tentativa de login com biometria errada</div>
-      </div>
-    </div>
-
-    <h4 style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin:20px 0 12px;">Os 4 Pilares da Arquitetura</h4>
-    <div class="g4">
-      <div class="pillar">
-        <div class="pillar-icon">🔐</div>
-        <h4>Identidade Contínua</h4>
-        <p>Autenticação facial ao vestir o dispositivo. Verificação contínua por presença. Se sai do rosto → sessão trava em menos de 1 segundo.</p>
-      </div>
-      <div class="pillar">
-        <div class="pillar-icon">🔒</div>
-        <h4>Canal Blindado</h4>
-        <p>Túnel WireGuard automático. Zero Trust: cada requisição verificada. Funciona em Wi-Fi público, satélite, 5G. Dados nunca trafegam em aberto.</p>
-      </div>
-      <div class="pillar">
-        <div class="pillar-icon">🛡️</div>
-        <h4>Proteção Inteligente</h4>
-        <p>DLP contextual: dados sensíveis transformados pela IA antes de exibir. Watermark personalizado. Detecção de observador via câmera.</p>
-      </div>
-      <div class="pillar">
-        <div class="pillar-icon">📊</div>
-        <h4>Governança Total</h4>
-        <p>Log auditável de todo acesso. Dashboard em tempo real. Conformidade LGPD automática. Biometria processada localmente, nunca enviada ao servidor.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ARQUITETURA -->
-  <div class="card">
-    <h4 style="margin-bottom:12px;">🏗️ Arquitetura End-to-End (testável com soluções de mercado)</h4>
-    <div class="flow">
-      <div class="flow-n" style="border-color:var(--accent);">👓 Óculos AR / Smartphone<br><small style="color:var(--muted)">Auth facial + câmera</small></div>
-      <div class="flow-a">→</div>
-      <div class="flow-n" style="border-color:var(--green);">🔒 WireGuard VPN<br><small style="color:var(--muted)">Túnel criptografado</small></div>
-      <div class="flow-a">→</div>
-      <div class="flow-n" style="border-color:var(--yellow);">🛡️ SecureVision Gateway<br><small style="color:var(--muted)">ZTNA + Nível contextual</small></div>
-      <div class="flow-a">→</div>
-      <div class="flow-n" style="border-color:var(--purple);">🤖 LLM (Azure OpenAI)<br><small style="color:var(--muted)">RBAC + classificação</small></div>
-    </div>
-    <div class="flow" style="margin-top:-8px;">
-      <div class="flow-n" style="border-color:var(--cyan);">🔄 Camada de Transformação<br><small style="color:var(--muted)">Filtra/transforma dados sensíveis</small></div>
-      <div class="flow-a">→</div>
-      <div class="flow-n" style="border-color:var(--accent);">👓 Exibição segura no dispositivo<br><small style="color:var(--muted)">Watermark + nível adequado</small></div>
-    </div>
-    <div class="flow" style="margin-top:4px;">
-      <div class="flow-n" style="border-color:var(--orange);min-width:220px;">📊 Dashboard de Governança<br><small style="color:var(--muted)">Microsoft Sentinel — logs, alertas, conformidade</small></div>
-    </div>
-
-    <h4 style="margin:18px 0 10px;">Stack Tecnológico (tudo disponível no mercado)</h4>
-    <div class="g3">
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
-        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">Azure AD + Conditional Access</div>
-        <div style="font-size:11px;color:var(--muted);">Autenticação, MFA contextual, políticas de acesso condicional</div>
-      </div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
-        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">WireGuard</div>
-        <div style="font-size:11px;color:var(--muted);">VPN leve e moderna — túnel criptografado com baixa latência</div>
-      </div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
-        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">Azure OpenAI + RBAC</div>
-        <div style="font-size:11px;color:var(--muted);">LLM com controle de acesso por função — cada usuário vê só o permitido</div>
-      </div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
-        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">Microsoft Purview</div>
-        <div style="font-size:11px;color:var(--muted);">Classificação automática de dados + DLP (Data Loss Prevention)</div>
-      </div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
-        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">Microsoft Sentinel</div>
-        <div style="font-size:11px;color:var(--muted);">SIEM — coleta logs de todas as interações, alertas em tempo real</div>
-      </div>
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
-        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">HoloLens 2 (ou smartphone)</div>
-        <div style="font-size:11px;color:var(--muted);">Dispositivo com BitLocker, TPM e Microsoft Defender SmartScreen</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PROTÓTIPO -->
-  <div class="dt">
-    <div class="dt-head">
-      <div class="dt-num" style="background:var(--purple-soft);color:var(--purple);">4</div>
-      <h3>Protótipo</h3>
-      <div class="dt-sub">Como demonstrar sem óculos físicos</div>
-    </div>
-    <div class="dt-body">
-      <div class="callout callout-green">
-        <div class="callout-icon">📱</div>
-        <div><strong>Sem óculos? Sem problema.</strong> O enunciado permite testar com qualquer LLM. Usamos um smartphone ou webcam de notebook como simulador do dispositivo vestível. A câmera simula autenticação facial e detecção de observador. Um web app simula a interface AR. O fluxo é idêntico.</div>
-      </div>
-
-      <h4 style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Fluxo do Protótipo (vídeo de 2 minutos)</h4>
-      <div class="proto">
-        <div class="proto-s">
-          <div class="sn" style="color:var(--accent2);">CENA 1 — 0:00</div>
-          <h4>Autenticação facial</h4>
-          <p>Webcam/câmera do celular simula a câmera do óculos. Reconhecimento facial → verificação de identidade → nível de segurança calculado (localização + rede).</p>
-          <div class="tool">HTML + JS + Face API</div>
-        </div>
-        <div class="proto-s">
-          <div class="sn" style="color:var(--accent2);">CENA 2 — 0:30</div>
-          <h4>Consulta à IA com filtro</h4>
-          <p>Usuário faz pergunta ao assistente de IA. A resposta passa pelo gateway SecureVision que classifica e transforma dados sensíveis antes de exibir.</p>
-          <div class="tool">API OpenAI/Gemini + Proxy Python</div>
-        </div>
-        <div class="proto-s">
-          <div class="sn" style="color:var(--accent2);">CENA 3 — 1:00</div>
-          <h4>Mudança de contexto</h4>
-          <p>Simular troca de nível: "rede interna → rede pública". A IA muda automaticamente o que mostra. Dados exatos viram genéricos. Watermark aparece.</p>
-          <div class="tool">Simulação via interface web</div>
-        </div>
-        <div class="proto-s">
-          <div class="sn" style="color:var(--accent2);">CENA 4 — 1:30</div>
-          <h4>Dashboard de governança</h4>
-          <p>Tela do gestor/analista: log de acessos, alertas, nível de cada sessão, status de criptografia. Tudo em tempo real.</p>
-          <div class="tool">HTML + Chart.js</div>
-        </div>
-      </div>
-
-      <div class="callout callout-yellow" style="margin-top:14px;">
-        <div class="callout-icon">🎬</div>
-        <div><strong>Para o vídeo:</strong> Gravem a tela mostrando todo o fluxo: (1) rosto na câmera → autenticado → (2) pergunta ao assistente → resposta filtrada → (3) troca de rede → IA adapta resposta → (4) dashboard do gestor com logs. Narrem por cima explicando cada etapa. 2 minutos é suficiente com edição objetiva.</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- TESTE -->
-  <div class="dt">
-    <div class="dt-head">
-      <div class="dt-num" style="background:var(--orange-soft);color:var(--orange);">5</div>
-      <h3>Teste e Validação</h3>
-      <div class="dt-sub">Como provar que funciona</div>
-    </div>
-    <div class="dt-body">
-      <div class="g3">
-        <div class="card" style="text-align:center;">
-          <div style="font-size:28px;font-weight:700;color:var(--green);">&lt; 3s</div>
-          <p>Autenticação facial<br>(câmera → sessão ativa)</p>
-        </div>
-        <div class="card" style="text-align:center;">
-          <div style="font-size:28px;font-weight:700;color:var(--accent2);">100%</div>
-          <p>Tráfego criptografado<br>(em qualquer rede)</p>
-        </div>
-        <div class="card" style="text-align:center;">
-          <div style="font-size:28px;font-weight:700;color:var(--purple);">5 níveis</div>
-          <p>Adaptação contextual<br>(dados filtrados por ambiente)</p>
-        </div>
-      </div>
-      <div class="g3" style="margin-top:4px;">
-        <div class="card" style="text-align:center;">
-          <div style="font-size:28px;font-weight:700;color:var(--yellow);">0 dados</div>
-          <p>Sensíveis exibidos em<br>ambiente não autorizado</p>
-        </div>
-        <div class="card" style="text-align:center;">
-          <div style="font-size:28px;font-weight:700;color:var(--green);">100%</div>
-          <p>Acessos auditáveis<br>(log completo para compliance)</p>
-        </div>
-        <div class="card" style="text-align:center;">
-          <div style="font-size:28px;font-weight:700;color:var(--red);">0</div>
-          <p>Dependência de<br>rede específica</p>
-        </div>
-      </div>
-
-      <h4 style="margin:18px 0 10px;">Cenários de teste para validação:</h4>
-      <table class="tbl">
-        <tr><th>Cenário</th><th>Teste</th><th>Resultado esperado</th></tr>
-        <tr>
-          <td><strong>Usuário autorizado, rede interna</strong></td>
-          <td>Login facial + pergunta à IA sobre dados de produção</td>
-          <td>Dados completos exibidos (Nível 1)</td>
-        </tr>
-        <tr>
-          <td><strong>Mesmo usuário, rede pública</strong></td>
-          <td>Mesma pergunta, mas conectado em Wi-Fi público</td>
-          <td>Dados genéricos + watermark (Nível 3)</td>
-        </tr>
-        <tr>
-          <td><strong>Usuário sem permissão</strong></td>
-          <td>Login facial OK, mas sem RBAC para dados financeiros</td>
-          <td>IA responde "você não tem acesso a essas informações"</td>
-        </tr>
-        <tr>
-          <td><strong>Dispositivo removido</strong></td>
-          <td>Simular remoção do dispositivo (cobrir câmera)</td>
-          <td>Sessão travada em &lt;1 segundo + alerta ao SOC</td>
-        </tr>
-        <tr>
-          <td><strong>Observador detectado</strong></td>
-          <td>Outra pessoa aparece no campo da câmera frontal</td>
-          <td>Dados sensíveis borrados automaticamente (Nível 4)</td>
-        </tr>
-      </table>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════════════════ -->
-<!--     ETAPA 2 — PENSAMENTO ANALÍTICO     -->
-<!-- ════════════════════════════════════════ -->
-<div class="ctn">
-<div class="sec">
-  <div class="sec-tag" style="color:var(--yellow)">Etapa 2</div>
-  <h2>Pensamento Analítico</h2>
-  <p class="sec-desc">Análise estratégica, viabilidade, riscos e ética.</p>
-
-  <!-- SWOT -->
-  <div class="card">
-    <h4>📊 Análise SWOT</h4>
-    <div class="g2" style="margin-top:12px;">
-      <div style="background:var(--green-soft);border:1px solid rgba(22,163,74,0.2);border-radius:6px;padding:16px;">
-        <h4 style="color:var(--green);font-size:13px;margin-bottom:8px;">Forças</h4>
-        <ul style="list-style:none;font-size:12px;color:#a1a1aa;">
-          <li style="padding:3px 0;">• 100% testável com soluções de mercado (Azure stack + WireGuard)</li>
-          <li style="padding:3px 0;">• Segurança transparente para o usuário (sem fricção)</li>
-          <li style="padding:3px 0;">• 5 níveis contextuais — segurança proporcional ao risco</li>
-          <li style="padding:3px 0;">• Conformidade LGPD nativa</li>
-          <li style="padding:3px 0;">• Funciona com óculos AR real OU smartphone simulador</li>
-        </ul>
-      </div>
-      <div style="background:var(--red-soft);border:1px solid rgba(220,38,38,0.2);border-radius:6px;padding:16px;">
-        <h4 style="color:var(--red);font-size:13px;margin-bottom:8px;">Fraquezas</h4>
-        <ul style="list-style:none;font-size:12px;color:#a1a1aa;">
-          <li style="padding:3px 0;">• Depende de ecossistema Microsoft (vendor lock-in)</li>
-          <li style="padding:3px 0;">• Detecção de observador pode gerar falsos positivos</li>
-          <li style="padding:3px 0;">• Definição precisa dos 5 níveis requer calibração por ambiente</li>
-          <li style="padding:3px 0;">• Latência adicional pela camada de transformação de dados</li>
-        </ul>
-      </div>
-      <div style="background:var(--accent-soft);border:1px solid rgba(37,99,235,0.2);border-radius:6px;padding:16px;">
-        <h4 style="color:var(--accent2);font-size:13px;margin-bottom:8px;">Oportunidades</h4>
-        <ul style="list-style:none;font-size:12px;color:#a1a1aa;">
-          <li style="padding:3px 0;">• Mercado de AR corporativo: US$ 198 bi até 2028</li>
-          <li style="padding:3px 0;">• Regulamentação de IA crescente exige soluções de governança</li>
-          <li style="padding:3px 0;">• Petrobras opera em 40+ países — escalabilidade global</li>
-          <li style="padding:3px 0;">• Pode expandir para qualquer dispositivo IoT industrial</li>
-        </ul>
-      </div>
-      <div style="background:var(--yellow-soft);border:1px solid rgba(202,138,4,0.2);border-radius:6px;padding:16px;">
-        <h4 style="color:var(--yellow);font-size:13px;margin-bottom:8px;">Ameaças</h4>
-        <ul style="list-style:none;font-size:12px;color:#a1a1aa;">
-          <li style="padding:3px 0;">• Microsoft pode lançar solução nativa integrada aos HoloLens</li>
-          <li style="padding:3px 0;">• Evolução de técnicas de spoofing facial</li>
-          <li style="padding:3px 0;">• Resistência cultural ao uso de biometria no trabalho</li>
-          <li style="padding:3px 0;">• Custo de licenciamento Azure pode escalar</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  <!-- RISCOS -->
-  <div class="card">
-    <h4>⚠️ Riscos e Mitigações</h4>
-    <table class="tbl">
-      <tr><th>Risco</th><th>Prob.</th><th>Impacto</th><th>Mitigação</th></tr>
-      <tr>
-        <td>Spoofing facial (foto/vídeo)</td>
-        <td><span class="risk-badge" style="background:var(--yellow-soft);color:var(--yellow);">Média</span></td>
-        <td><span class="risk-badge" style="background:var(--red-soft);color:var(--red);">Crítico</span></td>
-        <td>Liveness detection (verificação de vivacidade) + MFA contextual</td>
-      </tr>
-      <tr>
-        <td>Dispositivo roubado com sessão</td>
-        <td><span class="risk-badge" style="background:var(--yellow-soft);color:var(--yellow);">Média</span></td>
-        <td><span class="risk-badge" style="background:var(--red-soft);color:var(--red);">Crítico</span></td>
-        <td>Lock instantâneo ao sair do rosto + remote wipe + BitLocker no dispositivo</td>
-      </tr>
-      <tr>
-        <td>Sem conectividade em campo</td>
-        <td><span class="risk-badge" style="background:var(--red-soft);color:var(--red);">Alta</span></td>
-        <td><span class="risk-badge" style="background:var(--yellow-soft);color:var(--yellow);">Médio</span></td>
-        <td>Modo offline com cache criptografado local + expiração automática</td>
-      </tr>
-      <tr>
-        <td>Falsos positivos do detector de observador</td>
-        <td><span class="risk-badge" style="background:var(--yellow-soft);color:var(--yellow);">Média</span></td>
-        <td><span class="risk-badge" style="background:var(--green-soft);color:var(--green);">Baixo</span></td>
-        <td>Whitelist de colegas por equipe + sensibilidade ajustável</td>
-      </tr>
-      <tr>
-        <td>IA retorna dados além do permitido ao RBAC</td>
-        <td><span class="risk-badge" style="background:var(--yellow-soft);color:var(--yellow);">Média</span></td>
-        <td><span class="risk-badge" style="background:var(--red-soft);color:var(--red);">Crítico</span></td>
-        <td>Camada de transformação pós-LLM filtra ANTES de exibir + Purview classifica dados</td>
-      </tr>
-    </table>
-  </div>
-
-  <!-- ÉTICA -->
-  <div class="card">
-    <h4>⚖️ Ética Digital e LGPD</h4>
-    <table class="tbl">
-      <tr><th>Princípio</th><th>Como o SecureVision atende</th></tr>
-      <tr>
-        <td><strong>Consentimento (LGPD Art. 7°)</strong></td>
-        <td>Consentimento explícito para uso de biometria no primeiro uso. Revogável a qualquer momento.</td>
-      </tr>
-      <tr>
-        <td><strong>Minimização de dados (LGPD Art. 6°)</strong></td>
-        <td>Dados biométricos processados localmente no dispositivo (TEE/TPM). Imagem facial NUNCA sai do dispositivo — apenas o hash criptográfico.</td>
-      </tr>
-      <tr>
-        <td><strong>Transparência</strong></td>
-        <td>Colaborador sabe exatamente o que é coletado, por quê, e por quanto tempo. Pode consultar seus próprios logs de acesso.</td>
-      </tr>
-      <tr>
-        <td><strong>Proporcionalidade</strong></td>
-        <td>Os 5 níveis garantem que a proteção escala com a sensibilidade. Dados públicos não exigem autenticação extra.</td>
-      </tr>
-      <tr>
-        <td><strong>Não-discriminação</strong></td>
-        <td>Autenticação facial funciona independente de cor de pele e iluminação. Alternativa por voz para acessibilidade.</td>
-      </tr>
-      <tr>
-        <td><strong>Direito ao esquecimento (LGPD Art. 18°)</strong></td>
-        <td>Ao descadastrar, todos os dados biométricos e logs pessoais são apagados com certificado de exclusão.</td>
-      </tr>
-    </table>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════════════════ -->
-<!--       ETAPA 3 — LEAN CANVAS            -->
-<!-- ════════════════════════════════════════ -->
-<div class="ctn">
-<div class="sec">
-  <div class="sec-tag" style="color:var(--green)">Etapa 3 — Entregável 1</div>
-  <h2>LEAN Canvas</h2>
-  <p class="sec-desc">Modelo de negócio enxuto da solução SecureVision.</p>
-
-  <div class="canvas">
-    <!-- Row 1 -->
-    <div class="canvas-cell">
-      <div class="cell-t">1. Problema</div>
-      <div class="cell-c">
-        <strong>Top 3 problemas:</strong><br>
-        1. Óculos AR acessam IA sem autenticação contínua confiável<br>
-        2. Dados sensíveis trafegam e são exibidos sem proteção em redes de terceiros<br>
-        3. Sem auditoria de quem acessou o quê via dispositivos vestíveis
-      </div>
-    </div>
-    <div class="canvas-cell span2r">
-      <div class="cell-t">2. Solução</div>
-      <div class="cell-c">
-        <strong>SecureVision — Gateway de segurança inteligente</strong><br><br>
-        → Auth facial contínua (trava ao sair do rosto)<br>
-        → Túnel criptografado automático (WireGuard)<br>
-        → 5 níveis contextuais: IA adapta o que mostra ao ambiente<br>
-        → Camada de transformação: filtra dados sensíveis antes de exibir<br>
-        → Dashboard de governança com auditoria completa
-      </div>
-    </div>
-    <div class="canvas-cell span2r">
-      <div class="cell-t">3. Proposta de Valor Única</div>
-      <div class="cell-c">
-        <strong style="font-size:13px;">"Acesso seguro a IA via dispositivos vestíveis — sem fricção para o usuário, com visibilidade total para a segurança."</strong><br><br>
-        A IA adapta automaticamente o que mostra com base no contexto (local, rede, ambiente). Segurança proporcional ao risco — não bloqueia, transforma.
-      </div>
-    </div>
-    <div class="canvas-cell">
-      <div class="cell-t">4. Vantagem Injusta</div>
-      <div class="cell-c">
-        Arquitetura 100% testável com soluções de mercado já existentes (Azure Stack). Nenhum concorrente combina autenticação contínua + níveis contextuais + transformação de dados para AR.
-      </div>
-    </div>
-    <div class="canvas-cell">
-      <div class="cell-t">5. Segmentos de Clientes</div>
-      <div class="cell-c">
-        <strong>Inicial:</strong> Petrobras — refinarias, plataformas offshore, escritórios<br><br>
-        <strong>Expansão:</strong> empresas de energia, mineração, aviação, saúde — qualquer organização com dados sensíveis + dispositivos vestíveis
-      </div>
-    </div>
-
-    <!-- Row 2 -->
-    <div class="canvas-cell">
-      <div class="cell-t">6. Alternativas Existentes</div>
-      <div class="cell-c">
-        • MDM (Intune) — gerencia dispositivo, não protege conteúdo visual<br>
-        • VPN tradicional — criptografa, mas sem auth contínua<br>
-        • IAM (Okta/Azure AD) — auth forte, mas pensada para teclado, não AR
-      </div>
-    </div>
-    <div class="canvas-cell">
-      <div class="cell-t">7. Métricas-Chave</div>
-      <div class="cell-c">
-        • Tempo de autenticação (&lt;3s)<br>
-        • % de tráfego criptografado (100%)<br>
-        • Incidentes de vazamento (meta: 0)<br>
-        • % de acessos auditados (100%)<br>
-        • Uptime do gateway (&gt;99.9%)
-      </div>
-    </div>
-    <div class="canvas-cell">
-      <div class="cell-t">8. Canais</div>
-      <div class="cell-c">
-        • SDK integrado nos óculos AR corporativos<br>
-        • Gateway on-premise na infra Petrobras<br>
-        • Dashboard web para gestores<br>
-        • API REST para integração com SIEM
-      </div>
-    </div>
-
-    <!-- Row 3 -->
-    <div class="canvas-cell span2c">
-      <div class="cell-t">9. Estrutura de Custos</div>
-      <div class="cell-c">
-        <strong>Fixos:</strong> Equipe de desenvolvimento, infraestrutura cloud (Azure), certificações de segurança<br>
-        <strong>Variáveis:</strong> Licenças Azure por usuário, custos de VPN, atualizações de compliance por jurisdição
-      </div>
-    </div>
-    <div class="canvas-cell" style="background:transparent;min-height:0;"></div>
-    <div class="canvas-cell span2c">
-      <div class="cell-t">10. Fontes de Receita</div>
-      <div class="cell-c">
-        <strong>• Licença por dispositivo ativo/mês</strong> (modelo SaaS)<br>
-        <strong>• Gateway on-premise</strong> — licença anual por unidade industrial<br>
-        • Consultoria de implantação e integração<br>
-        • Relatórios de conformidade sob demanda
-      </div>
-    </div>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════════════════ -->
-<!--        ETAPA 4 — PITCH (3 min)         -->
-<!-- ════════════════════════════════════════ -->
-<div class="ctn">
-<div class="sec">
-  <div class="sec-tag" style="color:var(--purple)">Etapa 4 — Entregável 3</div>
-  <h2>Roteiro de Pitch — 3 minutos</h2>
-  <p class="sec-desc">Roteiro completo com falas, tempos e dicas para o vídeo do pitch.</p>
-
-  <div class="callout callout-blue" style="margin-bottom:20px;">
-    <div class="callout-icon">🎤</div>
-    <div><strong>Regra de ouro:</strong> Ensaiem com cronômetro 3x antes de gravar. Quem abre o pitch é quem fecha. Quem demonstra o protótipo fala enquanto navega — 15s de demo vale mais que 1min de descrição. Sem papel na mão.</div>
-  </div>
-
-  <div class="pitch red">
-    <div class="time" style="color:var(--red);">0:00 – 0:30 · ABERTURA</div>
-    <h4>O dado que ninguém viu sair</h4>
-    <div class="script">
-      "Um técnico numa plataforma offshore no litoral do Rio de Janeiro coloca seus óculos de realidade aumentada e pergunta à inteligência artificial da empresa: 'qual o diagnóstico da válvula 7B?'. A IA responde com dados de pressão, histórico de manutenção e parâmetros operacionais classificados. Tudo isso projetado na lente dele — visível para qualquer pessoa ao lado. Ele está conectado por satélite, numa rede que não é da Petrobras. Nesse momento, três perguntas surgem: como garantir que é realmente ele? Como garantir que ninguém interceptou esses dados? E como garantir que ninguém mais está vendo?"
-    </div>
-    <div class="tip">💡 Voz firme, pausada. Olhe para a câmera. A cena visual importa mais que dados nesse momento.</div>
-  </div>
-
-  <div class="pitch yellow">
-    <div class="time" style="color:var(--yellow);">0:30 – 1:00 · O PROBLEMA</div>
-    <h4>A realidade aumentada aumentou os riscos</h4>
-    <div class="script">
-      "Óculos inteligentes são o futuro do trabalho industrial — a própria Petrobras explora essa tecnologia. Mas eles criam três brechas que não existiam antes. Primeira: não tem teclado — como autenticar? Segunda: os dados trafegam pelo ar, em redes de terceiros — como proteger? Terceira: diferente de um computador, tudo que aparece no óculos é visível para quem está por perto — como evitar vazamento? E tem mais: esses dispositivos capturam imagem, áudio e localização. Cada sensor é um vetor de risco. Nenhuma ferramenta de segurança tradicional resolve isso junto."
-    </div>
-  </div>
-
-  <div class="pitch green">
-    <div class="time" style="color:var(--green);">1:00 – 2:10 · A SOLUÇÃO</div>
-    <h4>SecureVision — Segurança que se adapta ao contexto</h4>
-    <div class="script">
-      "Apresentamos o SecureVision: um gateway de segurança inteligente entre o dispositivo vestível e os sistemas de IA da Petrobras.<br><br>
-
-      <strong>Pilar 1 — Identidade Contínua.</strong> A câmera do dispositivo identifica o rosto do colaborador em menos de 3 segundos. Se o dispositivo sai do rosto — sessão travada instantaneamente. Sem senha, sem token, sem fricção.<br><br>
-
-      <strong>Pilar 2 — Canal Blindado.</strong> Um túnel criptografado WireGuard se ativa automaticamente. Não importa a rede — satélite, Wi-Fi de fornecedor, 5G público. Os dados nunca trafegam em aberto.<br><br>
-
-      <strong>Pilar 3 — Segurança Contextual.</strong> E aqui está o diferencial: o SecureVision opera em 5 níveis que se ajustam automaticamente ao contexto. Na sala segura com rede interna? Dados completos. No campo com rede de terceiro? A IA transforma: em vez de mostrar '42.7 bar', mostra 'pressão acima do normal'. Em área pública? A IA diz: 'volte a uma área segura para ver esses dados'. Alguém se aproxima? A câmera frontal detecta e borra os dados sensíveis. A segurança não bloqueia — ela se adapta.<br><br>
-
-      <strong>Pilar 4 — Governança Total.</strong> Dashboard central com log de todo acesso. Quem viu o quê, quando, de onde, em qual nível de segurança. Conformidade com LGPD — dados biométricos processados localmente, nunca enviados ao servidor."
-    </div>
-    <div class="tip">💡 Mostrem o protótipo aqui. Troca de apresentador. 15-20s de demo na tela: autenticação → consulta IA → mudança de nível → dashboard.</div>
-  </div>
-
-  <div class="pitch blue">
-    <div class="time" style="color:var(--accent2);">2:10 – 2:40 · VIABILIDADE</div>
-    <h4>Testável hoje, com soluções de mercado</h4>
-    <div class="script">
-      "O objetivo do desafio é ter uma arquitetura testável com soluções de mercado. O SecureVision usa exclusivamente tecnologias já disponíveis: Azure AD para autenticação, WireGuard para criptografia, Azure OpenAI com RBAC para controle de acesso à IA, Microsoft Purview para classificação de dados e Sentinel para auditoria. Funciona com HoloLens 2 — que já tem BitLocker, TPM e Microsoft Defender — ou com qualquer smartphone como simulador. Não é conceito. É arquitetura real, montável e testável."
-    </div>
-  </div>
-
-  <div class="pitch purple">
-    <div class="time" style="color:var(--purple);">2:40 – 3:00 · FECHAMENTO</div>
-    <h4>A frase que fica</h4>
-    <div class="script">
-      "A realidade aumentada vai transformar o trabalho na indústria de energia. Mas sem segurança, ela não aumenta a realidade — ela aumenta o risco.<br><br>
-      O SecureVision garante que cada colaborador da Petrobras possa vestir seus óculos, acessar a inteligência artificial da empresa, e ter uma certeza: é ele, é seguro, e ninguém mais está vendo.<br><br>
-      Somos a [nome da equipe], do SENAI [unidade]. Obrigado."
-    </div>
-    <div class="tip">💡 Mesma pessoa que abriu o pitch fecha. Última frase dita devagar, olhando para a câmera. Não diga "é isso" — encerre com confiança.</div>
-  </div>
-</div>
-</div>
-
-<!-- ════════════════════════════════════════ -->
-<!--            RESPOSTA AO DESAFIO          -->
-<!-- ════════════════════════════════════════ -->
-<div class="ctn">
-<div class="sec" style="border-bottom:none;">
-  <div class="sec-tag" style="color:var(--orange)">Síntese</div>
-  <h2>Resposta Direta ao Desafio</h2>
-
-  <div class="callout callout-green">
-    <div class="callout-icon">✅</div>
-    <div>
-      <strong>Autenticação confiável:</strong> Reconhecimento facial contínuo via câmera do dispositivo + Azure AD Conditional Access + lock instantâneo ao remover dispositivo.<br><br>
-      <strong>Proteção dos dados:</strong> Túnel WireGuard automático + ZTNA (cada requisição verificada) + Azure OpenAI com RBAC. Funciona em qualquer rede.<br><br>
-      <strong>Prevenção de vazamento:</strong> 5 níveis contextuais — IA transforma dados sensíveis antes de exibir. Detecção de observador. Watermark dinâmico. Purview classifica dados automaticamente.<br><br>
-      <strong>Redes de terceiros:</strong> Zero Trust — nunca confia na rede. WireGuard cria perímetro criptografado independente da infraestrutura subjacente.<br><br>
-      <strong>Testabilidade:</strong> 100% montável com Azure AD + WireGuard + Azure OpenAI + Purview + Sentinel + HoloLens 2 (ou smartphone simulador).
-    </div>
-  </div>
-</div>
-</div>
-
-<div class="footer">
-  <div class="ctn">Grand Prix SENAI de Inovação 2026 — Desafio Petrobras — Cibersegurança e Ética Digital</div>
-</div>
-
-</body>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BlindAR — Desafio Petrobras GP SENAI 2026</title>
+<style>
+:root {
+  --bg: #09090b;
+  --surface: #131316;
+  --surface2: #1a1a1f;
+  --border: #27272a;
+  --text: #e4e4e7;
+  --muted: #71717a;
+  --accent: #2563eb;
+  --accent2: #3b82f6;
+  --accent-soft: rgba(37,99,235,0.10);
+  --green: #16a34a;
+  --green-soft: rgba(22,163,74,0.10);
+  --yellow: #ca8a04;
+  --yellow-soft: rgba(202,138,4,0.10);
+  --red: #dc2626;
+  --red-soft: rgba(220,38,38,0.10);
+  --purple: #9333ea;
+  --purple-soft: rgba(147,51,234,0.10);
+  --orange: #ea580c;
+  --orange-soft: rgba(234,88,12,0.10);
+  --cyan: #0891b2;
+  --cyan-soft: rgba(8,145,178,0.10);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,-apple-system,sans-serif; font-size:15px; line-height:1.7; }
+.ctn { max-width:940px; margin:0 auto; padding:0 28px; }
+
+/* ── HERO ── */
+.hero { padding:72px 0 52px; border-bottom:1px solid var(--border); }
+.tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--accent2); margin-bottom:14px; }
+.hero h1 { font-size:36px; font-weight:800; line-height:1.12; margin-bottom:10px; }
+.hero h1 em { font-style:normal; color:var(--accent2); }
+.hero-sub { color:var(--muted); font-size:14px; margin-bottom:22px; }
+.enunciado { background:var(--surface); border-left:3px solid var(--accent); padding:18px 22px; font-size:14px; color:#a1a1aa; font-style:italic; border-radius:0 6px 6px 0; margin-top:18px; }
+.badges { display:flex; gap:16px; flex-wrap:wrap; margin-top:18px; }
+.badge { font-size:12px; padding:5px 14px; border:1px solid var(--border); border-radius:6px; color:var(--muted); }
+.badge b { color:var(--text); }
+
+/* ── SECTIONS ── */
+.sec { padding:52px 0; border-bottom:1px solid var(--border); }
+.sec-tag { font-size:10px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; margin-bottom:6px; }
+.sec h2 { font-size:24px; font-weight:700; margin-bottom:4px; }
+.sec-desc { color:var(--muted); font-size:13px; margin-bottom:28px; }
+
+/* ── CARDS ── */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:22px; margin-bottom:16px; }
+.card h3 { font-size:16px; font-weight:700; margin-bottom:8px; }
+.card h4 { font-size:14px; font-weight:700; margin-bottom:6px; }
+.card p, .card li { font-size:13px; color:#a1a1aa; }
+.card ul { list-style:none; }
+.card ul li { padding:4px 0; }
+.card ul li::before { content:"→ "; color:var(--muted); }
+
+/* ── GRID LAYOUTS ── */
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+.g4 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; }
+.g5 { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:0; }
+
+/* ── DT PHASE ── */
+.dt { margin-bottom:28px; }
+.dt-head { display:flex; align-items:center; gap:12px; padding:12px 18px; background:var(--surface); border:1px solid var(--border); border-radius:8px 8px 0 0; border-bottom:none; }
+.dt-num { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; flex-shrink:0; }
+.dt-head h3 { font-size:15px; font-weight:700; }
+.dt-head .dt-sub { font-size:12px; color:var(--muted); margin-left:auto; }
+.dt-body { border:1px solid var(--border); border-radius:0 0 8px 8px; padding:18px 22px; background:var(--surface2); }
+
+/* ── SOLUTION BOX ── */
+.sol-hero { background:linear-gradient(135deg,var(--accent-soft),var(--purple-soft)); border:1px solid rgba(37,99,235,0.2); border-radius:10px; padding:28px; margin:28px 0; }
+.sol-hero h3 { font-size:22px; font-weight:800; margin-bottom:6px; }
+.sol-hero .tagline { font-size:14px; color:#a1a1aa; margin-bottom:18px; }
+
+.pillar { background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.pillar-icon { font-size:22px; margin-bottom:6px; }
+.pillar h4 { font-size:13px; font-weight:700; margin-bottom:5px; }
+.pillar p { font-size:11px; color:#888; }
+
+/* ── CALLOUT ── */
+.callout { padding:14px 18px; border-radius:8px; font-size:13px; margin:18px 0; display:flex; gap:10px; align-items:flex-start; }
+.callout-blue { background:var(--accent-soft); border:1px solid rgba(37,99,235,0.18); }
+.callout-yellow { background:var(--yellow-soft); border:1px solid rgba(202,138,4,0.18); }
+.callout-green { background:var(--green-soft); border:1px solid rgba(22,163,74,0.18); }
+.callout-icon { font-size:16px; flex-shrink:0; }
+
+/* ── TABLE ── */
+.tbl { width:100%; border-collapse:collapse; margin:12px 0; }
+.tbl th,.tbl td { padding:10px 14px; text-align:left; font-size:13px; border-bottom:1px solid var(--border); }
+.tbl th { color:var(--muted); font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+.tbl td strong { color:var(--text); }
+.risk-badge { font-size:10px; font-weight:700; padding:2px 8px; border-radius:4px; display:inline-block; }
+
+/* ── LEAN CANVAS ── */
+.canvas { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; grid-template-rows:auto auto auto; gap:1px; background:var(--border); border-radius:8px; overflow:hidden; margin:18px 0; }
+.canvas-cell { background:var(--surface); padding:14px 16px; min-height:110px; }
+.canvas-cell.span2r { grid-row:span 2; }
+.canvas-cell.span5c { grid-column:span 5; }
+.canvas-cell.span2c { grid-column:span 2; }
+.canvas-cell.span3c { grid-column:span 3; }
+.cell-t { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.cell-c { font-size:12px; color:#a1a1aa; line-height:1.6; }
+.cell-c strong { color:var(--text); }
+
+/* ── PITCH ── */
+.pitch { position:relative; padding:18px 22px 18px 44px; background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:14px; }
+.pitch::before { content:''; position:absolute; left:22px; top:0; bottom:0; width:3px; border-radius:2px; }
+.pitch .time { font-size:11px; font-weight:700; letter-spacing:1px; margin-bottom:3px; }
+.pitch h4 { font-size:15px; font-weight:700; margin-bottom:8px; }
+.pitch .script { font-size:13px; color:#b4b4b4; font-style:italic; line-height:1.7; }
+.pitch .tip { font-size:12px; color:var(--yellow); margin-top:10px; padding:6px 10px; background:var(--yellow-soft); border-radius:6px; }
+.pitch.red::before { background:var(--red); }
+.pitch.yellow::before { background:var(--yellow); }
+.pitch.green::before { background:var(--green); }
+.pitch.blue::before { background:var(--accent); }
+.pitch.purple::before { background:var(--purple); }
+
+/* ── FLOW ── */
+.flow { display:flex; align-items:center; gap:0; margin:18px 0; flex-wrap:wrap; justify-content:center; }
+.flow-n { padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:12px; font-weight:600; text-align:center; min-width:130px; }
+.flow-a { color:var(--muted); font-size:18px; padding:0 6px; }
+
+/* ── PROTO ── */
+.proto { display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.proto-s { padding:16px; background:var(--surface); border-right:1px solid var(--border); }
+.proto-s:last-child { border-right:none; }
+.proto-s .sn { font-size:10px; font-weight:700; letter-spacing:2px; margin-bottom:5px; }
+.proto-s h4 { font-size:12px; font-weight:700; margin-bottom:5px; }
+.proto-s p { font-size:11px; color:var(--muted); }
+.proto-s .tool { font-size:10px; color:var(--accent2); font-weight:600; margin-top:7px; }
+
+/* ── LEVEL TABLE ── */
+.level-grid { border:1px solid var(--border); border-radius:8px; overflow:hidden; margin:16px 0; }
+.level-row { display:grid; grid-template-columns:60px 1fr 1fr 1fr; border-bottom:1px solid var(--border); }
+.level-row:last-child { border-bottom:none; }
+.level-row.header { background:var(--surface2); }
+.level-row.header > div { font-size:11px; font-weight:600; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+.level-row > div { padding:12px 14px; font-size:13px; background:var(--surface); }
+.level-num { font-weight:700; display:flex; align-items:center; justify-content:center; }
+
+/* ── FOOTER ── */
+.footer { padding:28px 0; text-align:center; font-size:11px; color:#333; letter-spacing:1px; }
+
+@media(max-width:768px) {
+  .g2,.g3,.g4 { grid-template-columns:1fr; }
+  .proto { grid-template-columns:1fr 1fr; }
+  .canvas { grid-template-columns:1fr; }
+  .canvas-cell.span2r,.canvas-cell.span5c,.canvas-cell.span2c,.canvas-cell.span3c { grid-column:span 1; grid-row:span 1; }
+  .level-row { grid-template-columns:40px 1fr; }
+  .level-row > div:nth-child(3),.level-row > div:nth-child(4) { display:none; }
+  .flow { flex-direction:column; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════ -->
+<!--                HERO                     -->
+<!-- ════════════════════════════════════════ -->
+<div class="ctn">
+<div class="hero">
+  <div class="tag">Grand Prix SENAI de Inovação 2026 — Desafio Petrobras</div>
+  <h1>BlindAR:<br><em>Acesso Seguro a IA via Dispositivos Vestíveis</em></h1>
+  <p class="hero-sub">Arquitetura de segurança testável com soluções de mercado — autenticação, proteção de dados e prevenção de vazamento para óculos de realidade aumentada.</p>
+  <div class="badges">
+    <div class="badge"><b>Entregável 1:</b> LEAN Canvas</div>
+    <div class="badge"><b>Entregável 2:</b> Protótipo Conceito (vídeo 2min)</div>
+    <div class="badge"><b>Entregável 3:</b> Pitch (vídeo 3min)</div>
+  </div>
+  <div class="enunciado">
+    "Como podemos garantir o acesso seguro a sistemas corporativos baseados em inteligência artificial por meio de óculos de realidade aumentada, assegurando a autenticação confiável do usuário, a proteção dos dados durante toda a comunicação e processamento, e a prevenção de vazamento de informações sensíveis, mesmo com o uso de redes e serviços de terceiros?"
+  </div>
+  <div class="callout callout-blue" style="margin-top:18px;">
+    <div class="callout-icon">🎯</div>
+    <div><strong>Métrica principal:</strong> Ter uma arquitetura que possa ser testada usando soluções já disponíveis no mercado, garantindo autenticação do usuário e retenção de dados (risco de vazamento).</div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--       ETAPA 1 — DESIGN THINKING        -->
+<!-- ════════════════════════════════════════ -->
+<div class="ctn">
+<div class="sec">
+  <div class="sec-tag" style="color:var(--accent2)">Etapa 1</div>
+  <h2>Design Thinking</h2>
+  <p class="sec-desc">Entendimento profundo do problema, das pessoas impactadas e construção da solução.</p>
+
+  <!-- EMPATIA -->
+  <div class="dt">
+    <div class="dt-head">
+      <div class="dt-num" style="background:var(--red-soft);color:var(--red);">1</div>
+      <h3>Empatia</h3>
+      <div class="dt-sub">Quem é afetado por esse problema?</div>
+    </div>
+    <div class="dt-body">
+      <div class="g2">
+        <div class="card">
+          <h4>👷 Técnico de Campo</h4>
+          <p>Trabalha em plataformas offshore e refinarias. Precisa consultar diagnósticos de IA sobre equipamentos em tempo real, muitas vezes conectado por satélite ou rede de terceiros.</p>
+          <p style="color:var(--red);margin-top:6px;"><strong>Dor:</strong> Se a segurança travar os óculos ou demorar para autenticar, perde produtividade em manutenção crítica.</p>
+        </div>
+        <div class="card">
+          <h4>🔒 Analista de Cibersegurança</h4>
+          <p>Responsável por garantir que dispositivos vestíveis não sejam vetores de ataque. Hoje, os óculos AR são um ponto cego na infraestrutura de segurança.</p>
+          <p style="color:var(--red);margin-top:6px;"><strong>Dor:</strong> Não tem visibilidade do que trafega entre os óculos e a IA. Não sabe quem acessou o quê.</p>
+        </div>
+        <div class="card">
+          <h4>🧑‍💼 Gestor de Operações</h4>
+          <p>Quer que a equipe ganhe agilidade com óculos AR, mas teme vazamento de informações estratégicas (dados de produção, projetos classificados).</p>
+          <p style="color:var(--red);margin-top:6px;"><strong>Dor:</strong> Se um dado sensível vazar por screenshot ou observação, a responsabilidade recai sobre a gestão.</p>
+        </div>
+        <div class="card">
+          <h4>⚖️ Compliance / LGPD</h4>
+          <p>Precisa garantir conformidade legal quando dados biométricos (íris, face) e dados corporativos sensíveis são usados em dispositivos vestíveis.</p>
+          <p style="color:var(--red);margin-top:6px;"><strong>Dor:</strong> Óculos capturam imagem, áudio e localização — cada sensor é um risco regulatório.</p>
+        </div>
+      </div>
+      <div class="callout callout-blue">
+        <div class="callout-icon">💡</div>
+        <div><strong>Insight:</strong> A segurança precisa ser invisível para o técnico de campo (sem fricção) e ao mesmo tempo dar visibilidade total ao time de segurança. Se autenticar demora mais de 3 segundos, ninguém usa.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEFINIÇÃO -->
+  <div class="dt">
+    <div class="dt-head">
+      <div class="dt-num" style="background:var(--yellow-soft);color:var(--yellow);">2</div>
+      <h3>Definição do Problema</h3>
+      <div class="dt-sub">Decomposição do enunciado em problemas-raiz</div>
+    </div>
+    <div class="dt-body">
+      <div class="g2">
+        <div class="card" style="border-left:3px solid var(--red);">
+          <h4>🔐 Problema 1 — Autenticação</h4>
+          <p>Óculos AR não têm teclado nem leitor de digital. Como provar que é o usuário certo? E como garantir que continua sendo ele durante toda a sessão (e não emprestou o dispositivo)?</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--accent);">
+          <h4>🔒 Problema 2 — Proteção de Dados</h4>
+          <p>Os dados trafegam do óculos até os servidores de IA por redes potencialmente inseguras (Wi-Fi, satélite, 5G de terceiros). Além disso, os óculos capturam e processam dados sensíveis como imagem, áudio e localização.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--orange);">
+          <h4>👁️ Problema 3 — Vazamento Visual</h4>
+          <p>Óculos AR projetam informações no campo de visão — qualquer pessoa ao redor pode ver. Screenshots, gravações e até reflexo das lentes são vetores de vazamento. A IA pode retornar dados sensíveis sem classificação.</p>
+        </div>
+        <div class="card" style="border-left:3px solid var(--green);">
+          <h4>🌐 Problema 4 — Redes de Terceiros</h4>
+          <p>Técnicos usam redes de satélite, Wi-Fi de fornecedores, 5G público. A solução não pode exigir infraestrutura 100% da Petrobras — precisa funcionar em qualquer rede mantendo a segurança.</p>
+        </div>
+      </div>
+      <div class="callout callout-yellow">
+        <div class="callout-icon">📐</div>
+        <div><strong>POV (Point of View):</strong> Colaboradores da Petrobras em campo precisam acessar sistemas de IA através de óculos AR de forma segura por padrão — autenticação sem fricção, dados criptografados, prevenção de vazamento automática — sem depender da rede ou do ambiente em que estão.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IDEAÇÃO -->
+  <div class="dt">
+    <div class="dt-head">
+      <div class="dt-num" style="background:var(--green-soft);color:var(--green);">3</div>
+      <h3>Ideação</h3>
+      <div class="dt-sub">Soluções convergidas para cada problema-raiz</div>
+    </div>
+    <div class="dt-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">A solução BlindAR combina 3 conceitos complementares numa arquitetura única:</p>
+
+      <div class="g3">
+        <div class="card" style="border-top:3px solid var(--accent);">
+          <h4>🏗️ Conceito 1: Gateway Zero Trust</h4>
+          <p style="margin-bottom:8px;">Arquitetura 100% testável usando soluções de mercado já disponíveis (Azure AD, WireGuard, Azure OpenAI com RBAC).</p>
+          <ul>
+            <li>Autenticação facial via Windows Hello / câmera do dispositivo</li>
+            <li>Túnel criptografado automático (WireGuard)</li>
+            <li>Cada requisição à IA verificada individualmente (ZTNA)</li>
+            <li>Controle de acesso por função (RBAC)</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top:3px solid var(--green);">
+          <h4>🎚️ Conceito 2: Níveis Contextuais</h4>
+          <p style="margin-bottom:8px;">5 níveis de segurança que se ajustam automaticamente ao contexto do ambiente:</p>
+          <ul>
+            <li>Nível avalia: localização + tipo de rede + autenticação + ambiente</li>
+            <li>IA adapta resposta ao nível (mais ou menos detalhada)</li>
+            <li>Em área pública → dados genéricos</li>
+            <li>Em sala segura + rede interna → dados completos</li>
+          </ul>
+        </div>
+        <div class="card" style="border-top:3px solid var(--purple);">
+          <h4>🔄 Conceito 3: Transformação de Dados</h4>
+          <p style="margin-bottom:8px;">Camada de IA que analisa a resposta do assistente ANTES de exibir e transforma dados sensíveis:</p>
+          <ul>
+            <li>Números exatos → gráficos relativos ("acima da média")</li>
+            <li>Nomes classificados → códigos</li>
+            <li>Watermark dinâmico (nome + hora)</li>
+            <li>Detecção de observador via câmera frontal</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOLUÇÃO CONVERGIDA -->
+  <div class="sol-hero">
+    <h3>🛡️ BlindAR</h3>
+    <div class="tagline">Gateway de segurança inteligente para acesso a IA via dispositivos vestíveis</div>
+    <p style="font-size:13px;color:#b4b4b4;margin-bottom:18px;">
+      O BlindAR é um middleware que se posiciona entre o dispositivo vestível (óculos AR ou smartphone simulador) e os sistemas de IA da Petrobras. Ele garante autenticação contínua, criptografia ponta a ponta, classificação e transformação de dados sensíveis, e auditoria completa — funcionando em qualquer rede.
+    </p>
+
+    <h4 style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Os 5 Níveis de Segurança Contextual</h4>
+    <div class="level-grid">
+      <div class="level-row header">
+        <div>Nível</div>
+        <div>Contexto detectado</div>
+        <div>O que a IA exibe</div>
+        <div>Exemplo</div>
+      </div>
+      <div class="level-row">
+        <div class="level-num" style="color:var(--green);">🟢 1</div>
+        <div>Sala segura + rede interna + biometria OK</div>
+        <div>Dados completos, sem filtro</div>
+        <div>Engenheiro no escritório acessando relatório de produção</div>
+      </div>
+      <div class="level-row">
+        <div class="level-num" style="color:var(--accent2);">🔵 2</div>
+        <div>Área de trabalho + rede interna</div>
+        <div>Dados com watermark dinâmico</div>
+        <div>Técnico na refinaria consultando diagnóstico de válvula</div>
+      </div>
+      <div class="level-row">
+        <div class="level-num" style="color:var(--yellow);">🟡 3</div>
+        <div>Campo + rede de terceiro</div>
+        <div>Dados genéricos (sem valores exatos)</div>
+        <div>Técnico offshore via satélite — vê "pressão acima do normal" em vez de "42.7 bar"</div>
+      </div>
+      <div class="level-row">
+        <div class="level-num" style="color:var(--orange);">🟠 4</div>
+        <div>Área pública ou observador detectado</div>
+        <div>Apenas alertas e instruções gerais</div>
+        <div>Colaborador em aeroporto — IA responde: "vá a uma área segura para ver esses dados"</div>
+      </div>
+      <div class="level-row">
+        <div class="level-num" style="color:var(--red);">🔴 5</div>
+        <div>Auth falha, dispositivo comprometido ou removido</div>
+        <div>Tela bloqueada + alerta ao SOC</div>
+        <div>Óculos removido do rosto ou tentativa de login com biometria errada</div>
+      </div>
+    </div>
+
+    <h4 style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin:20px 0 12px;">Os 4 Pilares da Arquitetura</h4>
+    <div class="g4">
+      <div class="pillar">
+        <div class="pillar-icon">🔐</div>
+        <h4>Identidade Contínua</h4>
+        <p>Autenticação facial ao vestir o dispositivo. Verificação contínua por presença. Se sai do rosto → sessão trava em menos de 1 segundo.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">🔒</div>
+        <h4>Canal Blindado</h4>
+        <p>Túnel WireGuard automático. Zero Trust: cada requisição verificada. Funciona em Wi-Fi público, satélite, 5G. Dados nunca trafegam em aberto.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">🛡️</div>
+        <h4>Proteção Inteligente</h4>
+        <p>DLP contextual: dados sensíveis transformados pela IA antes de exibir. Watermark personalizado. Detecção de observador via câmera.</p>
+      </div>
+      <div class="pillar">
+        <div class="pillar-icon">📊</div>
+        <h4>Governança Total</h4>
+        <p>Log auditável de todo acesso. Dashboard em tempo real. Conformidade LGPD automática. Biometria processada localmente, nunca enviada ao servidor.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARQUITETURA -->
+  <div class="card">
+    <h4 style="margin-bottom:12px;">🏗️ Arquitetura End-to-End (testável com soluções de mercado)</h4>
+    <div class="flow">
+      <div class="flow-n" style="border-color:var(--accent);">👓 Óculos AR / Smartphone<br><small style="color:var(--muted)">Auth facial + câmera</small></div>
+      <div class="flow-a">→</div>
+      <div class="flow-n" style="border-color:var(--green);">🔒 WireGuard VPN<br><small style="color:var(--muted)">Túnel criptografado</small></div>
+      <div class="flow-a">→</div>
+      <div class="flow-n" style="border-color:var(--yellow);">🛡️ BlindAR Gateway<br><small style="color:var(--muted)">ZTNA + Nível contextual</small></div>
+      <div class="flow-a">→</div>
+      <div class="flow-n" style="border-color:var(--purple);">🤖 LLM (Azure OpenAI)<br><small style="color:var(--muted)">RBAC + classificação</small></div>
+    </div>
+    <div class="flow" style="margin-top:-8px;">
+      <div class="flow-n" style="border-color:var(--cyan);">🔄 Camada de Transformação<br><small style="color:var(--muted)">Filtra/transforma dados sensíveis</small></div>
+      <div class="flow-a">→</div>
+      <div class="flow-n" style="border-color:var(--accent);">👓 Exibição segura no dispositivo<br><small style="color:var(--muted)">Watermark + nível adequado</small></div>
+    </div>
+    <div class="flow" style="margin-top:4px;">
+      <div class="flow-n" style="border-color:var(--orange);min-width:220px;">📊 Dashboard de Governança<br><small style="color:var(--muted)">Microsoft Sentinel — logs, alertas, conformidade</small></div>
+    </div>
+
+    <h4 style="margin:18px 0 10px;">Stack Tecnológico (tudo disponível no mercado)</h4>
+    <div class="g3">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">Azure AD + Conditional Access</div>
+        <div style="font-size:11px;color:var(--muted);">Autenticação, MFA contextual, políticas de acesso condicional</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">WireGuard</div>
+        <div style="font-size:11px;color:var(--muted);">VPN leve e moderna — túnel criptografado com baixa latência</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">Azure OpenAI + RBAC</div>
+        <div style="font-size:11px;color:var(--muted);">LLM com controle de acesso por função — cada usuário vê só o permitido</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">Microsoft Purview</div>
+        <div style="font-size:11px;color:var(--muted);">Classificação automática de dados + DLP (Data Loss Prevention)</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">Microsoft Sentinel</div>
+        <div style="font-size:11px;color:var(--muted);">SIEM — coleta logs de todas as interações, alertas em tempo real</div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;">
+        <div style="font-weight:700;font-size:13px;margin-bottom:3px;">HoloLens 2 (ou smartphone)</div>
+        <div style="font-size:11px;color:var(--muted);">Dispositivo com BitLocker, TPM e Microsoft Defender SmartScreen</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROTÓTIPO -->
+  <div class="dt">
+    <div class="dt-head">
+      <div class="dt-num" style="background:var(--purple-soft);color:var(--purple);">4</div>
+      <h3>Protótipo</h3>
+      <div class="dt-sub">Como demonstrar sem óculos físicos</div>
+    </div>
+    <div class="dt-body">
+      <div class="callout callout-green">
+        <div class="callout-icon">📱</div>
+        <div><strong>Sem óculos? Sem problema.</strong> O enunciado permite testar com qualquer LLM. Usamos um smartphone ou webcam de notebook como simulador do dispositivo vestível. A câmera simula autenticação facial e detecção de observador. Um web app simula a interface AR. O fluxo é idêntico.</div>
+      </div>
+
+      <h4 style="font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;">Fluxo do Protótipo (vídeo de 2 minutos)</h4>
+      <div class="proto">
+        <div class="proto-s">
+          <div class="sn" style="color:var(--accent2);">CENA 1 — 0:00</div>
+          <h4>Autenticação facial</h4>
+          <p>Webcam/câmera do celular simula a câmera do óculos. Reconhecimento facial → verificação de identidade → nível de segurança calculado (localização + rede).</p>
+          <div class="tool">HTML + JS + Face API</div>
+        </div>
+        <div class="proto-s">
+          <div class="sn" style="color:var(--accent2);">CENA 2 — 0:30</div>
+          <h4>Consulta à IA com filtro</h4>
+          <p>Usuário faz pergunta ao assistente de IA. A resposta passa pelo gateway BlindAR que classifica e transforma dados sensíveis antes de exibir.</p>
+          <div class="tool">API OpenAI/Gemini + Proxy Python</div>
+        </div>
+        <div class="proto-s">
+          <div class="sn" style="color:var(--accent2);">CENA 3 — 1:00</div>
+          <h4>Mudança de contexto</h4>
+          <p>Simular troca de nível: "rede interna → rede pública". A IA muda automaticamente o que mostra. Dados exatos viram genéricos. Watermark aparece.</p>
+          <div class="tool">Simulação via interface web</div>
+        </div>
+        <div class="proto-s">
+          <div class="sn" style="color:var(--accent2);">CENA 4 — 1:30</div>
+          <h4>Dashboard de governança</h4>
+          <p>Tela do gestor/analista: log de acessos, alertas, nível de cada sessão, status de criptografia. Tudo em tempo real.</p>
+          <div class="tool">HTML + Chart.js</div>
+        </div>
+      </div>
+
+      <div class="callout callout-yellow" style="margin-top:14px;">
+        <div class="callout-icon">🎬</div>
+        <div><strong>Para o vídeo:</strong> Gravem a tela mostrando todo o fluxo: (1) rosto na câmera → autenticado → (2) pergunta ao assistente → resposta filtrada → (3) troca de rede → IA adapta resposta → (4) dashboard do gestor com logs. Narrem por cima explicando cada etapa. 2 minutos é suficiente com edição objetiva.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TESTE -->
+  <div class="dt">
+    <div class="dt-head">
+      <div class="dt-num" style="background:var(--orange-soft);color:var(--orange);">5</div>
+      <h3>Teste e Validação</h3>
+      <div class="dt-sub">Como provar que funciona</div>
+    </div>
+    <div class="dt-body">
+      <div class="g3">
+        <div class="card" style="text-align:center;">
+          <div style="font-size:28px;font-weight:700;color:var(--green);">&lt; 3s</div>
+          <p>Autenticação facial<br>(câmera → sessão ativa)</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:28px;font-weight:700;color:var(--accent2);">100%</div>
+          <p>Tráfego criptografado<br>(em qualquer rede)</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:28px;font-weight:700;color:var(--purple);">5 níveis</div>
+          <p>Adaptação contextual<br>(dados filtrados por ambiente)</p>
+        </div>
+      </div>
+      <div class="g3" style="margin-top:4px;">
+        <div class="card" style="text-align:center;">
+          <div style="font-size:28px;font-weight:700;color:var(--yellow);">0 dados</div>
+          <p>Sensíveis exibidos em<br>ambiente não autorizado</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:28px;font-weight:700;color:var(--green);">100%</div>
+          <p>Acessos auditáveis<br>(log completo para compliance)</p>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div style="font-size:28px;font-weight:700;color:var(--red);">0</div>
+          <p>Dependência de<br>rede específica</p>
+        </div>
+      </div>
+
+      <h4 style="margin:18px 0 10px;">Cenários de teste para validação:</h4>
+      <table class="tbl">
+        <tr><th>Cenário</th><th>Teste</th><th>Resultado esperado</th></tr>
+        <tr>
+          <td><strong>Usuário autorizado, rede interna</strong></td>
+          <td>Login facial + pergunta à IA sobre dados de produção</td>
+          <td>Dados completos exibidos (Nível 1)</td>
+        </tr>
+        <tr>
+          <td><strong>Mesmo usuário, rede pública</strong></td>
+          <td>Mesma pergunta, mas conectado em Wi-Fi público</td>
+          <td>Dados genéricos + watermark (Nível 3)</td>
+        </tr>
+        <tr>
+          <td><strong>Usuário sem permissão</strong></td>
+          <td>Login facial OK, mas sem RBAC para dados financeiros</td>
+          <td>IA responde "você não tem acesso a essas informações"</td>
+        </tr>
+        <tr>
+          <td><strong>Dispositivo removido</strong></td>
+          <td>Simular remoção do dispositivo (cobrir câmera)</td>
+          <td>Sessão travada em &lt;1 segundo + alerta ao SOC</td>
+        </tr>
+        <tr>
+          <td><strong>Observador detectado</strong></td>
+          <td>Outra pessoa aparece no campo da câmera frontal</td>
+          <td>Dados sensíveis borrados automaticamente (Nível 4)</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--     ETAPA 2 — PENSAMENTO ANALÍTICO     -->
+<!-- ════════════════════════════════════════ -->
+<div class="ctn">
+<div class="sec">
+  <div class="sec-tag" style="color:var(--yellow)">Etapa 2</div>
+  <h2>Pensamento Analítico</h2>
+  <p class="sec-desc">Análise estratégica, viabilidade, riscos e ética.</p>
+
+  <!-- SWOT -->
+  <div class="card">
+    <h4>📊 Análise SWOT</h4>
+    <div class="g2" style="margin-top:12px;">
+      <div style="background:var(--green-soft);border:1px solid rgba(22,163,74,0.2);border-radius:6px;padding:16px;">
+        <h4 style="color:var(--green);font-size:13px;margin-bottom:8px;">Forças</h4>
+        <ul style="list-style:none;font-size:12px;color:#a1a1aa;">
+          <li style="padding:3px 0;">• 100% testável com soluções de mercado (Azure stack + WireGuard)</li>
+          <li style="padding:3px 0;">• Segurança transparente para o usuário (sem fricção)</li>
+          <li style="padding:3px 0;">• 5 níveis contextuais — segurança proporcional ao risco</li>
+          <li style="padding:3px 0;">• Conformidade LGPD nativa</li>
+          <li style="padding:3px 0;">• Funciona com óculos AR real OU smartphone simulador</li>
+        </ul>
+      </div>
+      <div style="background:var(--red-soft);border:1px solid rgba(220,38,38,0.2);border-radius:6px;padding:16px;">
+        <h4 style="color:var(--red);font-size:13px;margin-bottom:8px;">Fraquezas</h4>
+        <ul style="list-style:none;font-size:12px;color:#a1a1aa;">
+          <li style="padding:3px 0;">• Depende de ecossistema Microsoft (vendor lock-in)</li>
+          <li style="padding:3px 0;">• Detecção de observador pode gerar falsos positivos</li>
+          <li style="padding:3px 0;">• Definição precisa dos 5 níveis requer calibração por ambiente</li>
+          <li style="padding:3px 0;">• Latência adicional pela camada de transformação de dados</li>
+        </ul>
+      </div>
+      <div style="background:var(--accent-soft);border:1px solid rgba(37,99,235,0.2);border-radius:6px;padding:16px;">
+        <h4 style="color:var(--accent2);font-size:13px;margin-bottom:8px;">Oportunidades</h4>
+        <ul style="list-style:none;font-size:12px;color:#a1a1aa;">
+          <li style="padding:3px 0;">• Mercado de AR corporativo: US$ 198 bi até 2028</li>
+          <li style="padding:3px 0;">• Regulamentação de IA crescente exige soluções de governança</li>
+          <li style="padding:3px 0;">• Petrobras opera em 40+ países — escalabilidade global</li>
+          <li style="padding:3px 0;">• Pode expandir para qualquer dispositivo IoT industrial</li>
+        </ul>
+      </div>
+      <div style="background:var(--yellow-soft);border:1px solid rgba(202,138,4,0.2);border-radius:6px;padding:16px;">
+        <h4 style="color:var(--yellow);font-size:13px;margin-bottom:8px;">Ameaças</h4>
+        <ul style="list-style:none;font-size:12px;color:#a1a1aa;">
+          <li style="padding:3px 0;">• Microsoft pode lançar solução nativa integrada aos HoloLens</li>
+          <li style="padding:3px 0;">• Evolução de técnicas de spoofing facial</li>
+          <li style="padding:3px 0;">• Resistência cultural ao uso de biometria no trabalho</li>
+          <li style="padding:3px 0;">• Custo de licenciamento Azure pode escalar</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- RISCOS -->
+  <div class="card">
+    <h4>⚠️ Riscos e Mitigações</h4>
+    <table class="tbl">
+      <tr><th>Risco</th><th>Prob.</th><th>Impacto</th><th>Mitigação</th></tr>
+      <tr>
+        <td>Spoofing facial (foto/vídeo)</td>
+        <td><span class="risk-badge" style="background:var(--yellow-soft);color:var(--yellow);">Média</span></td>
+        <td><span class="risk-badge" style="background:var(--red-soft);color:var(--red);">Crítico</span></td>
+        <td>Liveness detection (verificação de vivacidade) + MFA contextual</td>
+      </tr>
+      <tr>
+        <td>Dispositivo roubado com sessão</td>
+        <td><span class="risk-badge" style="background:var(--yellow-soft);color:var(--yellow);">Média</span></td>
+        <td><span class="risk-badge" style="background:var(--red-soft);color:var(--red);">Crítico</span></td>
+        <td>Lock instantâneo ao sair do rosto + remote wipe + BitLocker no dispositivo</td>
+      </tr>
+      <tr>
+        <td>Sem conectividade em campo</td>
+        <td><span class="risk-badge" style="background:var(--red-soft);color:var(--red);">Alta</span></td>
+        <td><span class="risk-badge" style="background:var(--yellow-soft);color:var(--yellow);">Médio</span></td>
+        <td>Modo offline com cache criptografado local + expiração automática</td>
+      </tr>
+      <tr>
+        <td>Falsos positivos do detector de observador</td>
+        <td><span class="risk-badge" style="background:var(--yellow-soft);color:var(--yellow);">Média</span></td>
+        <td><span class="risk-badge" style="background:var(--green-soft);color:var(--green);">Baixo</span></td>
+        <td>Whitelist de colegas por equipe + sensibilidade ajustável</td>
+      </tr>
+      <tr>
+        <td>IA retorna dados além do permitido ao RBAC</td>
+        <td><span class="risk-badge" style="background:var(--yellow-soft);color:var(--yellow);">Média</span></td>
+        <td><span class="risk-badge" style="background:var(--red-soft);color:var(--red);">Crítico</span></td>
+        <td>Camada de transformação pós-LLM filtra ANTES de exibir + Purview classifica dados</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ÉTICA -->
+  <div class="card">
+    <h4>⚖️ Ética Digital e LGPD</h4>
+    <table class="tbl">
+      <tr><th>Princípio</th><th>Como o BlindAR atende</th></tr>
+      <tr>
+        <td><strong>Consentimento (LGPD Art. 7°)</strong></td>
+        <td>Consentimento explícito para uso de biometria no primeiro uso. Revogável a qualquer momento.</td>
+      </tr>
+      <tr>
+        <td><strong>Minimização de dados (LGPD Art. 6°)</strong></td>
+        <td>Dados biométricos processados localmente no dispositivo (TEE/TPM). Imagem facial NUNCA sai do dispositivo — apenas o hash criptográfico.</td>
+      </tr>
+      <tr>
+        <td><strong>Transparência</strong></td>
+        <td>Colaborador sabe exatamente o que é coletado, por quê, e por quanto tempo. Pode consultar seus próprios logs de acesso.</td>
+      </tr>
+      <tr>
+        <td><strong>Proporcionalidade</strong></td>
+        <td>Os 5 níveis garantem que a proteção escala com a sensibilidade. Dados públicos não exigem autenticação extra.</td>
+      </tr>
+      <tr>
+        <td><strong>Não-discriminação</strong></td>
+        <td>Autenticação facial funciona independente de cor de pele e iluminação. Alternativa por voz para acessibilidade.</td>
+      </tr>
+      <tr>
+        <td><strong>Direito ao esquecimento (LGPD Art. 18°)</strong></td>
+        <td>Ao descadastrar, todos os dados biométricos e logs pessoais são apagados com certificado de exclusão.</td>
+      </tr>
+    </table>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--       ETAPA 3 — LEAN CANVAS            -->
+<!-- ════════════════════════════════════════ -->
+<div class="ctn">
+<div class="sec">
+  <div class="sec-tag" style="color:var(--green)">Etapa 3 — Entregável 1</div>
+  <h2>LEAN Canvas</h2>
+  <p class="sec-desc">Modelo de negócio enxuto da solução BlindAR.</p>
+
+  <div class="canvas">
+    <!-- Row 1 -->
+    <div class="canvas-cell">
+      <div class="cell-t">1. Problema</div>
+      <div class="cell-c">
+        <strong>Top 3 problemas:</strong><br>
+        1. Óculos AR acessam IA sem autenticação contínua confiável<br>
+        2. Dados sensíveis trafegam e são exibidos sem proteção em redes de terceiros<br>
+        3. Sem auditoria de quem acessou o quê via dispositivos vestíveis
+      </div>
+    </div>
+    <div class="canvas-cell span2r">
+      <div class="cell-t">2. Solução</div>
+      <div class="cell-c">
+        <strong>BlindAR — Gateway de segurança inteligente</strong><br><br>
+        → Auth facial contínua (trava ao sair do rosto)<br>
+        → Túnel criptografado automático (WireGuard)<br>
+        → 5 níveis contextuais: IA adapta o que mostra ao ambiente<br>
+        → Camada de transformação: filtra dados sensíveis antes de exibir<br>
+        → Dashboard de governança com auditoria completa
+      </div>
+    </div>
+    <div class="canvas-cell span2r">
+      <div class="cell-t">3. Proposta de Valor Única</div>
+      <div class="cell-c">
+        <strong style="font-size:13px;">"Acesso seguro a IA via dispositivos vestíveis — sem fricção para o usuário, com visibilidade total para a segurança."</strong><br><br>
+        A IA adapta automaticamente o que mostra com base no contexto (local, rede, ambiente). Segurança proporcional ao risco — não bloqueia, transforma.
+      </div>
+    </div>
+    <div class="canvas-cell">
+      <div class="cell-t">4. Vantagem Injusta</div>
+      <div class="cell-c">
+        Arquitetura 100% testável com soluções de mercado já existentes (Azure Stack). Nenhum concorrente combina autenticação contínua + níveis contextuais + transformação de dados para AR.
+      </div>
+    </div>
+    <div class="canvas-cell">
+      <div class="cell-t">5. Segmentos de Clientes</div>
+      <div class="cell-c">
+        <strong>Inicial:</strong> Petrobras — refinarias, plataformas offshore, escritórios<br><br>
+        <strong>Expansão:</strong> empresas de energia, mineração, aviação, saúde — qualquer organização com dados sensíveis + dispositivos vestíveis
+      </div>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="canvas-cell">
+      <div class="cell-t">6. Alternativas Existentes</div>
+      <div class="cell-c">
+        • MDM (Intune) — gerencia dispositivo, não protege conteúdo visual<br>
+        • VPN tradicional — criptografa, mas sem auth contínua<br>
+        • IAM (Okta/Azure AD) — auth forte, mas pensada para teclado, não AR
+      </div>
+    </div>
+    <div class="canvas-cell">
+      <div class="cell-t">7. Métricas-Chave</div>
+      <div class="cell-c">
+        • Tempo de autenticação (&lt;3s)<br>
+        • % de tráfego criptografado (100%)<br>
+        • Incidentes de vazamento (meta: 0)<br>
+        • % de acessos auditados (100%)<br>
+        • Uptime do gateway (&gt;99.9%)
+      </div>
+    </div>
+    <div class="canvas-cell">
+      <div class="cell-t">8. Canais</div>
+      <div class="cell-c">
+        • SDK integrado nos óculos AR corporativos<br>
+        • Gateway on-premise na infra Petrobras<br>
+        • Dashboard web para gestores<br>
+        • API REST para integração com SIEM
+      </div>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="canvas-cell span2c">
+      <div class="cell-t">9. Estrutura de Custos</div>
+      <div class="cell-c">
+        <strong>Fixos:</strong> Equipe de desenvolvimento, infraestrutura cloud (Azure), certificações de segurança<br>
+        <strong>Variáveis:</strong> Licenças Azure por usuário, custos de VPN, atualizações de compliance por jurisdição
+      </div>
+    </div>
+    <div class="canvas-cell" style="background:transparent;min-height:0;"></div>
+    <div class="canvas-cell span2c">
+      <div class="cell-t">10. Fontes de Receita</div>
+      <div class="cell-c">
+        <strong>• Licença por dispositivo ativo/mês</strong> (modelo SaaS)<br>
+        <strong>• Gateway on-premise</strong> — licença anual por unidade industrial<br>
+        • Consultoria de implantação e integração<br>
+        • Relatórios de conformidade sob demanda
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--        ETAPA 4 — PITCH (3 min)         -->
+<!-- ════════════════════════════════════════ -->
+<div class="ctn">
+<div class="sec">
+  <div class="sec-tag" style="color:var(--purple)">Etapa 4 — Entregável 3</div>
+  <h2>Roteiro de Pitch — 3 minutos</h2>
+  <p class="sec-desc">Roteiro completo com falas, tempos e dicas para o vídeo do pitch.</p>
+
+  <div class="callout callout-blue" style="margin-bottom:20px;">
+    <div class="callout-icon">🎤</div>
+    <div><strong>Regra de ouro:</strong> Ensaiem com cronômetro 3x antes de gravar. Quem abre o pitch é quem fecha. Quem demonstra o protótipo fala enquanto navega — 15s de demo vale mais que 1min de descrição. Sem papel na mão.</div>
+  </div>
+
+  <div class="pitch red">
+    <div class="time" style="color:var(--red);">0:00 – 0:30 · ABERTURA</div>
+    <h4>O dado que ninguém viu sair</h4>
+    <div class="script">
+      "Um técnico numa plataforma offshore no litoral do Rio de Janeiro coloca seus óculos de realidade aumentada e pergunta à inteligência artificial da empresa: 'qual o diagnóstico da válvula 7B?'. A IA responde com dados de pressão, histórico de manutenção e parâmetros operacionais classificados. Tudo isso projetado na lente dele — visível para qualquer pessoa ao lado. Ele está conectado por satélite, numa rede que não é da Petrobras. Nesse momento, três perguntas surgem: como garantir que é realmente ele? Como garantir que ninguém interceptou esses dados? E como garantir que ninguém mais está vendo?"
+    </div>
+    <div class="tip">💡 Voz firme, pausada. Olhe para a câmera. A cena visual importa mais que dados nesse momento.</div>
+  </div>
+
+  <div class="pitch yellow">
+    <div class="time" style="color:var(--yellow);">0:30 – 1:00 · O PROBLEMA</div>
+    <h4>A realidade aumentada aumentou os riscos</h4>
+    <div class="script">
+      "Óculos inteligentes são o futuro do trabalho industrial — a própria Petrobras explora essa tecnologia. Mas eles criam três brechas que não existiam antes. Primeira: não tem teclado — como autenticar? Segunda: os dados trafegam pelo ar, em redes de terceiros — como proteger? Terceira: diferente de um computador, tudo que aparece no óculos é visível para quem está por perto — como evitar vazamento? E tem mais: esses dispositivos capturam imagem, áudio e localização. Cada sensor é um vetor de risco. Nenhuma ferramenta de segurança tradicional resolve isso junto."
+    </div>
+  </div>
+
+  <div class="pitch green">
+    <div class="time" style="color:var(--green);">1:00 – 2:10 · A SOLUÇÃO</div>
+    <h4>BlindAR — Segurança que se adapta ao contexto</h4>
+    <div class="script">
+      "Apresentamos o BlindAR: um gateway de segurança inteligente entre o dispositivo vestível e os sistemas de IA da Petrobras.<br><br>
+
+      <strong>Pilar 1 — Identidade Contínua.</strong> A câmera do dispositivo identifica o rosto do colaborador em menos de 3 segundos. Se o dispositivo sai do rosto — sessão travada instantaneamente. Sem senha, sem token, sem fricção.<br><br>
+
+      <strong>Pilar 2 — Canal Blindado.</strong> Um túnel criptografado WireGuard se ativa automaticamente. Não importa a rede — satélite, Wi-Fi de fornecedor, 5G público. Os dados nunca trafegam em aberto.<br><br>
+
+      <strong>Pilar 3 — Segurança Contextual.</strong> E aqui está o diferencial: o BlindAR opera em 5 níveis que se ajustam automaticamente ao contexto. Na sala segura com rede interna? Dados completos. No campo com rede de terceiro? A IA transforma: em vez de mostrar '42.7 bar', mostra 'pressão acima do normal'. Em área pública? A IA diz: 'volte a uma área segura para ver esses dados'. Alguém se aproxima? A câmera frontal detecta e borra os dados sensíveis. A segurança não bloqueia — ela se adapta.<br><br>
+
+      <strong>Pilar 4 — Governança Total.</strong> Dashboard central com log de todo acesso. Quem viu o quê, quando, de onde, em qual nível de segurança. Conformidade com LGPD — dados biométricos processados localmente, nunca enviados ao servidor."
+    </div>
+    <div class="tip">💡 Mostrem o protótipo aqui. Troca de apresentador. 15-20s de demo na tela: autenticação → consulta IA → mudança de nível → dashboard.</div>
+  </div>
+
+  <div class="pitch blue">
+    <div class="time" style="color:var(--accent2);">2:10 – 2:40 · VIABILIDADE</div>
+    <h4>Testável hoje, com soluções de mercado</h4>
+    <div class="script">
+      "O objetivo do desafio é ter uma arquitetura testável com soluções de mercado. O BlindAR usa exclusivamente tecnologias já disponíveis: Azure AD para autenticação, WireGuard para criptografia, Azure OpenAI com RBAC para controle de acesso à IA, Microsoft Purview para classificação de dados e Sentinel para auditoria. Funciona com HoloLens 2 — que já tem BitLocker, TPM e Microsoft Defender — ou com qualquer smartphone como simulador. Não é conceito. É arquitetura real, montável e testável."
+    </div>
+  </div>
+
+  <div class="pitch purple">
+    <div class="time" style="color:var(--purple);">2:40 – 3:00 · FECHAMENTO</div>
+    <h4>A frase que fica</h4>
+    <div class="script">
+      "A realidade aumentada vai transformar o trabalho na indústria de energia. Mas sem segurança, ela não aumenta a realidade — ela aumenta o risco.<br><br>
+      O BlindAR garante que cada colaborador da Petrobras possa vestir seus óculos, acessar a inteligência artificial da empresa, e ter uma certeza: é ele, é seguro, e ninguém mais está vendo.<br><br>
+      Somos a [nome da equipe], do SENAI [unidade]. Obrigado."
+    </div>
+    <div class="tip">💡 Mesma pessoa que abriu o pitch fecha. Última frase dita devagar, olhando para a câmera. Não diga "é isso" — encerre com confiança.</div>
+  </div>
+</div>
+</div>
+
+<!-- ════════════════════════════════════════ -->
+<!--            RESPOSTA AO DESAFIO          -->
+<!-- ════════════════════════════════════════ -->
+<div class="ctn">
+<div class="sec" style="border-bottom:none;">
+  <div class="sec-tag" style="color:var(--orange)">Síntese</div>
+  <h2>Resposta Direta ao Desafio</h2>
+
+  <div class="callout callout-green">
+    <div class="callout-icon">✅</div>
+    <div>
+      <strong>Autenticação confiável:</strong> Reconhecimento facial contínuo via câmera do dispositivo + Azure AD Conditional Access + lock instantâneo ao remover dispositivo.<br><br>
+      <strong>Proteção dos dados:</strong> Túnel WireGuard automático + ZTNA (cada requisição verificada) + Azure OpenAI com RBAC. Funciona em qualquer rede.<br><br>
+      <strong>Prevenção de vazamento:</strong> 5 níveis contextuais — IA transforma dados sensíveis antes de exibir. Detecção de observador. Watermark dinâmico. Purview classifica dados automaticamente.<br><br>
+      <strong>Redes de terceiros:</strong> Zero Trust — nunca confia na rede. WireGuard cria perímetro criptografado independente da infraestrutura subjacente.<br><br>
+      <strong>Testabilidade:</strong> 100% montável com Azure AD + WireGuard + Azure OpenAI + Purview + Sentinel + HoloLens 2 (ou smartphone simulador).
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="footer">
+  <div class="ctn">Grand Prix SENAI de Inovação 2026 — Desafio Petrobras — Cibersegurança e Ética Digital</div>
+</div>
+
+</body>
 </html>

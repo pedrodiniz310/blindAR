@@ -1,180 +1,180 @@
-================================================================================
-  ROTEIRO DO PROTÓTIPO — SecureVision
-  Grand Prix SENAI de Inovação 2026 — Desafio Petrobras (Cibersegurança)
-  Equipe: Pedro D. / Thauana P. / Xuiy K.
-================================================================================
-
-
-1. O QUE É O PROTÓTIPO
-================================================================================
-
-Um web app interativo que simula a experiência do SecureVision usando a webcam
-do notebook ou câmera do smartphone como substituto do HoloLens 2.
-
-Demonstra os 4 pilares:
-  1. Autenticação facial contínua
-  2. Consulta a IA com filtro de segurança
-  3. Mudança de nível contextual em tempo real
-  4. Dashboard de governança
-
-O protótipo é gravado em vídeo de 2 minutos para o Entregável 2.
-
-Arquivo do protótipo: prototipo_securevision.html
-Para rodar: abrir no navegador (Chrome/Edge) — não precisa instalar nada.
-
-
-2. FUNCIONALIDADES DO PROTÓTIPO
-================================================================================
-
-2.1 TELA DE LOGIN / AUTENTICAÇÃO FACIAL
-────────────────────────────────────────
-  • Webcam ativa ao abrir a página
-  • Detecção facial via face-api.js (TensorFlow.js)
-  • Ao detectar rosto → "Identidade verificada"
-  • Mostra: nome do usuário, cargo, nível de segurança calculado
-  • Se rosto sai do frame → "SESSÃO TRAVADA" em < 1 segundo
-  • Se rosto retorna → desbloqueia automaticamente
-
-2.2 INTERFACE AR (ASSISTENTE DE IA)
-────────────────────────────────────
-  • Simula a visão do óculos AR (HUD transparente)
-  • Campo de texto para perguntar ao assistente de IA
-  • Respostas são filtradas pelo nível de segurança atual
-  • Watermark dinâmico com nome + hora no canto da tela
-  • Perguntas pré-configuradas para demonstração:
-    - "Qual a pressão atual do poço P-47?"
-    - "Mostre os dados de produção do mês"
-    - "Quem é o responsável pela plataforma?"
-
-2.3 PAINEL DE NÍVEL DE SEGURANÇA
-─────────────────────────────────
-  • Barra lateral mostra o nível atual (1 a 5) com cor
-  • Botões para simular mudança de contexto:
-    - "Rede Interna" → Nível 1 (verde)
-    - "Rede Corporativa" → Nível 2 (azul)
-    - "Rede de Terceiro" → Nível 3 (amarelo)
-    - "Área Pública" → Nível 4 (laranja)
-    - "Dispositivo Comprometido" → Nível 5 (vermelho)
-  • Ao mudar nível, a resposta da IA muda em tempo real
-  • Demonstração visual: mesma pergunta, respostas diferentes
-
-2.4 DETECÇÃO DE OBSERVADOR
-──────────────────────────
-  • Se a câmera detectar MAIS DE UM rosto → alerta
-  • "Observador detectado — nível elevado para 4"
-  • Dados sensíveis ficam borrados automaticamente
-  • Volta ao normal quando observador sai do frame
-
-2.5 DASHBOARD DE GOVERNANÇA
-────────────────────────────
-  • Aba separada no protótipo
-  • Mostra log de eventos em tempo real:
-    - Autenticações (sucesso/falha)
-    - Consultas à IA (pergunta + nível aplicado)
-    - Mudanças de nível
-    - Detecções de observador
-    - Alertas de segurança
-  • Gráficos:
-    - Distribuição de acessos por nível
-    - Timeline de eventos
-    - Status dos dispositivos ativos
-
-
-3. FLUXO DE DEMONSTRAÇÃO PARA O VÍDEO (2 MINUTOS)
-================================================================================
-
-  CENA 1 — AUTENTICAÇÃO (0:00 - 0:25)
-  ─────────────────────────────────────
-  Narração: "O SecureVision começa com autenticação facial. Ao vestir
-  os óculos, a câmera reconhece o rosto do colaborador e calcula o
-  nível de segurança baseado no contexto: localização, rede e ambiente."
-
-  Ação no protótipo:
-  → Abrir o web app → webcam ativa
-  → Rosto aparece → "Identidade verificada: Pedro Diniz"
-  → Nível calculado: 1 (Verde - Sala segura)
-  → Mostrar que se tapar a câmera → "SESSÃO TRAVADA"
-  → Destampar → volta automaticamente
-
-
-  CENA 2 — CONSULTA À IA COM FILTRO (0:25 - 0:55)
-  ─────────────────────────────────────────────────
-  Narração: "O colaborador pode consultar o assistente de IA normalmente.
-  O SecureVision filtra a resposta automaticamente baseado no nível de
-  segurança."
-
-  Ação no protótipo:
-  → Digitar: "Qual a pressão atual do poço P-47?"
-  → Nível 1: resposta completa — "A pressão atual é 42.7 bar, 
-    dentro da faixa operacional. Responsável: João Silva."
-  → Mostrar o watermark dinâmico no canto
-
-
-  CENA 3 — MUDANÇA DE CONTEXTO (0:55 - 1:25)
-  ────────────────────────────────────────────
-  Narração: "Agora, o colaborador sai do escritório e se conecta a uma
-  rede de terceiro. O SecureVision detecta a mudança e adapta
-  automaticamente o que a IA mostra."
-
-  Ação no protótipo:
-  → Clicar em "Rede de Terceiro" → nível muda para 3 (Amarelo)
-  → Mesma pergunta: "Qual a pressão atual do poço P-47?"
-  → Resposta diferente: "A pressão está dentro dos parâmetros normais.
-    Consulte detalhes em uma rede segura."
-  → Valores exatos desaparecem
-  → Mostrar observador: outra pessoa no frame → nível sobe para 4
-  → Dados ficam borrados
-
-
-  CENA 4 — DASHBOARD DE GOVERNANÇA (1:25 - 1:55)
-  ────────────────────────────────────────────────
-  Narração: "O time de segurança tem visibilidade total através do
-  dashboard de governança. Todos os acessos, consultas e mudanças de
-  nível são registrados em tempo real."
-
-  Ação no protótipo:
-  → Mudar para aba Dashboard
-  → Mostrar log de eventos: todas as ações que acabaram de ser feitas
-  → Mostrar gráfico de distribuição por nível
-  → Mostrar alertas de segurança
-  → "Tudo auditável. Tudo em conformidade com a LGPD."
-
-
-  ENCERRAMENTO (1:55 - 2:00)
-  ──────────────────────────
-  Narração: "SecureVision — acesso seguro a IA via dispositivos
-  vestíveis. Sem fricção. Com visibilidade total."
-
-  Tela: Logo SecureVision + tagline
-
-
-4. TECNOLOGIAS DO PROTÓTIPO
-================================================================================
-
-  • HTML5 + CSS3 + JavaScript (vanilla)
-  • face-api.js — detecção facial no navegador (não envia dados)
-  • API simulada — respostas pré-configuradas por nível
-    (não precisa de API real para a demo)
-  • Chart.js — gráficos do dashboard
-  • Funciona offline — apenas abrir o .html no navegador
-
-
-5. COMO GRAVAR O VÍDEO
-================================================================================
-
-  Opção 1: OBS Studio (gratuito)
-    → Gravar tela + webcam + narração
-    → Exportar em 1080p, max 2 minutos
-
-  Opção 2: Gravação de tela do Windows (Win+G)
-    → Mais simples, sem instalar nada
-
-  Opção 3: Loom (online)
-    → Grava tela + cam + áudio
-
-  DICAS:
-  • Ensaiar o fluxo 2-3 vezes antes de gravar
-  • Falar devagar e com clareza
-  • Focar na demonstração, não na teoria
-  • Editar para ficar entre 1:50 e 2:00
-  • Adicionar legendas se possível
+================================================================================
+  ROTEIRO DO PROTÓTIPO — BlindAR
+  Grand Prix SENAI de Inovação 2026 — Desafio Petrobras (Cibersegurança)
+  Equipe: Pedro D. / Thauana P. / Xuiy K.
+================================================================================
+
+
+1. O QUE É O PROTÓTIPO
+================================================================================
+
+Um web app interativo que simula a experiência do BlindAR usando a webcam
+do notebook ou câmera do smartphone como substituto do HoloLens 2.
+
+Demonstra os 4 pilares:
+  1. Autenticação facial contínua
+  2. Consulta a IA com filtro de segurança
+  3. Mudança de nível contextual em tempo real
+  4. Dashboard de governança
+
+O protótipo é gravado em vídeo de 2 minutos para o Entregável 2.
+
+Arquivo do protótipo: prototipo_BlindAR.html
+Para rodar: abrir no navegador (Chrome/Edge) — não precisa instalar nada.
+
+
+2. FUNCIONALIDADES DO PROTÓTIPO
+================================================================================
+
+2.1 TELA DE LOGIN / AUTENTICAÇÃO FACIAL
+────────────────────────────────────────
+  • Webcam ativa ao abrir a página
+  • Detecção facial via face-api.js (TensorFlow.js)
+  • Ao detectar rosto → "Identidade verificada"
+  • Mostra: nome do usuário, cargo, nível de segurança calculado
+  • Se rosto sai do frame → "SESSÃO TRAVADA" em < 1 segundo
+  • Se rosto retorna → desbloqueia automaticamente
+
+2.2 INTERFACE AR (ASSISTENTE DE IA)
+────────────────────────────────────
+  • Simula a visão do óculos AR (HUD transparente)
+  • Campo de texto para perguntar ao assistente de IA
+  • Respostas são filtradas pelo nível de segurança atual
+  • Watermark dinâmico com nome + hora no canto da tela
+  • Perguntas pré-configuradas para demonstração:
+    - "Qual a pressão atual do poço P-47?"
+    - "Mostre os dados de produção do mês"
+    - "Quem é o responsável pela plataforma?"
+
+2.3 PAINEL DE NÍVEL DE SEGURANÇA
+─────────────────────────────────
+  • Barra lateral mostra o nível atual (1 a 5) com cor
+  • Botões para simular mudança de contexto:
+    - "Rede Interna" → Nível 1 (verde)
+    - "Rede Corporativa" → Nível 2 (azul)
+    - "Rede de Terceiro" → Nível 3 (amarelo)
+    - "Área Pública" → Nível 4 (laranja)
+    - "Dispositivo Comprometido" → Nível 5 (vermelho)
+  • Ao mudar nível, a resposta da IA muda em tempo real
+  • Demonstração visual: mesma pergunta, respostas diferentes
+
+2.4 DETECÇÃO DE OBSERVADOR
+──────────────────────────
+  • Se a câmera detectar MAIS DE UM rosto → alerta
+  • "Observador detectado — nível elevado para 4"
+  • Dados sensíveis ficam borrados automaticamente
+  • Volta ao normal quando observador sai do frame
+
+2.5 DASHBOARD DE GOVERNANÇA
+────────────────────────────
+  • Aba separada no protótipo
+  • Mostra log de eventos em tempo real:
+    - Autenticações (sucesso/falha)
+    - Consultas à IA (pergunta + nível aplicado)
+    - Mudanças de nível
+    - Detecções de observador
+    - Alertas de segurança
+  • Gráficos:
+    - Distribuição de acessos por nível
+    - Timeline de eventos
+    - Status dos dispositivos ativos
+
+
+3. FLUXO DE DEMONSTRAÇÃO PARA O VÍDEO (2 MINUTOS)
+================================================================================
+
+  CENA 1 — AUTENTICAÇÃO (0:00 - 0:25)
+  ─────────────────────────────────────
+  Narração: "O BlindAR começa com autenticação facial. Ao vestir
+  os óculos, a câmera reconhece o rosto do colaborador e calcula o
+  nível de segurança baseado no contexto: localização, rede e ambiente."
+
+  Ação no protótipo:
+  → Abrir o web app → webcam ativa
+  → Rosto aparece → "Identidade verificada: Pedro Diniz"
+  → Nível calculado: 1 (Verde - Sala segura)
+  → Mostrar que se tapar a câmera → "SESSÃO TRAVADA"
+  → Destampar → volta automaticamente
+
+
+  CENA 2 — CONSULTA À IA COM FILTRO (0:25 - 0:55)
+  ─────────────────────────────────────────────────
+  Narração: "O colaborador pode consultar o assistente de IA normalmente.
+  O BlindAR filtra a resposta automaticamente baseado no nível de
+  segurança."
+
+  Ação no protótipo:
+  → Digitar: "Qual a pressão atual do poço P-47?"
+  → Nível 1: resposta completa — "A pressão atual é 42.7 bar, 
+    dentro da faixa operacional. Responsável: João Silva."
+  → Mostrar o watermark dinâmico no canto
+
+
+  CENA 3 — MUDANÇA DE CONTEXTO (0:55 - 1:25)
+  ────────────────────────────────────────────
+  Narração: "Agora, o colaborador sai do escritório e se conecta a uma
+  rede de terceiro. O BlindAR detecta a mudança e adapta
+  automaticamente o que a IA mostra."
+
+  Ação no protótipo:
+  → Clicar em "Rede de Terceiro" → nível muda para 3 (Amarelo)
+  → Mesma pergunta: "Qual a pressão atual do poço P-47?"
+  → Resposta diferente: "A pressão está dentro dos parâmetros normais.
+    Consulte detalhes em uma rede segura."
+  → Valores exatos desaparecem
+  → Mostrar observador: outra pessoa no frame → nível sobe para 4
+  → Dados ficam borrados
+
+
+  CENA 4 — DASHBOARD DE GOVERNANÇA (1:25 - 1:55)
+  ────────────────────────────────────────────────
+  Narração: "O time de segurança tem visibilidade total através do
+  dashboard de governança. Todos os acessos, consultas e mudanças de
+  nível são registrados em tempo real."
+
+  Ação no protótipo:
+  → Mudar para aba Dashboard
+  → Mostrar log de eventos: todas as ações que acabaram de ser feitas
+  → Mostrar gráfico de distribuição por nível
+  → Mostrar alertas de segurança
+  → "Tudo auditável. Tudo em conformidade com a LGPD."
+
+
+  ENCERRAMENTO (1:55 - 2:00)
+  ──────────────────────────
+  Narração: "BlindAR — acesso seguro a IA via dispositivos
+  vestíveis. Sem fricção. Com visibilidade total."
+
+  Tela: Logo BlindAR + tagline
+
+
+4. TECNOLOGIAS DO PROTÓTIPO
+================================================================================
+
+  • HTML5 + CSS3 + JavaScript (vanilla)
+  • face-api.js — detecção facial no navegador (não envia dados)
+  • API simulada — respostas pré-configuradas por nível
+    (não precisa de API real para a demo)
+  • Chart.js — gráficos do dashboard
+  • Funciona offline — apenas abrir o .html no navegador
+
+
+5. COMO GRAVAR O VÍDEO
+================================================================================
+
+  Opção 1: OBS Studio (gratuito)
+    → Gravar tela + webcam + narração
+    → Exportar em 1080p, max 2 minutos
+
+  Opção 2: Gravação de tela do Windows (Win+G)
+    → Mais simples, sem instalar nada
+
+  Opção 3: Loom (online)
+    → Grava tela + cam + áudio
+
+  DICAS:
+  • Ensaiar o fluxo 2-3 vezes antes de gravar
+  • Falar devagar e com clareza
+  • Focar na demonstração, não na teoria
+  • Editar para ficar entre 1:50 e 2:00
+  • Adicionar legendas se possível
