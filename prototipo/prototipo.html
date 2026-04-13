@@ -47,9 +47,10 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .sb-section { margin-bottom:20px; }
 
 /* CAMERA */
-.cam-box { position:relative; width:100%; aspect-ratio:4/3; background:#000; border-radius:8px; overflow:hidden; border:2px solid var(--border); }
-.cam-box video { width:100%; height:100%; object-fit:cover; }
-.cam-box canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
+.cam-box { position:relative; width:100%; aspect-ratio:4/3; background:#000; border-radius:8px; overflow:hidden; border:2px solid var(--border); transition:border-color .3s; }
+.cam-box:hover { border-color:var(--accent); }
+.cam-box video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+.cam-box canvas { position:absolute; top:0; left:0; width:100%; height:100%; transform:scaleX(-1); }
 .cam-status { position:absolute; bottom:0; left:0; right:0; padding:6px 10px; font-size:11px; font-weight:600; text-align:center; }
 .cam-status.ok { background:rgba(34,197,94,0.85); color:#fff; }
 .cam-status.warn { background:rgba(249,115,22,0.85); color:#fff; }
@@ -159,17 +160,25 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .session-locked-big .lock-reason { font-size:13px; color:var(--red); margin-top:12px; }
 
 /* REGISTRATION MODAL */
-.reg-modal { display:none; position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0.85); flex-direction:column; align-items:center; justify-content:center; }
+.reg-modal { display:none; position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0.92); flex-direction:column; align-items:center; justify-content:center; }
 .reg-modal.show { display:flex !important; }
-.reg-modal .reg-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:40px; text-align:center; max-width:420px; }
+.reg-modal .reg-box { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:36px 40px; text-align:center; max-width:520px; width:90%; }
 .reg-modal h2 { font-size:22px; font-weight:700; margin-bottom:8px; }
 .reg-modal p { font-size:13px; color:var(--muted); margin-bottom:20px; line-height:1.6; }
 .reg-modal .reg-name-input { padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:14px; outline:none; width:100%; margin-bottom:12px; text-align:center; }
 .reg-modal .reg-name-input:focus { border-color:var(--accent); }
-.reg-modal .reg-btn { padding:10px 28px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:14px; font-weight:600; cursor:pointer; }
+.reg-modal .reg-btn { padding:10px 28px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:14px; font-weight:600; cursor:pointer; transition:background .15s; }
 .reg-modal .reg-btn:hover { background:var(--accent2); }
 .reg-modal .reg-btn:disabled { opacity:.5; cursor:not-allowed; }
-.reg-progress { margin-top:16px; font-size:12px; color:var(--muted); }
+.reg-progress { margin-top:16px; font-size:12px; color:var(--muted); min-height:20px; }
+
+/* Registration camera preview */
+.reg-cam-container { display:none; position:relative; width:100%; max-width:360px; aspect-ratio:4/3; margin:16px auto; border-radius:12px; overflow:hidden; border:2px solid var(--accent); background:#000; }
+.reg-cam-container.active { display:block; animation:fadeIn .4s; }
+.reg-cam-container video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+.reg-cam-container canvas { position:absolute; top:0; left:0; width:100%; height:100%; transform:scaleX(-1); }
+.reg-cam-label { position:absolute; bottom:0; left:0; right:0; padding:8px; font-size:11px; font-weight:600; text-align:center; background:rgba(37,99,235,0.85); color:#fff; }
+.reg-cam-corners { position:absolute; inset:20px; border:2px dashed rgba(37,99,235,0.4); border-radius:8px; pointer-events:none; }
 
 </style>
 </head>
@@ -205,11 +214,17 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 <!-- REGISTRATION MODAL -->
 <div class="reg-modal" id="regModal">
   <div class="reg-box">
-    <div style="font-size:48px;margin-bottom:16px;">🔐</div>
+    <img src="../images/logo-favicon.png" alt="BlindAR" style="height:56px;margin-bottom:16px;">
     <h2>Cadastro Facial BlindAR</h2>
     <p>Para usar o dispositivo, é necessário cadastrar sua identidade. O sistema vai capturar seu rosto pela câmera e criar um descritor biométrico único.</p>
     <input class="reg-name-input" id="regName" placeholder="Seu nome completo" value="">
     <input class="reg-name-input" id="regRole" placeholder="Cargo (ex: Técnico de Manutenção)" value="">
+    <div class="reg-cam-container" id="regCamContainer">
+      <video id="regVideo" autoplay muted playsinline></video>
+      <canvas id="regOverlay"></canvas>
+      <div class="reg-cam-corners"></div>
+      <div class="reg-cam-label" id="regCamLabel">Posicione seu rosto no centro</div>
+    </div>
     <br>
     <button class="reg-btn" id="regBtn" onclick="startRegistration()">Iniciar Cadastro Facial</button>
     <div class="reg-progress" id="regProgress"></div>
@@ -822,48 +837,101 @@ async function startRegistration() {
 
   const btn = document.getElementById('regBtn');
   const progress = document.getElementById('regProgress');
+  const camContainer = document.getElementById('regCamContainer');
+  const regVideo = document.getElementById('regVideo');
   btn.disabled = true;
 
   if (!faceApiLoaded) {
-    // Fallback: register without face descriptor
     progress.textContent = 'Modo simulado — cadastro sem biometria facial.';
-    setTimeout(() => {
-      completeRegistration(null);
-    }, 1000);
+    setTimeout(() => completeRegistration(null), 1000);
     return;
   }
 
+  // Show camera preview in the modal
+  camContainer.classList.add('active');
+  btn.textContent = 'Capturando...';
+  progress.textContent = 'Ativando câmera para cadastro...';
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:640, height:480 } });
+    regVideo.srcObject = stream;
+    await regVideo.play();
+  } catch(e) {
+    progress.textContent = 'Câmera não disponível — usando câmera lateral.';
+  }
+
+  // Use the registration modal video (or fallback to main video)
+  const videoEl = regVideo.srcObject ? regVideo : document.getElementById('video');
+  const regOverlay = document.getElementById('regOverlay');
+  const regLabel = document.getElementById('regCamLabel');
+
   progress.textContent = 'Olhe para a câmera... capturando descritor facial...';
 
-  const video = document.getElementById('video');
   let attempts = 0;
-  const maxAttempts = 20;
+  const maxAttempts = 30;
 
   const tryCapture = async () => {
     attempts++;
     if (attempts > maxAttempts) {
       progress.textContent = 'Não foi possível capturar rosto. Cadastro simulado.';
+      stopRegCamera();
       completeRegistration(null);
       return;
     }
 
-    progress.textContent = `Capturando rosto... (tentativa ${attempts}/${maxAttempts})`;
+    regLabel.textContent = `Detectando rosto... (${attempts}/${maxAttempts})`;
+    progress.textContent = `Posicione seu rosto centralizado na câmera`;
 
     const detection = await faceapi
-      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+      .detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
       .withFaceLandmarks()
       .withFaceDescriptor();
 
     if (detection) {
+      // Draw face box on the registration overlay
+      regOverlay.width = videoEl.videoWidth;
+      regOverlay.height = videoEl.videoHeight;
+      const ctx = regOverlay.getContext('2d');
+      ctx.clearRect(0, 0, regOverlay.width, regOverlay.height);
+      const box = detection.detection.box;
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
+      ctx.fillStyle = 'rgba(34,197,94,0.8)';
+      ctx.fillRect(box.x, box.y - 22, 120, 22);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Segoe UI';
+      ctx.fillText('✓ ROSTO DETECTADO', box.x + 6, box.y - 7);
+
       registeredDescriptor = detection.descriptor;
+      regLabel.textContent = '✓ Rosto capturado com sucesso!';
+      regLabel.style.background = 'rgba(34,197,94,0.85)';
       progress.textContent = '✓ Descritor facial capturado! Registrando identidade...';
-      setTimeout(() => completeRegistration(detection.descriptor), 500);
+      setTimeout(() => {
+        stopRegCamera();
+        completeRegistration(detection.descriptor);
+      }, 800);
     } else {
+      // Draw guide on overlay
+      regOverlay.width = videoEl.videoWidth;
+      regOverlay.height = videoEl.videoHeight;
+      const ctx = regOverlay.getContext('2d');
+      ctx.clearRect(0, 0, regOverlay.width, regOverlay.height);
       setTimeout(tryCapture, 500);
     }
   };
 
-  tryCapture();
+  // Small delay so the camera feed is visible before detection starts
+  setTimeout(tryCapture, 600);
+}
+
+function stopRegCamera() {
+  const regVideo = document.getElementById('regVideo');
+  if (regVideo.srcObject) {
+    regVideo.srcObject.getTracks().forEach(t => t.stop());
+    regVideo.srcObject = null;
+  }
+  document.getElementById('regCamContainer').classList.remove('active');
 }
 
 function completeRegistration(descriptor) {
@@ -879,7 +947,7 @@ function completeRegistration(descriptor) {
     document.getElementById('recogStatus').textContent = 'Ativo';
     document.getElementById('recogStatus').style.color = '#22c55e';
     addLog('✅', `Cadastro facial concluído — ${registeredName} (descritor 128-dim)`, '#22c55e');
-    addLog('🔐', 'Reconhecimento contínuo ativado — verificação a cada 500ms', '#22c55e');
+    addLog('🔐', 'Reconhecimento contínuo ativado — verificação a cada 10s', '#22c55e');
   } else {
     status.textContent = `✓ ${registeredName} — Modo simulado`;
     status.className = 'cam-status ok';
@@ -1007,17 +1075,17 @@ function startContinuousRecognition() {
     } else {
       // No face detected
       noFaceFrames++;
-      if (noFaceFrames > 5 && isAuthenticated && !isLocked) {
+      if (noFaceFrames > 2 && isAuthenticated && !isLocked) {
         faceDetected = false;
         status.textContent = '⚠ Rosto não detectado';
         status.className = 'cam-status locked';
         document.getElementById('identityBadge').innerHTML = '';
-        if (noFaceFrames > 12) {
+        if (noFaceFrames > 3) {
           lockSession('Rosto ausente — possível remoção do dispositivo');
         }
       }
     }
-  }, 500);
+  }, 10000);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1032,4 +1100,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 </body>
-</html>
+</html>
