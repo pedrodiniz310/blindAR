@@ -1,0 +1,113 @@
+================================================================================
+  LEAN CANVAS — SecureVision
+  Grand Prix SENAI de Inovação 2026 — Desafio Petrobras (Cibersegurança)
+  Equipe: Pedro D. / Thauana P. / Xuiy K.
+================================================================================
+
+┌─────────────────┬─────────────────────┬──────────────────────┬─────────────────┬─────────────────┐
+│  1. PROBLEMA     │  2. SOLUÇÃO          │ 3. PROPOSTA DE VALOR │ 4. VANTAGEM     │ 5. SEGMENTO DE  │
+│                  │                      │    ÚNICA             │    INJUSTA      │    CLIENTES     │
+├─────────────────┤                      │                      │                 │                 │
+│ Top 3 problemas:│ SecureVision —       │ "Acesso seguro a IA  │ Arquitetura     │ EARLY ADOPTER:  │
+│                  │ Gateway de segurança │ via dispositivos     │ 100% testável   │ Petrobras —     │
+│ 1. Óculos AR    │ inteligente para     │ vestíveis — sem      │ com soluções de │ refinarias,     │
+│ acessam IA sem  │ dispositivos         │ fricção para o       │ mercado já      │ plataformas     │
+│ autenticação    │ vestíveis.           │ usuário, com         │ existentes      │ offshore,       │
+│ contínua        │                      │ visibilidade total   │ (Azure Stack +  │ escritórios.    │
+│ confiável.      │ → Auth facial        │ para a segurança."   │ WireGuard).     │                 │
+│                  │   contínua (trava    │                      │                 │ EXPANSÃO:       │
+│ 2. Dados        │   ao sair do rosto)  │ A IA adapta          │ Nenhum          │ Empresas de     │
+│ sensíveis       │                      │ automaticamente o    │ concorrente     │ energia,        │
+│ trafegam e são  │ → Túnel criptografado│ que mostra com base  │ combina:        │ mineração,      │
+│ exibidos sem    │   automático         │ no contexto (local,  │ auth contínua + │ aviação, saúde  │
+│ proteção em     │   (WireGuard VPN)    │ rede, ambiente).     │ níveis          │ — qualquer org  │
+│ redes de        │                      │                      │ contextuais +   │ com dados       │
+│ terceiros.      │ → 5 níveis           │ Segurança            │ transformação   │ sensíveis +     │
+│                  │   contextuais: IA    │ proporcional ao      │ de dados para   │ dispositivos    │
+│ 3. Sem auditoria│   adapta o que mostra│ risco — não bloqueia,│ AR.             │ vestíveis.      │
+│ de quem acessou │   ao ambiente        │ TRANSFORMA.          │                 │                 │
+│ o quê via       │                      │                      │                 │                 │
+│ dispositivos    │ → Camada de          │                      │                 │                 │
+│ vestíveis.      │   transformação:     │                      │                 │                 │
+│                  │   filtra dados       │                      │                 │                 │
+│ ALTERNATIVAS    │   sensíveis antes    │                      │                 │                 │
+│ EXISTENTES:     │   de exibir          │                      │                 │                 │
+│ • MDM (Intune)  │                      │                      │                 │                 │
+│   gerencia device│ → Dashboard de      │                      │                 │                 │
+│   mas não conteúdo│  governança com    │                      │                 │                 │
+│ • VPN tradicio- │   auditoria completa │                      │                 │                 │
+│   nal não tem   │                      │                      │                 │                 │
+│   auth contínua │                      │                      │                 │                 │
+│ • IAM (Okta/    │                      │                      │                 │                 │
+│   Azure AD) é   │                      │                      │                 │                 │
+│   pensada p/    │                      │                      │                 │                 │
+│   teclado, não  │                      │                      │                 │                 │
+│   AR            │                      │                      │                 │                 │
+├─────────────────┼──────────┬──────────┼──────────────────────┼─────────────────┼─────────────────┤
+│ 6. MÉTRICAS-    │ 7. CANAIS           │                      │                 │                 │
+│    CHAVE        │                      │                      │                 │                 │
+├─────────────────┤                      │                      │                 │                 │
+│ • Tempo de auth │ • SDK integrado nos  │                      │                 │                 │
+│   < 3 segundos  │   óculos AR          │                      │                 │                 │
+│                  │   corporativos      │                      │                 │                 │
+│ • 100% tráfego  │                      │                      │                 │                 │
+│   criptografado │ • Gateway on-premise │                      │                 │                 │
+│                  │   na infra Petrobras │                      │                 │                 │
+│ • Incidentes de │                      │                      │                 │                 │
+│   vazamento: 0  │ • Dashboard web para │                      │                 │                 │
+│                  │   gestores de TI     │                      │                 │                 │
+│ • 100% dos      │                      │                      │                 │                 │
+│   acessos       │ • API REST para      │                      │                 │                 │
+│   auditados     │   integração com     │                      │                 │                 │
+│                  │   SIEM existente     │                      │                 │                 │
+│ • Uptime do     │                      │                      │                 │                 │
+│   gateway       │                      │                      │                 │                 │
+│   > 99.9%       │                      │                      │                 │                 │
+├─────────────────┴──────────────────────┴──────────────────────┴─────────────────┴─────────────────┤
+│ 8. ESTRUTURA DE CUSTOS                         │ 9. FLUXO DE RECEITAS                             │
+├────────────────────────────────────────────────┤                                                  │
+│                                                │                                                  │
+│ CUSTOS FIXOS:                                  │ MODELO: SaaS B2B (licença por dispositivo/mês)   │
+│ • Equipe de desenvolvimento (3-5 devs)         │                                                  │
+│ • Infraestrutura cloud Azure                   │ • Plano Básico: R$ 89/dispositivo/mês            │
+│   (VMs, Azure OpenAI, Sentinel)                │   Auth + VPN + níveis 1-3                        │
+│ • Certificações de segurança                   │                                                  │
+│   (ISO 27001, SOC 2)                           │ • Plano Enterprise: R$ 189/dispositivo/mês       │
+│                                                │   Todos os 5 níveis + transformação de dados     │
+│ CUSTOS VARIÁVEIS:                              │   + dashboard + Sentinel + compliance LGPD       │
+│ • Licenças Azure por usuário ativo             │                                                  │
+│ • Custos de tráfego VPN (Gb)                   │ • Implantação customizada: sob consulta           │
+│ • Atualizações de compliance por jurisdição    │   (integração com sistemas legados)               │
+│ • Treinamento de modelos de detecção           │                                                  │
+│                                                │ PROJEÇÃO ANO 1: 500 dispositivos × R$ 189        │
+│ ESTIMATIVA MENSAL:                             │ = R$ 94.500/mês = R$ 1.134.000/ano               │
+│ Infra: ~R$ 15.000                              │                                                  │
+│ Equipe: ~R$ 45.000                             │                                                  │
+│ Licenças: ~R$ 8.000                            │                                                  │
+│ Total: ~R$ 68.000/mês                          │                                                  │
+└────────────────────────────────────────────────┴──────────────────────────────────────────────────┘
+
+
+================================================================================
+  RESUMO EXECUTIVO DO LEAN CANVAS
+================================================================================
+
+PROBLEMA: Dispositivos vestíveis (óculos AR) acessam sistemas de IA corporativos
+sem autenticação contínua, sem proteção de dados em trânsito/exibição, e sem
+auditoria — especialmente em redes de terceiros.
+
+SOLUÇÃO: SecureVision — um gateway de segurança que se posiciona entre o
+dispositivo AR e a IA corporativa, oferecendo:
+  1. Autenticação facial contínua (< 3s, trava ao remover)
+  2. Túnel criptografado automático (WireGuard)
+  3. 5 níveis de segurança contextual (IA adapta resposta ao ambiente)
+  4. Transformação de dados sensíveis antes da exibição
+  5. Dashboard de governança com auditoria completa
+
+DIFERENCIAL: Única solução que combina auth contínua + níveis contextuais +
+transformação de dados + 100% testável com ferramentas de mercado existentes.
+
+MERCADO: Início na Petrobras, expansível para todo setor industrial com
+dispositivos vestíveis e dados sensíveis.
+
+RECEITA: SaaS B2B por dispositivo/mês. Projeção: R$ 1.1M/ano com 500 devices.

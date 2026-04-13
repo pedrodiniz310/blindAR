@@ -1,0 +1,222 @@
+================================================================================
+  DESIGN THINKING — SecureVision (Documentação Completa)
+  Grand Prix SENAI de Inovação 2026 — Desafio Petrobras (Cibersegurança)
+  Equipe: Pedro D. / Thauana P. / Xuiy K.
+================================================================================
+
+
+================================================================================
+1. EMPATIA — Quem é afetado por esse problema?
+================================================================================
+
+PERSONA 1: TÉCNICO DE CAMPO
+────────────────────────────
+  Nome fictício: Carlos, 34 anos
+  Cargo: Técnico de Manutenção — Plataforma P-76
+  Contexto: Trabalha em plataformas offshore e refinarias.
+            Precisa consultar diagnósticos de IA sobre equipamentos
+            em tempo real, conectado por satélite ou rede de terceiros.
+  
+  Necessidade: Acesso rápido e sem fricção aos dados de manutenção.
+  
+  Dor principal: "Se a segurança travar os óculos ou demorar para
+  autenticar, perco produtividade em manutenção crítica. Cada minuto
+  parado numa plataforma custa caro."
+  
+  Comportamento: Quer tecnologia que funcione sem pensar. Não quer
+  digitar senhas, não quer esperar. Precisa das mãos livres.
+
+
+PERSONA 2: ANALISTA DE CIBERSEGURANÇA
+──────────────────────────────────────
+  Nome fictício: Marina, 29 anos
+  Cargo: Analista de Segurança da Informação — SOC Petrobras
+  Contexto: Responsável por garantir que dispositivos vestíveis não
+            sejam vetores de ataque. Monitora ameaças 24/7.
+  
+  Necessidade: Visibilidade total do que trafega entre óculos e IA.
+  
+  Dor principal: "Hoje os óculos AR são um ponto cego na minha
+  infraestrutura. Não sei quem acessou o quê, quando ou de onde."
+  
+  Comportamento: Quer dashboards, logs, alertas em tempo real.
+  Não confia em dispositivo que não pode monitorar.
+
+
+PERSONA 3: GESTOR DE OPERAÇÕES
+──────────────────────────────
+  Nome fictício: Roberto, 45 anos
+  Cargo: Gerente de Operações — Refinaria REPLAN
+  Contexto: Quer que a equipe ganhe agilidade com óculos AR, mas
+            teme vazamento de informações estratégicas.
+  
+  Necessidade: Ganhar produtividade sem aumentar risco.
+  
+  Dor principal: "Se um dado sensível vazar por screenshot ou
+  observação, a responsabilidade recai sobre mim."
+  
+  Comportamento: Precisa de números para justificar o investimento.
+  Quer ROI, redução de risco quantificável.
+
+
+PERSONA 4: COMPLIANCE / LGPD
+─────────────────────────────
+  Nome fictício: Fernanda, 38 anos
+  Cargo: Encarregada de Proteção de Dados (DPO)
+  Contexto: Precisa garantir conformidade legal quando dados
+            biométricos e corporativos são usados em vestíveis.
+  
+  Necessidade: Conformidade LGPD sem bloquear inovação.
+  
+  Dor principal: "Óculos capturam imagem, áudio e localização —
+  cada sensor é um risco regulatório. Preciso de rastreabilidade."
+  
+  Comportamento: Quer documentação, políticas claras, direito
+  ao esquecimento implementado, consentimento explícito.
+
+
+INSIGHT PRINCIPAL:
+  A segurança precisa ser INVISÍVEL para o técnico de campo (sem
+  fricção) e ao mesmo tempo dar VISIBILIDADE TOTAL ao time de
+  segurança. Se autenticar demora mais de 3 segundos, ninguém usa.
+
+
+================================================================================
+2. DEFINIÇÃO — Decomposição do problema
+================================================================================
+
+O enunciado contém 4 PROBLEMAS-RAIZ:
+
+PROBLEMA 1 — AUTENTICAÇÃO
+──────────────────────────
+  Questão: Como provar que é o usuário certo se óculos AR não têm
+  teclado nem leitor de digital? E como garantir que CONTINUA sendo
+  ele durante toda a sessão?
+  
+  Riscos: Empréstimo de dispositivo, roubo com sessão ativa,
+  deepfake/spoofing facial.
+  
+  Requisitos: Autenticação < 3 segundos, contínua, sem fricção.
+
+PROBLEMA 2 — PROTEÇÃO DE DADOS EM TRÂNSITO
+───────────────────────────────────────────
+  Questão: Dados trafegam do óculos até servidores de IA por redes
+  potencialmente inseguras (Wi-Fi, satélite, 5G de terceiros).
+  
+  Riscos: Interceptação (MITM), sniffing, exfiltração.
+  
+  Requisitos: Criptografia ponta a ponta, funcionamento em qualquer
+  rede, sem degradação significativa de performance.
+
+PROBLEMA 3 — VAZAMENTO VISUAL
+──────────────────────────────
+  Questão: Óculos AR projetam informações no campo de visão.
+  Qualquer pessoa ao redor pode ver. Screenshots, gravações e
+  até reflexo das lentes são vetores de vazamento.
+  
+  Riscos: Shoulder surfing, gravação externa, screenshot interno,
+  IA retornando dados sensíveis sem classificação.
+  
+  Requisitos: Filtro inteligente que proteja dados sensíveis sem
+  tornar o sistema inútil.
+
+PROBLEMA 4 — REDES DE TERCEIROS
+────────────────────────────────
+  Questão: Técnicos usam redes de satélite, Wi-Fi de fornecedores,
+  5G público. A solução NÃO pode exigir infraestrutura 100% da
+  Petrobras.
+  
+  Riscos: Rede comprometida, latência alta, desconexão intermitente.
+  
+  Requisitos: Funcionar em qualquer rede, reconexão automática,
+  criptografia independente da rede.
+
+
+POV (POINT OF VIEW):
+  "Colaboradores da Petrobras em campo precisam acessar sistemas de
+  IA através de óculos AR de forma SEGURA POR PADRÃO — autenticação
+  sem fricção, dados criptografados, prevenção de vazamento automática
+  — sem depender da rede ou do ambiente em que estão."
+
+
+================================================================================
+3. IDEAÇÃO — Soluções geradas
+================================================================================
+
+Foram geradas 8 ideias na etapa de brainstorming.
+3 conceitos foram selecionados e convergidos na solução final:
+
+CONCEITO 1: GATEWAY ZERO TRUST (origem: ideia PetroBridge)
+──────────────────────────────────────────────────────────
+  • Arquitetura 100% testável com soluções de mercado
+  • Azure AD + Conditional Access para autenticação
+  • WireGuard para túnel criptografado
+  • Azure OpenAI com RBAC para controle de acesso à IA
+  • Cada requisição verificada individualmente (ZTNA)
+
+CONCEITO 2: NÍVEIS CONTEXTUAIS (origem: ideia ShieldView)
+─────────────────────────────────────────────────────────
+  • 5 níveis de segurança que se ajustam ao contexto
+  • Variáveis: localização + rede + autenticação + ambiente
+  • IA adapta a resposta ao nível do momento
+  • Área pública = dados genéricos; sala segura = dados completos
+
+CONCEITO 3: TRANSFORMAÇÃO DE DADOS (origem: ideia ContextShield)
+────────────────────────────────────────────────────────────────
+  • Camada de IA que analisa resposta ANTES de exibir
+  • Números exatos → gráficos relativos
+  • Nomes classificados → códigos
+  • Watermark dinâmico (nome + hora)
+  • Detecção de observador via câmera frontal
+
+
+SOLUÇÃO CONVERGIDA: SecureVision
+────────────────────────────────
+  Combina os 3 conceitos em uma arquitetura única:
+  Gateway Zero Trust + Níveis Contextuais + Transformação de Dados
+  
+  Tagline: "Acesso seguro a IA via dispositivos vestíveis —
+  sem fricção para o usuário, com visibilidade total para a segurança."
+
+
+================================================================================
+4. PROTOTIPAÇÃO — O que foi construído
+================================================================================
+
+  Protótipo: Web app interativo (prototipo_securevision.html)
+  
+  Funcionalidades implementadas:
+  1. Autenticação facial via webcam (face-api.js)
+  2. Chat com IA simulada (respostas filtradas por nível)
+  3. 5 níveis de segurança com troca em tempo real
+  4. Detecção de observador (múltiplos rostos)
+  5. Dashboard de governança com logs e gráficos
+  6. Watermark dinâmico em todas as telas
+  
+  Para testar: abrir prototipo_securevision.html no Chrome/Edge
+  Não precisa instalar nada — funciona 100% no navegador
+
+
+================================================================================
+5. TESTE — Validação do protótipo
+================================================================================
+
+  ┌────┬──────────────────────────────────┬─────────────────────────────┐
+  │ #  │ Cenário de teste                 │ Resultado esperado          │
+  ├────┼──────────────────────────────────┼─────────────────────────────┤
+  │ 1  │ Usuário autorizado, rede interna │ Dados completos (Nível 1)   │
+  │ 2  │ Mesmo usuário, rede pública      │ Dados genéricos (Nível 3)   │
+  │ 3  │ Usuário sem permissão RBAC       │ "Acesso negado"             │
+  │ 4  │ Dispositivo removido do rosto    │ Sessão trava <1s (Nível 5)  │
+  │ 5  │ Observador detectado             │ Dados borrados (Nível 4)    │
+  │ 6  │ VPN desconecta                   │ Reconexão automática        │
+  │ 7  │ Tentativa de screenshot          │ Watermark rastreável        │
+  │ 8  │ Biometria errada 3x             │ Dispositivo bloqueado       │
+  └────┴──────────────────────────────────┴─────────────────────────────┘
+
+  MÉTRICAS DE SUCESSO:
+  • Tempo de autenticação: < 3 segundos
+  • Tráfego criptografado: 100%
+  • Dados sensíveis em ambiente não autorizado: 0
+  • Acessos auditáveis: 100%
+  • Dependência de rede específica: 0

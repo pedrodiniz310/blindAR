@@ -1,0 +1,264 @@
+================================================================================
+  ARQUITETURA TÉCNICA — SecureVision
+  Grand Prix SENAI de Inovação 2026 — Desafio Petrobras (Cibersegurança)
+  Equipe: Pedro D. / Thauana P. / Xuiy K.
+================================================================================
+
+
+1. VISÃO GERAL DA ARQUITETURA
+================================================================================
+
+O SecureVision é um middleware de segurança que se posiciona entre o dispositivo
+vestível (óculos AR HoloLens 2 ou smartphone simulador) e os sistemas de IA
+corporativos da Petrobras.
+
+Fluxo de dados:
+
+  ┌──────────────────┐     ┌──────────────┐     ┌───────────────────┐
+  │  DISPOSITIVO AR  │────>│  WireGuard   │────>│  SecureVision     │
+  │  (HoloLens 2 ou  │     │  VPN Tunnel  │     │  Gateway (Azure)  │
+  │   Smartphone)    │     │  (criptog.)  │     │                   │
+  └──────────────────┘     └──────────────┘     └─────────┬─────────┘
+         ^                                                │
+         │                                                v
+  ┌──────┴───────────┐     ┌──────────────┐     ┌───────────────────┐
+  │  EXIBIÇÃO SEGURA │<────│  Camada de   │<────│  LLM (Azure       │
+  │  (Watermark +    │     │  Transforma- │     │  OpenAI) + RBAC   │
+  │   nível adequado)│     │  ção de Dados│     │                   │
+  └──────────────────┘     └──────────────┘     └───────────────────┘
+                                                          │
+                                                          v
+                                                ┌───────────────────┐
+                                                │  Microsoft        │
+                                                │  Sentinel (SIEM)  │
+                                                │  Dashboard Gov.   │
+                                                └───────────────────┘
+
+
+2. COMPONENTES DA ARQUITETURA
+================================================================================
+
+2.1 CAMADA DE DISPOSITIVO (Edge)
+─────────────────────────────────
+Dispositivo: Microsoft HoloLens 2 (ou smartphone como simulador)
+
+Segurança nativa do HoloLens 2 (fonte: Microsoft Learn):
+  • BitLocker — criptografia total do disco
+  • TPM (Trusted Platform Module) — proteção de credenciais em hardware
+  • Microsoft Defender SmartScreen — proteção contra phishing/malware
+  • UEFI Secure Boot — impede adulteração de firmware
+  • SO sem administrador — grupo Admin desabilitado
+  • Firewall sempre ativo — impossível desabilitar
+  • Code signing — apenas firmware assinado é instalado
+  • Windows Hello for Business — autenticação por PIN ou biometria (íris)
+  • Microsoft Entra ID — identidade NÃO armazenada localmente
+  • Intune MDM — gerenciamento remoto de dispositivos
+
+Funções no SecureVision:
+  • Câmera frontal → autenticação facial (Windows Hello)
+  • Câmera frontal → detecção de presença contínua
+  • Câmera frontal → detecção de observador (pessoa ao redor)
+  • Sensores → localização (GPS/Wi-Fi)
+  • Cliente WireGuard → estabelece túnel criptografado
+  • App UWP SecureVision → interface AR do assistente de IA
+
+
+2.2 CAMADA DE REDE (Túnel Seguro)
+─────────────────────────────────
+Tecnologia: WireGuard VPN
+
+Por que WireGuard e não VPN convencional?
+  • Código-fonte: ~4.000 linhas (vs ~100.000 do OpenVPN) — menos superfície de ataque
+  • Latência: ~1ms de overhead (vs ~10ms do IPsec)
+  • Reconexão instantânea ao trocar de rede (roaming)
+  • Criptografia moderna: ChaCha20, Poly1305, Curve25519, BLAKE2s
+  • Ideal para dispositivos com bateria limitada (baixo consumo)
+
+Configuração:
+  • Cliente WireGuard no HoloLens/smartphone
+  • Servidor WireGuard no Azure (ou on-premise na Petrobras)
+  • Chaves pré-compartilhadas por dispositivo
+  • Túnel estabelecido automaticamente ao ligar o dispositivo
+  • TODO tráfego passa pelo túnel — zero exposição à rede local
+
+
+2.3 CAMADA DE GATEWAY (SecureVision Core)
+─────────────────────────────────────────
+Hospedagem: Azure App Service ou Azure Container Instances
+
+Componentes do Gateway:
+  
+  a) AUTENTICADOR CONTEXTUAL
+     • Recebe token do Azure AD (via Windows Hello)
+     • Verifica: identidade + dispositivo + localização + tipo de rede
+     • Calcula o NÍVEL DE SEGURANÇA (1 a 5)
+     • Aplica Conditional Access Policies do Azure AD
+
+  b) MOTOR DE NÍVEIS CONTEXTUAIS
+     • Nível 1 (VERDE): Sala segura + rede interna + biometria OK
+       → Dados completos, sem filtro
+     • Nível 2 (AZUL): Área de trabalho + rede interna
+       → Dados com watermark dinâmico
+     • Nível 3 (AMARELO): Campo + rede de terceiro
+       → Dados genéricos (sem valores exatos)
+     • Nível 4 (LARANJA): Área pública OU observador detectado
+       → Apenas alertas e instruções gerais
+     • Nível 5 (VERMELHO): Auth falha / dispositivo comprometido / removido
+       → Tela bloqueada + alerta ao SOC
+
+  c) PROXY DE IA
+     • Intercepta requisições do usuário → adiciona contexto de segurança
+     • Roteia para Azure OpenAI com RBAC aplicado
+     • Instrui o LLM a NÃO retornar dados além da classificação do usuário
+     • System prompt inclui: nível do usuário, classificação de dados permitida
+
+  d) CAMADA DE TRANSFORMAÇÃO (pós-LLM)
+     • Recebe resposta da IA
+     • Microsoft Purview classifica dados automaticamente
+     • Se nível < 3: substitui valores exatos por genéricos
+       Ex: "42.7 bar" → "pressão acima do normal"
+       Ex: "João Silva" → "Colaborador #2847"
+     • Aplica watermark dinâmico (nome + data + hora + nível)
+     • Se observador detectado: blur automático em dados sensíveis
+
+
+2.4 CAMADA DE IA (Backend)
+─────────────────────────
+Tecnologia: Azure OpenAI Service
+
+Configuração:
+  • Modelo: GPT-4o ou equivalente
+  • RBAC por Azure AD: cada papel tem acesso a datasets diferentes
+  • System prompt controlado pelo gateway (não pelo usuário)
+  • Data sources conectados via Azure AI Search
+  • Rate limiting por usuário/dispositivo
+  • Logs de toda interação enviados ao Sentinel
+
+
+2.5 CAMADA DE GOVERNANÇA
+────────────────────────
+Tecnologia: Microsoft Sentinel (SIEM) + Dashboard customizado
+
+O que é logado:
+  • Cada autenticação (sucesso/falha)
+  • Cada mudança de nível de segurança
+  • Cada consulta à IA (pergunta + resposta filtrada)
+  • Cada detecção de observador
+  • Cada tentativa de acesso negado
+  • Localização e rede em cada evento
+
+Dashboard exibe:
+  • Mapa com dispositivos ativos em campo
+  • Nível de segurança de cada sessão ativa
+  • Alertas em tempo real (Nível 5 = alerta crítico)
+  • Histórico de acessos por colaborador
+  • Métricas: tempo médio de auth, % tráfego criptografado
+  • Conformidade LGPD: dados biométricos processados vs enviados
+
+
+3. STACK TECNOLÓGICO COMPLETO
+================================================================================
+
+┌────────────────────────────┬───────────────────────────────────────────────┐
+│ Componente                 │ Tecnologia (disponível no mercado)           │
+├────────────────────────────┼───────────────────────────────────────────────┤
+│ Autenticação               │ Azure AD + Windows Hello + Conditional Access│
+│ VPN                        │ WireGuard                                    │
+│ Gateway / Middleware       │ Azure App Service (Python/Node.js)           │
+│ IA / LLM                  │ Azure OpenAI Service (GPT-4o)                │
+│ Classificação de dados    │ Microsoft Purview (DLP)                      │
+│ SIEM / Logs               │ Microsoft Sentinel                           │
+│ MDM                        │ Microsoft Intune                             │
+│ Dispositivo AR             │ Microsoft HoloLens 2                        │
+│ Simulação (protótipo)     │ Smartphone / Webcam + Web App                │
+│ Detecção facial           │ face-api.js (TensorFlow.js) ou Azure Face API│
+│ Dashboard                  │ HTML + Chart.js (ou Power BI)                │
+└────────────────────────────┴───────────────────────────────────────────────┘
+
+
+4. SEGURANÇA NATIVA DO HOLOLENS 2 (Microsoft Learn)
+================================================================================
+
+A segurança do HoloLens 2 cobre a camada de DISPOSITIVO:
+  • BitLocker → dados em repouso criptografados
+  • TPM → credenciais protegidas em hardware
+  • Secure Boot → impede firmware adulterado
+  • Firewall always-on → impossível desabilitar
+  • SO sem admin → superfície de ataque minimizada
+  • Code signing → só apps assinados instalam
+  • Entra ID → identidade não fica no device
+  • Defender SmartScreen → anti-phishing/malware
+
+O SecureVision foca nas camadas que o HoloLens NÃO cobre sozinho:
+  ✗ Rede (VPN entre device e backend) → WireGuard
+  ✗ Dados em exibição (vazamento visual) → ContextShield / Transformação
+  ✗ Acesso contextual (adaptar IA ao ambiente) → ShieldView / 5 Níveis
+  ✗ Auditoria centralizada de interações com IA → Sentinel
+
+
+5. FLUXO DETALHADO DE UMA REQUISIÇÃO
+================================================================================
+
+  1. Usuário veste HoloLens / abre app no smartphone
+  2. Câmera frontal captura rosto → Windows Hello autentica
+  3. Token de identidade emitido pelo Azure AD
+  4. Cliente WireGuard estabelece túnel criptografado automaticamente
+  5. Gateway SecureVision recebe token + metadados:
+     - Localização GPS
+     - Tipo de rede (interna/pública/satélite)
+     - Status de biometria (contínua)
+     - Presença de observador (sim/não)
+  6. Motor de Níveis calcula: nível = f(localização, rede, auth, observador)
+  7. Usuário faz pergunta ao assistente de IA
+  8. Gateway adiciona context de segurança ao prompt:
+     "O usuário tem nível 3. Não retorne valores numéricos exatos.
+      Não retorne nomes de pessoas. Use linguagem genérica."
+  9. Azure OpenAI processa com RBAC aplicado
+  10. Resposta retorna ao Gateway
+  11. Microsoft Purview classifica dados na resposta
+  12. Camada de Transformação aplica filtros do nível atual:
+      - Nível 1-2: exibe como está (com/sem watermark)
+      - Nível 3: substitui valores exatos por genéricos
+      - Nível 4: retorna apenas alertas gerais
+      - Nível 5: bloqueia tudo + alerta SOC
+  13. Resposta transformada enviada ao dispositivo via túnel
+  14. Exibida na interface AR com watermark dinâmico
+  15. Todo o fluxo logado no Microsoft Sentinel
+
+  Tempo total estimado: < 2 segundos (auth) + < 1 segundo (query + transform)
+
+
+6. CENÁRIOS DE TESTE
+================================================================================
+
+┌────┬──────────────────────────────────┬────────────────────────────────────────┐
+│ #  │ Cenário                          │ Resultado esperado                     │
+├────┼──────────────────────────────────┼────────────────────────────────────────┤
+│ 1  │ Usuário autorizado, rede interna │ Dados completos (Nível 1)              │
+│ 2  │ Mesmo usuário, rede pública      │ Dados genéricos + watermark (Nível 3)  │
+│ 3  │ Usuário sem permissão RBAC       │ "Você não tem acesso a essas info"     │
+│ 4  │ Dispositivo removido do rosto    │ Sessão trava <1s + alerta SOC (Nv 5)  │
+│ 5  │ Observador detectado pela câmera │ Dados blur automático (Nível 4)        │
+│ 6  │ VPN desconecta (rede instável)   │ Reconexão automática WireGuard <1s     │
+│ 7  │ Tentativa de screenshot          │ Watermark com nome+hora no conteúdo    │
+│ 8  │ Biometria errada 3x              │ Dispositivo bloqueado + alerta SOC     │
+└────┴──────────────────────────────────┴────────────────────────────────────────┘
+
+
+7. CONFORMIDADE LGPD
+================================================================================
+
+┌────────────────────────────┬──────────────────────────────────────────────────┐
+│ Princípio LGPD             │ Como o SecureVision atende                       │
+├────────────────────────────┼──────────────────────────────────────────────────┤
+│ Consentimento (Art. 7°)    │ Consentimento explícito no 1° uso. Revogável.   │
+│ Minimização (Art. 6°)      │ Biometria processada localmente no TPM.         │
+│                            │ Imagem facial NUNCA sai do dispositivo.          │
+│ Transparência              │ Colaborador vê o que é coletado e por quê.      │
+│ Proporcionalidade          │ 5 níveis = proteção proporcional ao risco.       │
+│ Não-discriminação          │ Auth facial funciona independente de cor/luz.    │
+│ Direito ao esquecimento    │ Ao descadastrar: todos os dados biométricos     │
+│ (Art. 18°)                 │ e logs pessoais apagados com certificado.        │
+│ Segurança (Art. 46)        │ Criptografia ponta a ponta + TPM + BitLocker.   │
+│ Responsabilização          │ Logs auditáveis no Sentinel + DPO dashboard.    │
+└────────────────────────────┴──────────────────────────────────────────────────┘
