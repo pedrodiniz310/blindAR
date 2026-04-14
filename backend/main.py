@@ -20,7 +20,7 @@ from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from supabase import create_client, Client
-from postgrest.constants import CountMethod
+from postgrest.types import CountMethod
 
 load_dotenv()
 
