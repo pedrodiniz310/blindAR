@@ -271,9 +271,13 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
     <div class="sb-section">
       <div class="sb-title">API do Assistente IA</div>
       <div class="api-section">
-        <input class="api-input" id="apiKey" type="password" placeholder="Cole sua API key do Google Gemini" oninput="validateApiKey()">
+        <select id="aiProviderSelect" onchange="switchProvider()" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:12px;margin-bottom:8px;outline:none;cursor:pointer;">
+          <option value="groq" selected>Groq — Llama 3.3 70B (recomendado)</option>
+          <option value="gemini">Google Gemini 2.0 Flash</option>
+        </select>
+        <input class="api-input" id="apiKey" type="password" placeholder="Cole sua API key do Groq" oninput="validateApiKey()">
         <div class="api-status" id="apiStatus"></div>
-        <div class="api-hint">Obtenha grátis em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent2);">aistudio.google.com/apikey</a></div>
+        <div class="api-hint" id="apiHint">Obtenha grátis em <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent2);">console.groq.com/keys</a></div>
       </div>
     </div>
 
@@ -413,8 +417,22 @@ let lastMatchScore = 0;
 const MATCH_THRESHOLD = 0.5; // euclidean distance < 0.5 = same person
 
 // API
-let geminiApiKey = '';
-let aiMode = 'local'; // 'local' or 'gemini'
+let apiKey = '';
+let aiMode = 'local'; // 'local' or 'api'
+let aiProvider = 'groq'; // 'groq' or 'gemini'
+
+const AI_PROVIDERS = {
+  groq: {
+    name: 'Groq (Llama 3.3 70B)',
+    hint: 'Obtenha grátis em <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent2);">console.groq.com/keys</a>',
+    placeholder: 'Cole sua API key do Groq'
+  },
+  gemini: {
+    name: 'Google Gemini',
+    hint: 'Obtenha grátis em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent2);">aistudio.google.com/apikey</a>',
+    placeholder: 'Cole sua API key do Gemini'
+  }
+};
 
 const LEVEL_CONFIG = {
   1: { name:'NÍVEL 1', color:'#22c55e', bg:'rgba(34,197,94,0.15)', label:'Sala segura — Rede Interna', network:'Interna (segura)' },
@@ -479,21 +497,32 @@ function getDateTime() {
 // ══════════════════════════════════════════════════════════════
 //  API KEY
 // ══════════════════════════════════════════════════════════════
+function switchProvider() {
+  const select = document.getElementById('aiProviderSelect');
+  aiProvider = select.value;
+  const provider = AI_PROVIDERS[aiProvider];
+  document.getElementById('apiKey').placeholder = provider.placeholder;
+  document.getElementById('apiHint').innerHTML = provider.hint;
+  // Re-validate with current key
+  validateApiKey();
+}
+
 function validateApiKey() {
   const key = document.getElementById('apiKey').value.trim();
   const status = document.getElementById('apiStatus');
+  const providerName = AI_PROVIDERS[aiProvider].name;
   if (key.length > 20) {
-    geminiApiKey = key;
-    aiMode = 'gemini';
-    status.innerHTML = '<span style="color:var(--green);">✓ API key configurada — IA real ativa</span>';
-    addLog('🤖', 'Gemini API conectada — respostas reais ativadas', '#22c55e');
+    apiKey = key;
+    aiMode = 'api';
+    status.innerHTML = `<span style="color:var(--green);">✓ ${providerName} conectado — IA real ativa</span>`;
+    addLog('🤖', `${providerName} conectado — respostas reais ativadas`, '#22c55e');
   } else if (key.length > 0) {
     status.innerHTML = '<span style="color:var(--yellow);">⏳ Key incompleta...</span>';
     aiMode = 'local';
   } else {
     status.innerHTML = '';
     aiMode = 'local';
-    geminiApiKey = '';
+    apiKey = '';
   }
 }
 
@@ -736,8 +765,12 @@ async function processChat(question) {
 
   let response;
   try {
-    if (aiMode === 'gemini' && geminiApiKey) {
-      response = await callGemini(question);
+    if (aiMode === 'api' && apiKey) {
+      if (aiProvider === 'groq') {
+        response = await callGroq(question);
+      } else {
+        response = await callGemini(question);
+      }
     } else {
       response = getLocalResponse(question);
     }
@@ -763,8 +796,8 @@ async function processChat(question) {
   else if (currentLevel === 4) filterTag = '<div class="msg-blocked">🚫 Dados protegidos — observador/área pública (Nível 4)</div>';
   else filterTag = '<div class="msg-blocked">❌ Sessão bloqueada (Nível 5)</div>';
 
-  const modeTag = aiMode === 'gemini'
-    ? '<div style="font-size:9px;color:var(--accent2);margin-top:6px;opacity:0.7;">⚡ Resposta via Google Gemini</div>'
+  const modeTag = aiMode === 'api'
+    ? `<div style="font-size:9px;color:var(--accent2);margin-top:6px;opacity:0.7;">⚡ Resposta via ${AI_PROVIDERS[aiProvider].name}</div>`
     : '<div style="font-size:9px;color:var(--muted);margin-top:6px;opacity:0.5;">💾 Resposta local (simulada)</div>';
 
   aiDiv.innerHTML = `<div class="msg-label">BLINDAR IA — ${LEVEL_CONFIG[currentLevel].name}</div><div class="msg-bubble ai">${response}${filterTag}${modeTag}</div>`;
@@ -777,6 +810,49 @@ async function processChat(question) {
   queryCount++;
   hourlyCounts[new Date().getHours()]++;
   addLog('📋', `Query: "${escapeHtml(question.substring(0,40))}..." — ${LEVEL_CONFIG[currentLevel].name} [${aiMode}]`, LEVEL_CONFIG[currentLevel].color);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GROQ API (Llama 3.3 70B)
+// ══════════════════════════════════════════════════════════════
+async function callGroq(question) {
+  const url = 'https://api.groq.com/openai/v1/chat/completions';
+
+  const body = {
+    model: 'llama-3.3-70b-versatile',
+    messages: [
+      { role: 'system', content: getSystemPrompt() },
+      { role: 'user', content: question }
+    ],
+    temperature: 0.7,
+    max_tokens: 500
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    const msg = err.error?.message || `HTTP ${res.status}`;
+    if (res.status === 429) {
+      throw new Error('Limite de requisições atingido. Aguarde alguns segundos e tente novamente.');
+    }
+    throw new Error(msg);
+  }
+
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content;
+  if (!text) throw new Error('Resposta vazia da API');
+
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -794,7 +870,7 @@ async function callGemini(question) {
 
   for (const model of GEMINI_MODELS) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
       const body = {
         system_instruction: {
