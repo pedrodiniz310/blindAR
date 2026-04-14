@@ -109,7 +109,9 @@ class DashboardStats(BaseModel):
     total_queries: int
     total_alerts: int
     active_devices: int
+    total_users: int
     events: list[dict]
+    users: list[dict]
 
 
 # ──────────────────────────────────────────────────────────────
@@ -415,12 +417,29 @@ async def create_event(event: SecurityEvent):
 
 
 @app.get("/api/events", response_model=list[dict])
-async def get_events(limit: int = 50):
-    """Retrieve recent security events."""
+async def get_events(limit: int = 50, severity: Optional[str] = None, event_type: Optional[str] = None):
+    """Retrieve recent security events with optional filters."""
     if supabase:
-        result = supabase.table("events").select("*").order("created_at", desc=True).limit(limit).execute()
+        query = supabase.table("events").select("*")
+        if severity:
+            query = query.eq("severity", severity)
+        if event_type:
+            query = query.eq("event_type", event_type)
+        result = query.order("created_at", desc=True).limit(limit).execute()
         return result.data
     return []
+
+
+# ──────────────────────────────────────────────────────────────
+#  Routes — Users List (Organization)
+# ──────────────────────────────────────────────────────────────
+@app.get("/api/users")
+async def list_users():
+    """List all registered users in the organization."""
+    if not supabase:
+        return []
+    result = supabase.table("users").select("id, name, role, registered_at, is_active").order("registered_at", desc=True).execute()
+    return result.data
 
 
 async def log_event(event: SecurityEvent):
@@ -443,17 +462,20 @@ async def log_event(event: SecurityEvent):
 async def dashboard():
     """Get aggregated dashboard statistics."""
     if not supabase:
-        return DashboardStats(total_queries=0, total_alerts=0, active_devices=1, events=[])
+        return DashboardStats(total_queries=0, total_alerts=0, active_devices=1, total_users=0, events=[], users=[])
 
     queries = supabase.table("events").select("id", count=CountMethod.exact).eq("event_type", "ai_query").execute()
     alerts = supabase.table("events").select("id", count=CountMethod.exact).in_("severity", ["warning", "critical"]).execute()
-    recent = supabase.table("events").select("*").order("created_at", desc=True).limit(20).execute()
+    recent = supabase.table("events").select("*").order("created_at", desc=True).limit(50).execute()
+    users = supabase.table("users").select("id, name, role, registered_at, is_active").order("registered_at", desc=True).execute()
 
     return DashboardStats(
         total_queries=queries.count or 0,
         total_alerts=alerts.count or 0,
         active_devices=1,
+        total_users=len(users.data) if users.data else 0,
         events=recent.data,
+        users=users.data or [],
     )
 
 

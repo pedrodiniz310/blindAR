@@ -142,6 +142,24 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .log-time { color:var(--muted); font-family:monospace; flex-shrink:0; }
 .log-icon { flex-shrink:0; }
 .log-text { color:#a1a1aa; }
+.log-severity { padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700; flex-shrink:0; letter-spacing:0.5px; }
+.log-severity.critical { background:rgba(239,68,68,0.15); color:#ef4444; }
+.log-severity.warning { background:rgba(249,115,22,0.15); color:#f97316; }
+.log-severity.info { background:rgba(59,130,246,0.15); color:#3b82f6; }
+
+/* LOG FILTERS */
+.log-filter { padding:4px 10px; border:1px solid var(--border); border-radius:4px; background:var(--surface2); color:var(--muted); font-size:10px; cursor:pointer; transition:all .15s; }
+.log-filter:hover { color:var(--text); border-color:var(--accent); }
+.log-filter.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+/* USER LIST */
+.user-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+.user-row:last-child { border-bottom:none; }
+.user-avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:#fff; flex-shrink:0; }
+.user-info { flex:1; }
+.user-info .uname { font-size:13px; font-weight:600; color:var(--text); }
+.user-info .urole { font-size:11px; color:var(--muted); }
+.user-status { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; }
 
 /* TABS VISIBILITY */
 .tab-content { display:none; flex:1; overflow:hidden; }
@@ -406,11 +424,11 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
           </div>
           <div class="dash-card">
             <div class="num" style="color:var(--accent2);" id="dashQueries">0</div>
-            <div class="label">Consultas à IA hoje</div>
+            <div class="label">Consultas à IA</div>
           </div>
           <div class="dash-card">
-            <div class="num" style="color:var(--green);" id="dashIdentity">—</div>
-            <div class="label">Similaridade facial</div>
+            <div class="num" style="color:var(--green);" id="dashUsers">0</div>
+            <div class="label">Usuários cadastrados</div>
           </div>
         </div>
         <div class="dash-charts">
@@ -423,8 +441,24 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
             <canvas id="chartTime"></canvas>
           </div>
         </div>
+
+        <!-- Users in Organization -->
+        <div class="log-card" style="margin-bottom:14px;" id="usersCard">
+          <h3>👥 Usuários da Organização</h3>
+          <div id="usersList" style="font-size:12px;color:var(--muted);">Conecte ao backend para ver os usuários cadastrados.</div>
+        </div>
+
+        <!-- Event Log -->
         <div class="log-card">
-          <h3>Log de Eventos em Tempo Real</h3>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <h3 style="margin:0;">📋 Log de Eventos em Tempo Real</h3>
+            <div style="display:flex;gap:4px;" id="logFilters">
+              <button class="log-filter active" data-filter="all" onclick="filterLogs('all')">Todos</button>
+              <button class="log-filter" data-filter="critical" onclick="filterLogs('critical')">🚨 Críticos</button>
+              <button class="log-filter" data-filter="warning" onclick="filterLogs('warning')">⚠️ Alerta</button>
+              <button class="log-filter" data-filter="info" onclick="filterLogs('info')">📋 Info</button>
+            </div>
+          </div>
           <div id="logEntries"></div>
         </div>
       </div>
@@ -695,6 +729,30 @@ async function apiLoadEvents() {
   }
 }
 
+async function apiLoadDashboard() {
+  if (!backendConnected) return null;
+  try {
+    const res = await fetch(backendUrl + '/api/dashboard');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch(e) {
+    console.warn('Backend dashboard load failed:', e);
+    return null;
+  }
+}
+
+async function apiLoadUsers() {
+  if (!backendConnected) return [];
+  try {
+    const res = await fetch(backendUrl + '/api/users');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch(e) {
+    console.warn('Backend users load failed:', e);
+    return [];
+  }
+}
+
 // ══════════════════════════════════════════════════════════════
 //  TABS
 // ══════════════════════════════════════════════════════════════
@@ -771,7 +829,10 @@ function setLevel(level) {
 function lockSession(reason) {
   isLocked = true;
   document.getElementById('lockMessage').textContent = reason || 'Rosto não detectado — aproxime-se da câmera para desbloquear';
-  document.getElementById('lockReason').textContent = 'Alerta enviado ao SOC — Sentinel';
+  document.getElementById('lockReason').textContent = backendConnected
+    ? 'Alerta registrado no Supabase — SOC notificado via Sentinel'
+    : '⚠️ Backend desconectado — alerta não foi enviado ao SOC';
+  document.getElementById('lockReason').style.color = backendConnected ? '#ef4444' : '#f97316';
   document.getElementById('sessionLocked').classList.add('show');
   // Reset unlock UI
   document.getElementById('unlockBtn').disabled = false;
@@ -1196,29 +1257,41 @@ function renderLog() {
 //  DASHBOARD
 // ══════════════════════════════════════════════════════════════
 let chartLevel = null, chartTime = null;
+let currentLogFilter = 'all';
+let backendEvents = [];
+let backendUsers = [];
 
-function updateDashboard() {
+function filterLogs(filter) {
+  currentLogFilter = filter;
+  document.querySelectorAll('.log-filter').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+  renderLog();
+}
+
+async function updateDashboard() {
+  // In-memory stats (always available)
   document.getElementById('dashDevices').textContent = '1';
   document.getElementById('dashAlerts').textContent = alertCount;
   document.getElementById('dashQueries').textContent = queryCount;
-  document.getElementById('dashIdentity').textContent = lastMatchScore > 0 ? (lastMatchScore * 100).toFixed(0) + '%' : '—';
-  renderLog();
+  document.getElementById('dashUsers').textContent = backendUsers.length || (registeredName ? '1' : '0');
 
-  // Load events from backend if connected
+  // If backend connected, fetch real data
   if (backendConnected) {
-    apiLoadEvents().then(events => {
-      if (events.length > 0) {
-        const el = document.getElementById('logEntries');
-        const severityIcon = { info: '📋', warning: '⚠️', critical: '🚨' };
-        const severityColor = { info: '#a1a1aa', warning: '#f97316', critical: '#ef4444' };
-        const dbEntries = events.map(e => {
-          const t = new Date(e.created_at).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-          return `<div class="log-entry"><span class="log-time">${t}</span><span class="log-icon">${severityIcon[e.severity] || '📋'}</span><span class="log-text" style="color:${severityColor[e.severity] || '#a1a1aa'}">[DB] ${e.description}</span></div>`;
-        }).join('');
-        el.innerHTML += '<div style="border-top:1px solid var(--border);margin:8px 0;padding-top:4px;font-size:10px;color:var(--muted);">🗄️ Eventos persistidos</div>' + dbEntries;
-      }
-    });
+    const dashData = await apiLoadDashboard();
+    if (dashData) {
+      document.getElementById('dashAlerts').textContent = dashData.total_alerts || alertCount;
+      document.getElementById('dashQueries').textContent = dashData.total_queries || queryCount;
+      document.getElementById('dashUsers').textContent = dashData.total_users || 0;
+
+      // Store backend events for rendering
+      backendEvents = dashData.events || [];
+      backendUsers = dashData.users || [];
+
+      // Render users list
+      renderUsers(backendUsers);
+    }
   }
+
+  renderLog();
 
   const ctxL = document.getElementById('chartLevel');
   if (chartLevel) chartLevel.destroy();
@@ -1245,6 +1318,82 @@ function updateDashboard() {
       plugins: { legend: { display:false } }
     }
   });
+}
+
+function renderUsers(users) {
+  const el = document.getElementById('usersList');
+  if (!users || users.length === 0) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;">Nenhum usuário cadastrado ainda.</div>';
+    return;
+  }
+  const colors = ['#22c55e','#3b82f6','#eab308','#f97316','#9333ea','#ec4899'];
+  el.innerHTML = users.map((u, i) => {
+    const initials = (u.name || '?').split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
+    const color = colors[i % colors.length];
+    const active = u.is_active !== false;
+    const date = new Date(u.registered_at).toLocaleDateString('pt-BR');
+    const isCurrent = u.id === backendUserId;
+    return `<div class="user-row">
+      <div class="user-avatar" style="background:${color};">${initials}</div>
+      <div class="user-info">
+        <div class="uname">${u.name}${isCurrent ? ' <span style="font-size:10px;color:var(--accent2);">(você)</span>' : ''}</div>
+        <div class="urole">${u.role || 'Colaborador'} · Cadastrado em ${date}</div>
+      </div>
+      <span class="user-status" style="background:${active ? 'rgba(34,197,94,0.15);color:#22c55e' : 'rgba(239,68,68,0.15);color:#ef4444'}">${active ? 'Ativo' : 'Inativo'}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderLog() {
+  const el = document.getElementById('logEntries');
+  if (!el) return;
+
+  // Merge in-memory + backend events
+  const severityIcon = { info: '📋', warning: '⚠️', critical: '🚨' };
+  const severityColor = { info: '#3b82f6', warning: '#f97316', critical: '#ef4444' };
+
+  // In-memory events (always shown)
+  let entries = eventLog.map(e => ({
+    time: e.time,
+    icon: e.icon,
+    text: e.text,
+    color: e.color || '#a1a1aa',
+    severity: e.color === '#ef4444' ? 'critical' : (e.color === '#f97316' ? 'warning' : 'info'),
+    source: 'local'
+  }));
+
+  // Backend events
+  if (backendEvents.length > 0) {
+    const dbEntries = backendEvents.map(e => ({
+      time: new Date(e.created_at).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'}),
+      icon: severityIcon[e.severity] || '📋',
+      text: e.description,
+      color: severityColor[e.severity] || '#a1a1aa',
+      severity: e.severity || 'info',
+      source: 'db',
+      eventType: e.event_type
+    }));
+    entries = entries.concat(dbEntries);
+  }
+
+  // Apply filter
+  if (currentLogFilter !== 'all') {
+    entries = entries.filter(e => e.severity === currentLogFilter);
+  }
+
+  if (entries.length === 0) {
+    el.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--muted);text-align:center;">Nenhum evento encontrado para este filtro.</div>';
+    return;
+  }
+
+  el.innerHTML = entries.map(e =>
+    `<div class="log-entry">
+      <span class="log-time">${e.time}</span>
+      <span class="log-severity ${e.severity}">${e.severity === 'critical' ? 'CRIT' : e.severity === 'warning' ? 'WARN' : 'INFO'}</span>
+      <span class="log-icon">${e.icon}</span>
+      <span class="log-text" style="color:${e.color}">${e.source === 'db' ? '[DB] ' : ''}${e.text}</span>
+    </div>`
+  ).join('');
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1583,7 +1732,9 @@ function startContinuousRecognition() {
           identityMismatch = true;
           document.getElementById('identityAlert').style.display = 'block';
           lockSession('Rosto não corresponde ao usuário cadastrado — possível empréstimo de dispositivo');
-          document.getElementById('lockReason').textContent = `Similaridade: ${(similarity*100).toFixed(0)}% (mínimo: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%) — Alerta enviado ao SOC`;
+          document.getElementById('lockReason').textContent = backendConnected
+            ? `Similaridade: ${(similarity*100).toFixed(0)}% (mínimo: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%) — Alerta registrado no SOC`
+            : `Similaridade: ${(similarity*100).toFixed(0)}% (mínimo: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%) — Backend desconectado`;
           alertCount++;
           addLog('🚨', `IDENTIDADE NÃO CONFERE — similaridade ${(similarity*100).toFixed(0)}% (pessoa diferente detectada)`, '#ef4444');
           apiLogEvent('identity_mismatch', `Similaridade ${(similarity*100).toFixed(0)}% - pessoa não autorizada`, 'critical', { similarity: similarity });
