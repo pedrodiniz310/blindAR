@@ -421,11 +421,19 @@ let detectionInterval = null;
 let isSendingMessage = false;
 
 // Face recognition state
-let registeredDescriptor = null; // Float32Array of 128 dims
+let registeredDescriptor = null; // Float32Array of 128 dims (averaged)
 let registeredName = '';
 let registeredRole = '';
 let lastMatchScore = 0;
-const MATCH_THRESHOLD = 0.5; // euclidean distance < 0.5 = same person
+const MATCH_THRESHOLD = 0.6; // euclidean distance < 0.6 = same person
+const REG_SAMPLES = 5; // number of face samples to average during registration
+
+function averageDescriptors(descriptors) {
+  const avg = new Float32Array(128);
+  for (const d of descriptors) for (let i = 0; i < 128; i++) avg[i] += d[i];
+  for (let i = 0; i < 128; i++) avg[i] /= descriptors.length;
+  return avg;
+}
 
 // API
 let apiKey = '';
@@ -764,7 +772,7 @@ async function attemptUnlock() {
     unlockLabel.textContent = `Detectando rosto... (${attempts}/${maxAttempts})`;
 
     const detection = await faceapi
-      .detectSingleFace(unlockVideo, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+      .detectSingleFace(unlockVideo, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
       .withFaceLandmarks()
       .withFaceDescriptor();
 
@@ -1176,13 +1184,14 @@ async function initCamera() {
     try {
       await Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
         faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
         faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
       ]);
       faceApiLoaded = true;
       document.getElementById('recogStatus').textContent = 'Pronto';
       document.getElementById('recogStatus').style.color = '#eab308';
-      addLog('🧠', 'Modelos de reconhecimento facial carregados (TinyFace + Landmarks + Recognition)', '#3b82f6');
+      addLog('🧠', 'Modelos de reconhecimento facial carregados (SSD + TinyFace + Landmarks + Recognition)', '#3b82f6');
 
       // Check for persistent session
       const restored = await tryRestoreSession();
@@ -1309,26 +1318,38 @@ async function startRegistration() {
   progress.textContent = 'Olhe para a câmera... capturando descritor facial...';
 
   let attempts = 0;
-  const maxAttempts = 30;
+  const maxAttempts = 40;
+  const capturedDescriptors = [];
 
   const tryCapture = async () => {
     attempts++;
     if (attempts > maxAttempts) {
-      progress.textContent = 'Não foi possível capturar rosto. Cadastro simulado.';
-      stopRegCamera();
-      completeRegistration(null);
+      if (capturedDescriptors.length >= 2) {
+        const avg = averageDescriptors(capturedDescriptors);
+        registeredDescriptor = avg;
+        regLabel.textContent = `✓ Rosto capturado (${capturedDescriptors.length} amostras)`;
+        regLabel.style.background = 'rgba(34,197,94,0.85)';
+        progress.textContent = `✓ Descritor facial capturado (${capturedDescriptors.length} amostras)!`;
+        setTimeout(() => { stopRegCamera(); completeRegistration(avg); }, 800);
+      } else {
+        progress.textContent = 'Não foi possível capturar rosto. Cadastro simulado.';
+        stopRegCamera();
+        completeRegistration(null);
+      }
       return;
     }
 
-    regLabel.textContent = `Detectando rosto... (${attempts}/${maxAttempts})`;
-    progress.textContent = `Posicione seu rosto centralizado na câmera`;
+    regLabel.textContent = `Capturando rosto... (${capturedDescriptors.length}/${REG_SAMPLES})`;
+    progress.textContent = 'Posicione seu rosto centralizado na câmera';
 
     const detection = await faceapi
-      .detectSingleFace(videoEl, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+      .detectSingleFace(videoEl, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
       .withFaceLandmarks()
       .withFaceDescriptor();
 
     if (detection) {
+      capturedDescriptors.push(detection.descriptor);
+
       // Draw face box on the registration overlay
       regOverlay.width = videoEl.videoWidth;
       regOverlay.height = videoEl.videoHeight;
@@ -1339,21 +1360,22 @@ async function startRegistration() {
       ctx.lineWidth = 3;
       ctx.strokeRect(box.x, box.y, box.width, box.height);
       ctx.fillStyle = 'rgba(34,197,94,0.8)';
-      ctx.fillRect(box.x, box.y - 22, 120, 22);
+      ctx.fillRect(box.x, box.y - 22, 150, 22);
       ctx.fillStyle = '#fff';
       ctx.font = 'bold 12px Segoe UI';
-      ctx.fillText('✓ ROSTO DETECTADO', box.x + 6, box.y - 7);
+      ctx.fillText(`✓ AMOSTRA ${capturedDescriptors.length}/${REG_SAMPLES}`, box.x + 6, box.y - 7);
 
-      registeredDescriptor = detection.descriptor;
-      regLabel.textContent = '✓ Rosto capturado com sucesso!';
-      regLabel.style.background = 'rgba(34,197,94,0.85)';
-      progress.textContent = '✓ Descritor facial capturado! Registrando identidade...';
-      setTimeout(() => {
-        stopRegCamera();
-        completeRegistration(detection.descriptor);
-      }, 800);
+      if (capturedDescriptors.length >= REG_SAMPLES) {
+        const avg = averageDescriptors(capturedDescriptors);
+        registeredDescriptor = avg;
+        regLabel.textContent = `✓ ${REG_SAMPLES} amostras capturadas com sucesso!`;
+        regLabel.style.background = 'rgba(34,197,94,0.85)';
+        progress.textContent = `✓ Descritor facial robusto gerado (${REG_SAMPLES} amostras)! Registrando...`;
+        setTimeout(() => { stopRegCamera(); completeRegistration(avg); }, 800);
+      } else {
+        setTimeout(tryCapture, 300);
+      }
     } else {
-      // Draw guide on overlay
       regOverlay.width = videoEl.videoWidth;
       regOverlay.height = videoEl.videoHeight;
       const ctx = regOverlay.getContext('2d');
@@ -1387,7 +1409,7 @@ function completeRegistration(descriptor) {
     status.className = 'cam-status ok';
     document.getElementById('recogStatus').textContent = 'Ativo';
     document.getElementById('recogStatus').style.color = '#22c55e';
-    addLog('✅', `Cadastro facial concluído — ${registeredName} (descritor 128-dim)`, '#22c55e');
+    addLog('✅', `Cadastro facial concluído — ${registeredName} (descritor 128-dim, ${REG_SAMPLES} amostras)`, '#22c55e');
     addLog('🔐', 'Reconhecimento contínuo ativado — verificação a cada 10s', '#22c55e');
   } else {
     status.textContent = `✓ ${registeredName} — Modo simulado`;
@@ -1430,7 +1452,7 @@ function startContinuousRecognition() {
     canvas.height = video.videoHeight;
 
     const detections = await faceapi
-      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }))
+      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.4 }))
       .withFaceLandmarks()
       .withFaceDescriptors();
 
