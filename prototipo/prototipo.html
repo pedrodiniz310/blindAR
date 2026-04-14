@@ -1410,7 +1410,7 @@ function completeRegistration(descriptor) {
     document.getElementById('recogStatus').textContent = 'Ativo';
     document.getElementById('recogStatus').style.color = '#22c55e';
     addLog('✅', `Cadastro facial concluído — ${registeredName} (descritor 128-dim, ${REG_SAMPLES} amostras)`, '#22c55e');
-    addLog('🔐', 'Reconhecimento contínuo ativado — verificação a cada 10s', '#22c55e');
+    addLog('🔐', 'Reconhecimento contínuo ativado — verificação a cada 3s', '#22c55e');
   } else {
     status.textContent = `✓ ${registeredName} — Modo simulado`;
     status.className = 'cam-status ok';
@@ -1552,15 +1552,15 @@ function startContinuousRecognition() {
       noFaceFrames++;
       if (noFaceFrames >= 1 && isAuthenticated && !isLocked) {
         faceDetected = false;
-        status.textContent = `⚠ Rosto não detectado (${noFaceFrames * 10}s)`;
+        status.textContent = `⚠ Rosto não detectado (${noFaceFrames * 3}s)`;
         status.className = 'cam-status locked';
         document.getElementById('identityBadge').innerHTML = '';
-        if (noFaceFrames >= 3) {
+        if (noFaceFrames >= 10) {
           lockSession('Rosto ausente há 30 segundos — sessão travada por segurança');
         }
       }
     }
-  }, 10000);
+  }, 3000);
 }
 
 // ══════════════════════════════════════════════════════════════
