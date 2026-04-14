@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="images/logo-favicon.png">
-<title>BlindAR â€” Desafio Petrobras GP SENAI 2026</title>
+<title>BlindAR — Desafio Petrobras GP SENAI 2026</title>
 <style>
 :root {
   --bg: #09090b;
@@ -22,7 +22,7 @@ a { color:var(--accent); text-decoration:none; }
 a:hover { text-decoration:underline; }
 .wrap { max-width:820px; margin:0 auto; padding:0 24px; }
 
-/* â”€â”€ HERO â”€â”€ */
+/* ── HERO ── */
 .hero { padding:80px 0 56px; text-align:center; }
 .logo { height:56px; margin-bottom:28px; }
 .hero h1 { font-size:32px; font-weight:700; letter-spacing:-0.5px; margin-bottom:8px; }
@@ -31,47 +31,47 @@ a:hover { text-decoration:underline; }
 .hero-badges { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
 .hero-badges span { font-size:11px; padding:5px 14px; border:1px solid var(--border); border-radius:100px; color:var(--muted); letter-spacing:0.5px; }
 
-/* â”€â”€ DIVIDER â”€â”€ */
+/* ── DIVIDER ── */
 .divider { border:none; border-top:1px solid var(--border); margin:0; }
 
-/* â”€â”€ CHALLENGE â”€â”€ */
+/* ── CHALLENGE ── */
 .challenge { padding:40px 0; }
 .challenge blockquote { font-style:italic; color:#a1a1aa; font-size:14px; border-left:3px solid var(--accent2); padding:16px 20px; background:var(--surface); border-radius:0 8px 8px 0; margin:0; }
 .challenge .metric { display:flex; align-items:flex-start; gap:10px; margin-top:16px; font-size:13px; color:var(--muted); }
 .challenge .metric span { color:var(--accent); font-size:15px; flex-shrink:0; }
 
-/* â”€â”€ SECTION â”€â”€ */
+/* ── SECTION ── */
 .section { padding:48px 0; }
 .section-label { font-size:10px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--accent); margin-bottom:6px; }
 .section h2 { font-size:22px; font-weight:700; margin-bottom:4px; }
 .section .sub { color:var(--muted); font-size:13px; margin-bottom:28px; }
 
-/* â”€â”€ PILLARS â”€â”€ */
+/* ── PILLARS ── */
 .pillars { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:28px; }
 .pillar { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px; }
 .pillar .icon { font-size:20px; margin-bottom:8px; }
 .pillar h3 { font-size:13px; font-weight:700; margin-bottom:6px; }
 .pillar p { font-size:12px; color:var(--muted); line-height:1.6; }
 
-/* â”€â”€ LEVELS â”€â”€ */
+/* ── LEVELS ── */
 .levels { display:flex; flex-direction:column; gap:6px; margin-bottom:28px; }
 .level { display:grid; grid-template-columns:44px 1fr 1.2fr; gap:16px; align-items:center; padding:14px 18px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:13px; }
 .level-num { font-weight:700; font-size:14px; text-align:center; }
 .level .ctx { color:var(--muted); font-size:12px; }
 
-/* â”€â”€ STACK â”€â”€ */
+/* ── STACK ── */
 .stack { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
 .stack-item { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
 .stack-item strong { font-size:13px; display:block; margin-bottom:2px; }
 .stack-item span { font-size:11px; color:var(--muted); }
 
-/* â”€â”€ FLOW â”€â”€ */
+/* ── FLOW ── */
 .flow { display:flex; align-items:center; justify-content:center; gap:0; flex-wrap:wrap; margin:24px 0; }
 .flow-node { padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:8px; font-size:12px; font-weight:600; text-align:center; min-width:120px; }
 .flow-node small { display:block; color:var(--muted); font-weight:400; margin-top:2px; }
 .flow-arrow { color:var(--muted); font-size:16px; padding:0 6px; }
 
-/* â”€â”€ LEAN CANVAS â”€â”€ */
+/* ── LEAN CANVAS ── */
 .canvas { display:grid; grid-template-columns:1fr 1fr 1fr 1fr 1fr; gap:1px; background:var(--border); border-radius:10px; overflow:hidden; }
 .cell { background:var(--surface); padding:14px 16px; min-height:100px; }
 .cell.r2 { grid-row:span 2; }
@@ -82,17 +82,17 @@ a:hover { text-decoration:underline; }
 .cell p { font-size:12px; color:#a1a1aa; line-height:1.6; }
 .cell p strong { color:var(--text); }
 
-/* â”€â”€ PROTOTYPE â”€â”€ */
+/* ── PROTOTYPE ── */
 .proto-link { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-top:20px; }
 .proto-link div strong { font-size:15px; display:block; margin-bottom:2px; }
 .proto-link div span { font-size:12px; color:var(--muted); }
 .proto-link a { font-size:13px; font-weight:600; padding:8px 20px; border:1px solid var(--accent2); border-radius:6px; transition:background .2s; }
 .proto-link a:hover { background:var(--accent-soft); }
 
-/* â”€â”€ FOOTER â”€â”€ */
+/* ── FOOTER ── */
 .footer { padding:40px 0; text-align:center; font-size:11px; color:#333; letter-spacing:1px; }
 
-/* â”€â”€ RESPONSIVE â”€â”€ */
+/* ── RESPONSIVE ── */
 @media(max-width:768px) {
   .pillars { grid-template-columns:1fr 1fr; }
   .stack { grid-template-columns:1fr; }
@@ -111,12 +111,12 @@ a:hover { text-decoration:underline; }
 <div class="wrap">
 <div class="hero">
   <img src="images/blindar-logotype.png" alt="BlindAR" class="logo">
-  <h1>Acesso Seguro a IA via <span>Dispositivos VestÃ­veis</span></h1>
-  <p>Gateway de seguranÃ§a inteligente que adapta a proteÃ§Ã£o de dados ao contexto do ambiente â€” sem fricÃ§Ã£o para o usuÃ¡rio, com visibilidade total para a seguranÃ§a.</p>
+  <h1>Acesso Seguro a IA via <span>Dispositivos Vestíveis</span></h1>
+  <p>Gateway de segurança inteligente que adapta a proteção de dados ao contexto do ambiente — sem fricção para o usuário, com visibilidade total para a segurança.</p>
   <div class="hero-badges">
     <span>Grand Prix SENAI 2026</span>
     <span>Desafio Petrobras</span>
-    <span>CiberseguranÃ§a &amp; Ã‰tica Digital</span>
+    <span>Cibersegurança &amp; Ética Digital</span>
   </div>
 </div>
 </div>
@@ -127,11 +127,11 @@ a:hover { text-decoration:underline; }
 <div class="wrap">
 <div class="challenge">
   <blockquote>
-    "Como podemos garantir o acesso seguro a sistemas corporativos baseados em inteligÃªncia artificial por meio de Ã³culos de realidade aumentada, assegurando a autenticaÃ§Ã£o confiÃ¡vel do usuÃ¡rio, a proteÃ§Ã£o dos dados durante toda a comunicaÃ§Ã£o e processamento, e a prevenÃ§Ã£o de vazamento de informaÃ§Ãµes sensÃ­veis, mesmo com o uso de redes e serviÃ§os de terceiros?"
+    "Como podemos garantir o acesso seguro a sistemas corporativos baseados em inteligência artificial por meio de óculos de realidade aumentada, assegurando a autenticação confiável do usuário, a proteção dos dados durante toda a comunicação e processamento, e a prevenção de vazamento de informações sensíveis, mesmo com o uso de redes e serviços de terceiros?"
   </blockquote>
   <div class="metric">
-    <span>â—†</span>
-    <div><strong style="color:var(--text);">MÃ©trica principal:</strong> Arquitetura testÃ¡vel com soluÃ§Ãµes de mercado, garantindo autenticaÃ§Ã£o do usuÃ¡rio e retenÃ§Ã£o de dados.</div>
+    <span>◆</span>
+    <div><strong style="color:var(--text);">Métrica principal:</strong> Arquitetura testável com soluções de mercado, garantindo autenticação do usuário e retenção de dados.</div>
   </div>
 </div>
 </div>
@@ -141,30 +141,30 @@ a:hover { text-decoration:underline; }
 <!-- 4 PILARES -->
 <div class="wrap">
 <div class="section">
-  <div class="section-label">A SoluÃ§Ã£o</div>
+  <div class="section-label">A Solução</div>
   <h2>4 Pilares da Arquitetura</h2>
-  <p class="sub">Cada pilar resolve um vetor de risco especÃ­fico dos dispositivos vestÃ­veis.</p>
+  <p class="sub">Cada pilar resolve um vetor de risco específico dos dispositivos vestíveis.</p>
 
   <div class="pillars">
     <div class="pillar">
-      <div class="icon">ðŸ”</div>
-      <h3>Identidade ContÃ­nua</h3>
-      <p>AutenticaÃ§Ã£o facial ao vestir. VerificaÃ§Ã£o contÃ­nua por presenÃ§a. Sai do rosto â†’ sessÃ£o trava em &lt;1s.</p>
+      <div class="icon">🔐</div>
+      <h3>Identidade Contínua</h3>
+      <p>Autenticação facial ao vestir. Verificação contínua por presença. Sai do rosto → sessão trava em &lt;1s.</p>
     </div>
     <div class="pillar">
-      <div class="icon">ðŸ”’</div>
+      <div class="icon">🔒</div>
       <h3>Canal Blindado</h3>
-      <p>TÃºnel WireGuard automÃ¡tico. Cada requisiÃ§Ã£o verificada (ZTNA). Funciona em qualquer rede.</p>
+      <p>Túnel WireGuard automático. Cada requisição verificada (ZTNA). Funciona em qualquer rede.</p>
     </div>
     <div class="pillar">
-      <div class="icon">ðŸ›¡ï¸</div>
-      <h3>ProteÃ§Ã£o Inteligente</h3>
-      <p>DLP contextual: dados sensÃ­veis transformados pela IA antes de exibir. DetecÃ§Ã£o de observador via cÃ¢mera.</p>
+      <div class="icon">🛡️</div>
+      <h3>Proteção Inteligente</h3>
+      <p>DLP contextual: dados sensíveis transformados pela IA antes de exibir. Detecção de observador via câmera.</p>
     </div>
     <div class="pillar">
-      <div class="icon">ðŸ“Š</div>
-      <h3>GovernanÃ§a Total</h3>
-      <p>Log auditÃ¡vel de todo acesso. Dashboard em tempo real. Biometria processada localmente (LGPD).</p>
+      <div class="icon">📊</div>
+      <h3>Governança Total</h3>
+      <p>Log auditável de todo acesso. Dashboard em tempo real. Biometria processada localmente (LGPD).</p>
     </div>
   </div>
 </div>
@@ -172,36 +172,36 @@ a:hover { text-decoration:underline; }
 
 <hr class="divider">
 
-<!-- 5 NÃVEIS -->
+<!-- 5 NÍVEIS -->
 <div class="wrap">
 <div class="section">
-  <div class="section-label">SeguranÃ§a Contextual</div>
-  <h2>5 NÃ­veis Adaptativos</h2>
+  <div class="section-label">Segurança Contextual</div>
+  <h2>5 Níveis Adaptativos</h2>
   <p class="sub">A IA adapta automaticamente o que exibe com base no contexto detectado.</p>
 
   <div class="levels">
     <div class="level">
-      <div class="level-num" style="color:#16a34a;">ðŸŸ¢ 1</div>
+      <div class="level-num" style="color:#16a34a;">🟢 1</div>
       <div>Dados completos, sem filtro</div>
       <div class="ctx">Sala segura + rede interna + biometria OK</div>
     </div>
     <div class="level">
-      <div class="level-num" style="color:#3b82f6;">ðŸ”µ 2</div>
-      <div>Dados com watermark dinÃ¢mico</div>
-      <div class="ctx">Ãrea de trabalho + rede interna</div>
+      <div class="level-num" style="color:#3b82f6;">🔵 2</div>
+      <div>Dados com watermark dinâmico</div>
+      <div class="ctx">Área de trabalho + rede interna</div>
     </div>
     <div class="level">
-      <div class="level-num" style="color:#ca8a04;">ðŸŸ¡ 3</div>
-      <div>Dados genÃ©ricos (sem valores exatos)</div>
+      <div class="level-num" style="color:#ca8a04;">🟡 3</div>
+      <div>Dados genéricos (sem valores exatos)</div>
       <div class="ctx">Campo + rede de terceiro</div>
     </div>
     <div class="level">
-      <div class="level-num" style="color:#ea580c;">ðŸŸ  4</div>
-      <div>Apenas alertas e instruÃ§Ãµes gerais</div>
-      <div class="ctx">Ãrea pÃºblica ou observador detectado</div>
+      <div class="level-num" style="color:#ea580c;">🟠 4</div>
+      <div>Apenas alertas e instruções gerais</div>
+      <div class="ctx">Área pública ou observador detectado</div>
     </div>
     <div class="level">
-      <div class="level-num" style="color:#dc2626;">ðŸ”´ 5</div>
+      <div class="level-num" style="color:#dc2626;">🔴 5</div>
       <div>Tela bloqueada + alerta ao SOC</div>
       <div class="ctx">Auth falha ou dispositivo comprometido</div>
     </div>
@@ -216,24 +216,24 @@ a:hover { text-decoration:underline; }
 <div class="section">
   <div class="section-label">Arquitetura</div>
   <h2>Fluxo End-to-End</h2>
-  <p class="sub">100% montÃ¡vel com tecnologias de mercado jÃ¡ disponÃ­veis.</p>
+  <p class="sub">100% montável com tecnologias de mercado já disponíveis.</p>
 
   <div class="flow">
-    <div class="flow-node">ðŸ‘“ Dispositivo AR<small>Auth facial + cÃ¢mera</small></div>
-    <div class="flow-arrow">â†’</div>
-    <div class="flow-node">ðŸ”’ WireGuard<small>TÃºnel criptografado</small></div>
-    <div class="flow-arrow">â†’</div>
-    <div class="flow-node">ðŸ›¡ï¸ BlindAR Gateway<small>ZTNA + nÃ­vel contextual</small></div>
-    <div class="flow-arrow">â†’</div>
-    <div class="flow-node">ðŸ¤– Azure OpenAI<small>RBAC + classificaÃ§Ã£o</small></div>
+    <div class="flow-node">👓 Dispositivo AR<small>Auth facial + câmera</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">🔒 WireGuard<small>Túnel criptografado</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">🛡️ BlindAR Gateway<small>ZTNA + nível contextual</small></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node">🤖 Azure OpenAI<small>RBAC + classificação</small></div>
   </div>
 
   <div class="stack">
-    <div class="stack-item"><strong>Azure AD</strong><span>AutenticaÃ§Ã£o + Conditional Access + MFA</span></div>
-    <div class="stack-item"><strong>WireGuard</strong><span>VPN leve â€” tÃºnel criptografado, baixa latÃªncia</span></div>
-    <div class="stack-item"><strong>Azure OpenAI + RBAC</strong><span>LLM com controle de acesso por funÃ§Ã£o</span></div>
-    <div class="stack-item"><strong>Microsoft Purview</strong><span>ClassificaÃ§Ã£o automÃ¡tica + DLP</span></div>
-    <div class="stack-item"><strong>Microsoft Sentinel</strong><span>SIEM â€” logs e alertas em tempo real</span></div>
+    <div class="stack-item"><strong>Azure AD</strong><span>Autenticação + Conditional Access + MFA</span></div>
+    <div class="stack-item"><strong>WireGuard</strong><span>VPN leve — túnel criptografado, baixa latência</span></div>
+    <div class="stack-item"><strong>Azure OpenAI + RBAC</strong><span>LLM com controle de acesso por função</span></div>
+    <div class="stack-item"><strong>Microsoft Purview</strong><span>Classificação automática + DLP</span></div>
+    <div class="stack-item"><strong>Microsoft Sentinel</strong><span>SIEM — logs e alertas em tempo real</span></div>
     <div class="stack-item"><strong>HoloLens 2</strong><span>BitLocker, TPM, Defender SmartScreen</span></div>
   </div>
 </div>
@@ -244,53 +244,53 @@ a:hover { text-decoration:underline; }
 <!-- LEAN CANVAS -->
 <div class="wrap">
 <div class="section">
-  <div class="section-label">EntregÃ¡vel 1</div>
+  <div class="section-label">Entregável 1</div>
   <h2>LEAN Canvas</h2>
-  <p class="sub">Modelo de negÃ³cio enxuto da soluÃ§Ã£o BlindAR.</p>
+  <p class="sub">Modelo de negócio enxuto da solução BlindAR.</p>
 
   <div class="canvas">
     <div class="cell">
       <div class="cell-h">1. Problema</div>
-      <p><strong>Top 3:</strong><br>1. Ã“culos AR sem autenticaÃ§Ã£o contÃ­nua confiÃ¡vel<br>2. Dados sensÃ­veis expostos em redes de terceiros<br>3. Sem auditoria de acessos via vestÃ­veis</p>
+      <p><strong>Top 3:</strong><br>1. Óculos AR sem autenticação contínua confiável<br>2. Dados sensíveis expostos em redes de terceiros<br>3. Sem auditoria de acessos via vestíveis</p>
     </div>
     <div class="cell r2">
-      <div class="cell-h">2. SoluÃ§Ã£o</div>
-      <p><strong>BlindAR â€” Gateway inteligente</strong><br><br>â†’ Auth facial contÃ­nua<br>â†’ TÃºnel WireGuard automÃ¡tico<br>â†’ 5 nÃ­veis contextuais<br>â†’ TransformaÃ§Ã£o de dados sensÃ­veis<br>â†’ Dashboard de governanÃ§a</p>
+      <div class="cell-h">2. Solução</div>
+      <p><strong>BlindAR — Gateway inteligente</strong><br><br>→ Auth facial contínua<br>→ Túnel WireGuard automático<br>→ 5 níveis contextuais<br>→ Transformação de dados sensíveis<br>→ Dashboard de governança</p>
     </div>
     <div class="cell r2">
       <div class="cell-h">3. Proposta de Valor</div>
-      <p><strong>"Acesso seguro a IA via vestÃ­veis â€” sem fricÃ§Ã£o, com visibilidade total."</strong><br><br>A IA adapta o que mostra ao contexto. SeguranÃ§a proporcional ao risco.</p>
+      <p><strong>"Acesso seguro a IA via vestíveis — sem fricção, com visibilidade total."</strong><br><br>A IA adapta o que mostra ao contexto. Segurança proporcional ao risco.</p>
     </div>
     <div class="cell">
       <div class="cell-h">4. Vantagem Injusta</div>
-      <p>100% testÃ¡vel com soluÃ§Ãµes de mercado. Nenhum concorrente combina auth contÃ­nua + nÃ­veis contextuais + transformaÃ§Ã£o de dados para AR.</p>
+      <p>100% testável com soluções de mercado. Nenhum concorrente combina auth contínua + níveis contextuais + transformação de dados para AR.</p>
     </div>
     <div class="cell">
       <div class="cell-h">5. Segmentos</div>
-      <p><strong>Inicial:</strong> Petrobras<br><strong>ExpansÃ£o:</strong> Energia, mineraÃ§Ã£o, aviaÃ§Ã£o, saÃºde</p>
+      <p><strong>Inicial:</strong> Petrobras<br><strong>Expansão:</strong> Energia, mineração, aviação, saúde</p>
     </div>
 
     <div class="cell">
       <div class="cell-h">6. Alternativas</div>
-      <p>â€¢ MDM (Intune) â€” nÃ£o protege conteÃºdo visual<br>â€¢ VPN tradicional â€” sem auth contÃ­nua<br>â€¢ IAM â€” pensada para teclado, nÃ£o AR</p>
+      <p>• MDM (Intune) — não protege conteúdo visual<br>• VPN tradicional — sem auth contínua<br>• IAM — pensada para teclado, não AR</p>
     </div>
     <div class="cell">
-      <div class="cell-h">7. MÃ©tricas-Chave</div>
-      <p>â€¢ Auth &lt;3s<br>â€¢ 100% trÃ¡fego criptografado<br>â€¢ 0 vazamentos<br>â€¢ 100% acessos auditados<br>â€¢ Uptime &gt;99.9%</p>
+      <div class="cell-h">7. Métricas-Chave</div>
+      <p>• Auth &lt;3s<br>• 100% tráfego criptografado<br>• 0 vazamentos<br>• 100% acessos auditados<br>• Uptime &gt;99.9%</p>
     </div>
     <div class="cell">
       <div class="cell-h">8. Canais</div>
-      <p>â€¢ SDK integrado nos Ã³culos AR<br>â€¢ Gateway on-premise<br>â€¢ Dashboard web<br>â€¢ API REST para SIEM</p>
+      <p>• SDK integrado nos óculos AR<br>• Gateway on-premise<br>• Dashboard web<br>• API REST para SIEM</p>
     </div>
 
     <div class="cell c2">
       <div class="cell-h">9. Estrutura de Custos</div>
-      <p><strong>Fixos:</strong> Equipe dev, infra Azure, certificaÃ§Ãµes<br><strong>VariÃ¡veis:</strong> LicenÃ§as por usuÃ¡rio, VPN, compliance</p>
+      <p><strong>Fixos:</strong> Equipe dev, infra Azure, certificações<br><strong>Variáveis:</strong> Licenças por usuário, VPN, compliance</p>
     </div>
     <div class="cell" style="background:transparent;min-height:0;"></div>
     <div class="cell c2">
       <div class="cell-h">10. Fontes de Receita</div>
-      <p>â€¢ LicenÃ§a SaaS por dispositivo/mÃªs<br>â€¢ Gateway on-premise anual<br>â€¢ Consultoria de implantaÃ§Ã£o</p>
+      <p>• Licença SaaS por dispositivo/mês<br>• Gateway on-premise anual<br>• Consultoria de implantação</p>
     </div>
   </div>
 </div>
@@ -298,19 +298,19 @@ a:hover { text-decoration:underline; }
 
 <hr class="divider">
 
-<!-- PROTÃ“TIPO -->
+<!-- PROTÓTIPO -->
 <div class="wrap">
 <div class="section">
-  <div class="section-label">EntregÃ¡vel 2</div>
-  <h2>ProtÃ³tipo Funcional</h2>
+  <div class="section-label">Entregável 2</div>
+  <h2>Protótipo Funcional</h2>
   <p class="sub">Web app que simula o fluxo completo do BlindAR usando webcam + browser.</p>
 
   <div class="proto-link">
     <div>
-      <strong>Abrir ProtÃ³tipo Interativo</strong>
-      <span>AutenticaÃ§Ã£o facial Â· Chat com IA Â· 5 NÃ­veis Â· DetecÃ§Ã£o de observador Â· Dashboard</span>
+      <strong>Abrir Protótipo Interativo</strong>
+      <span>Autenticação facial · Chat com IA · 5 Níveis · Detecção de observador · Dashboard</span>
     </div>
-    <a href="prototipo/prototipo.html">Acessar â†’</a>
+    <a href="prototipo/prototipo.html">Acessar →</a>
   </div>
 </div>
 </div>
@@ -320,22 +320,22 @@ a:hover { text-decoration:underline; }
 <!-- RESPOSTA AO DESAFIO -->
 <div class="wrap">
 <div class="section">
-  <div class="section-label">SÃ­ntese</div>
+  <div class="section-label">Síntese</div>
   <h2>Resposta Direta ao Desafio</h2>
   <p class="sub" style="margin-bottom:20px;"></p>
 
   <div style="font-size:13px;color:#a1a1aa;line-height:2;">
-    <p><strong style="color:var(--accent);">AutenticaÃ§Ã£o confiÃ¡vel:</strong> Reconhecimento facial contÃ­nuo + Azure AD Conditional Access + lock instantÃ¢neo ao remover dispositivo.</p>
-    <p style="margin-top:10px;"><strong style="color:var(--accent);">ProteÃ§Ã£o dos dados:</strong> TÃºnel WireGuard automÃ¡tico + ZTNA + Azure OpenAI com RBAC. Funciona em qualquer rede.</p>
-    <p style="margin-top:10px;"><strong style="color:var(--accent);">PrevenÃ§Ã£o de vazamento:</strong> 5 nÃ­veis contextuais â€” IA transforma dados antes de exibir. DetecÃ§Ã£o de observador. Watermark dinÃ¢mico. Purview classifica dados.</p>
-    <p style="margin-top:10px;"><strong style="color:var(--accent);">Redes de terceiros:</strong> Zero Trust â€” nunca confia na rede. WireGuard cria perÃ­metro criptografado independente da infra.</p>
-    <p style="margin-top:10px;"><strong style="color:var(--accent);">Testabilidade:</strong> 100% montÃ¡vel com Azure AD + WireGuard + Azure OpenAI + Purview + Sentinel + HoloLens 2.</p>
+    <p><strong style="color:var(--accent);">Autenticação confiável:</strong> Reconhecimento facial contínuo + Azure AD Conditional Access + lock instantâneo ao remover dispositivo.</p>
+    <p style="margin-top:10px;"><strong style="color:var(--accent);">Proteção dos dados:</strong> Túnel WireGuard automático + ZTNA + Azure OpenAI com RBAC. Funciona em qualquer rede.</p>
+    <p style="margin-top:10px;"><strong style="color:var(--accent);">Prevenção de vazamento:</strong> 5 níveis contextuais — IA transforma dados antes de exibir. Detecção de observador. Watermark dinâmico. Purview classifica dados.</p>
+    <p style="margin-top:10px;"><strong style="color:var(--accent);">Redes de terceiros:</strong> Zero Trust — nunca confia na rede. WireGuard cria perímetro criptografado independente da infra.</p>
+    <p style="margin-top:10px;"><strong style="color:var(--accent);">Testabilidade:</strong> 100% montável com Azure AD + WireGuard + Azure OpenAI + Purview + Sentinel + HoloLens 2.</p>
   </div>
 </div>
 </div>
 
 <div class="footer">
-  <div class="wrap">Grand Prix SENAI de InovaÃ§Ã£o 2026 â€” Desafio Petrobras â€” Equipe FIREWALL</div>
+  <div class="wrap">Grand Prix SENAI de Inovação 2026 — Desafio Petrobras — Equipe FIREWALL</div>
 </div>
 
 </body>
