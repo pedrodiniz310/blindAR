@@ -265,6 +265,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
         <div class="name" id="userName"></div>
         <div class="role" id="userRole"></div>
         <div class="meta" id="userMeta"></div>
+        <button onclick="logoutSession()" style="margin-top:8px;padding:4px 12px;border:1px solid #ef4444;background:transparent;color:#ef4444;border-radius:4px;font-size:11px;cursor:pointer;opacity:0.7;">Sair</button>
       </div>
     </div>
 
@@ -408,6 +409,7 @@ let isAuthenticated = false;
 let isLocked = false;
 let faceDetected = false;
 let observerDetected = false;
+let levelBeforeObserver = null;
 let identityMismatch = false;
 let queryCount = 0;
 let alertCount = 0;
@@ -583,6 +585,16 @@ async function apiRegisterUser(name, role, descriptor) {
     const data = await res.json();
     backendUserId = data.id;
     addLog('🗄️', `Usuário salvo no banco (ID: ${backendUserId.substring(0,8)}...)`, '#22c55e');
+
+    // Persist session to localStorage for auto-login
+    localStorage.setItem('blindar-session', JSON.stringify({
+      userId: backendUserId,
+      name: name,
+      role: role,
+      token: data.token,
+      backendUrl: backendUrl
+    }));
+    addLog('💾', 'Sessão salva — login persistente ativado', '#3b82f6');
   } catch(e) {
     console.warn('Backend registration failed:', e);
     addLog('⚠️', `Falha ao salvar no backend: ${e.message}`, '#f97316');
@@ -1168,14 +1180,17 @@ async function initCamera() {
         faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
       ]);
       faceApiLoaded = true;
-      status.textContent = 'Modelos carregados — cadastre seu rosto';
-      status.className = 'cam-status registering';
       document.getElementById('recogStatus').textContent = 'Pronto';
       document.getElementById('recogStatus').style.color = '#eab308';
       addLog('🧠', 'Modelos de reconhecimento facial carregados (TinyFace + Landmarks + Recognition)', '#3b82f6');
 
-      // Show registration modal
-      document.getElementById('regModal').classList.add('show');
+      // Check for persistent session
+      const restored = await tryRestoreSession();
+      if (!restored) {
+        status.textContent = 'Modelos carregados — cadastre seu rosto';
+        status.className = 'cam-status registering';
+        document.getElementById('regModal').classList.add('show');
+      }
 
     } catch(e) {
       console.warn('Face recognition models failed:', e);
@@ -1190,6 +1205,67 @@ async function initCamera() {
     addLog('⚠️', 'Câmera não disponível — funcionalidades de reconhecimento limitadas', '#f97316');
     document.getElementById('regModal').classList.add('show');
   }
+}
+
+// ──────────────────────────────────────────────────────────────
+//  Persistent Login — Restore session from localStorage + DB
+// ──────────────────────────────────────────────────────────────
+async function tryRestoreSession() {
+  const raw = localStorage.getItem('blindar-session');
+  if (!raw) return false;
+
+  try {
+    const session = JSON.parse(raw);
+    if (!session.userId || !session.backendUrl) return false;
+
+    addLog('🔄', `Sessão anterior encontrada — restaurando ${session.name}...`, '#3b82f6');
+    const status = document.getElementById('camStatus');
+    status.textContent = 'Restaurando sessão...';
+    status.className = 'cam-status loading';
+
+    // Connect to backend
+    const healthRes = await fetch(session.backendUrl + '/health');
+    if (!healthRes.ok) throw new Error('Backend offline');
+    backendUrl = session.backendUrl;
+    backendConnected = true;
+    document.getElementById('backendUrl').value = backendUrl;
+    document.getElementById('backendStatus').innerHTML = '<span style="color:var(--green);">✓ Backend conectado (sessão restaurada)</span>';
+
+    // Fetch user from database
+    const userRes = await fetch(backendUrl + '/api/users/' + session.userId);
+    if (!userRes.ok) throw new Error('Usuário não encontrado no banco');
+    const userData = await userRes.json();
+
+    // Restore state
+    registeredName = userData.name;
+    registeredRole = userData.role;
+    backendUserId = userData.id;
+
+    // Restore face descriptor from DB
+    if (userData.face_descriptor && userData.face_descriptor.length === 128) {
+      registeredDescriptor = new Float32Array(userData.face_descriptor);
+      addLog('🧬', `Descritor facial restaurado do banco de dados (128-dim)`, '#22c55e');
+    }
+
+    // Complete authentication
+    completeRegistration(registeredDescriptor);
+    addLog('🔓', `Login persistente — ${registeredName} restaurado do Supabase`, '#22c55e');
+    apiLogEvent('session_restored', `Sessão restaurada para ${registeredName}`, 'info');
+
+    return true;
+  } catch(e) {
+    console.warn('Session restore failed:', e);
+    addLog('⚠️', `Sessão anterior expirada ou inválida — novo cadastro necessário`, '#f97316');
+    localStorage.removeItem('blindar-session');
+    return false;
+  }
+}
+
+function logoutSession() {
+  localStorage.removeItem('blindar-session');
+  addLog('🚪', `${registeredName} deslogou — sessão removida`, '#f97316');
+  apiLogEvent('logout', `${registeredName} fez logout`, 'info');
+  location.reload();
 }
 
 async function startRegistration() {
@@ -1415,8 +1491,11 @@ function startContinuousRecognition() {
       if (detections.length > 1) {
         if (!observerDetected) {
           observerDetected = true;
+          levelBeforeObserver = currentLevel;
           document.getElementById('observerAlert').style.display = 'block';
           if (currentLevel < 4) setLevel(4);
+          // Blur ALL existing AI messages immediately
+          document.querySelectorAll('#chatMessages .chat-msg.ai').forEach(m => m.classList.add('msg-blurred'));
           addLog('🚨', `Observador detectado (${detections.length} rostos) — Nível elevado para 4`, '#f97316');
           alertCount++;
           apiLogEvent('observer_detected', `${detections.length} rostos detectados`, 'warning', { face_count: detections.length });
@@ -1440,6 +1519,9 @@ function startContinuousRecognition() {
         if (observerDetected) {
           observerDetected = false;
           document.getElementById('observerAlert').style.display = 'none';
+          // Unblur all AI messages when observer leaves
+          document.querySelectorAll('#chatMessages .chat-msg.ai.msg-blurred').forEach(m => m.classList.remove('msg-blurred'));
+          if (levelBeforeObserver && levelBeforeObserver < 4) setLevel(levelBeforeObserver);
           addLog('✅', 'Observador saiu — nível restaurado', '#22c55e');
         }
       }

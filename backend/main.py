@@ -227,6 +227,32 @@ async def register_user(user: UserRegister):
 
 
 # ──────────────────────────────────────────────────────────────
+#  Routes — User Lookup (persistent login)
+# ──────────────────────────────────────────────────────────────
+@app.get("/api/users/{user_id}")
+async def get_user(user_id: str):
+    """Fetch a registered user by ID (for persistent login)."""
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Supabase não configurado")
+
+    result = supabase.table("users").select("id, name, role, face_descriptor, registered_at, is_active").eq("id", user_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    user = result.data[0]
+    if not user.get("is_active", True):
+        raise HTTPException(status_code=403, detail="Usuário desativado")
+
+    return {
+        "id": str(user["id"]),
+        "name": user["name"],
+        "role": user["role"],
+        "face_descriptor": user["face_descriptor"],
+        "registered_at": user["registered_at"],
+    }
+
+
+# ──────────────────────────────────────────────────────────────
 #  Routes — Face Verification
 # ──────────────────────────────────────────────────────────────
 @app.post("/api/verify", response_model=VerifyResponse)
