@@ -113,7 +113,12 @@ a:hover { text-decoration:underline; }
 .team-panel { display:none; }
 .team-panel.active { display:block; }
 .task-list { list-style:none; counter-reset:task; }
-.task-list li { display:flex; align-items:flex-start; gap:12px; padding:14px 16px; background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:6px; font-size:13px; line-height:1.6; }
+.task-list li { display:flex; align-items:flex-start; gap:12px; padding:14px 16px; background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:6px; font-size:13px; line-height:1.6; transition:all .2s; }
+.task-list li.done { opacity:0.45; }
+.task-list li.done strong { text-decoration:line-through; }
+.task-check { width:20px; height:20px; min-width:20px; border-radius:5px; border:2px solid #333; background:transparent; cursor:pointer; appearance:none; -webkit-appearance:none; margin-top:2px; transition:all .15s; flex-shrink:0; }
+.task-check:checked { background:var(--accent2); border-color:var(--accent2); }
+.task-check:checked::after { content:'✓'; color:#fff; font-size:13px; font-weight:700; display:flex; align-items:center; justify-content:center; height:100%; }
 .task-list li::before { counter-increment:task; content:counter(task); background:var(--accent2); color:#fff; font-size:11px; font-weight:700; min-width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
 .task-list .due { font-size:11px; color:var(--accent); font-weight:600; margin-left:auto; white-space:nowrap; flex-shrink:0; }
 .task-list .desc { color:var(--muted); font-size:12px; margin-top:2px; }
@@ -374,26 +379,32 @@ a:hover { text-decoration:underline; }
   <div class="team-panel active" id="panel-pedro">
     <ol class="task-list">
       <li>
+        <input type="checkbox" class="task-check" data-id="pedro-1">
         <div><strong>Finalizar protótipo web</strong><div class="desc">Corrigir bugs restantes, polir UI, garantir que todos os fluxos funcionam para a gravação.</div></div>
         <span class="due">13–14/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="pedro-2">
         <div><strong>Backend + Supabase funcionando</strong><div class="desc">Garantir que o servidor FastAPI responde e salva dados no Supabase corretamente.</div></div>
         <span class="due">14/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="pedro-3">
         <div><strong>Gravar vídeo do protótipo (2 min)</strong><div class="desc">Gravar tela do protótipo com narração — demo dos 5 níveis, cadastro facial, chat com IA. Roteiro pronto em docs/03.</div></div>
         <span class="due">15/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="pedro-4">
         <div><strong>Gravar pitch de 3 minutos</strong><div class="desc">Apresentar como porta-voz: problema, solução, demo, viabilidade. Script pronto em docs/04.</div></div>
         <span class="due">15–16/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="pedro-5">
         <div><strong>Editar os 2 vídeos</strong><div class="desc">Cortar, legendar, adicionar logo/transições. Exportar em alta qualidade.</div></div>
         <span class="due">16–17/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="pedro-6">
         <div><strong>Deploy final do site + push GitHub</strong><div class="desc">index.html atualizado, GitHub Pages funcionando, tudo commitado.</div></div>
         <span class="due">17/04</span>
       </li>
@@ -404,22 +415,27 @@ a:hover { text-decoration:underline; }
   <div class="team-panel" id="panel-yury">
     <ol class="task-list">
       <li>
+        <input type="checkbox" class="task-check" data-id="yury-1">
         <div><strong>Revisar e finalizar LEAN Canvas</strong><div class="desc">Entregável 1 — revisar modelo de negócio, custos, receitas, métricas. Já existe em docs/01.</div></div>
         <span class="due">13–14/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="yury-2">
         <div><strong>Organizar roteiros dos vídeos</strong><div class="desc">Validar tempo, cenas e falas. Scripts prontos em docs/03, 04 e 05. Ajustar se necessário.</div></div>
         <span class="due">14/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="yury-3">
         <div><strong>Preparar materiais visuais</strong><div class="desc">Slides, infográficos ou cards visuais de apoio pro pitch (se necessário).</div></div>
         <span class="due">14–15/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="yury-4">
         <div><strong>Plano de viabilidade</strong><div class="desc">Custos de implantação, cronograma de deploy, escalabilidade. Reforça o critério "viabilidade".</div></div>
         <span class="due">15–16/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="yury-5">
         <div><strong>Controle de cronograma da equipe</strong><div class="desc">Cobrar prazos, alinhar entregas diárias, garantir que tudo seja concluído até dia 17.</div></div>
         <span class="due">13–17/04</span>
       </li>
@@ -430,22 +446,27 @@ a:hover { text-decoration:underline; }
   <div class="team-panel" id="panel-gabriela">
     <ol class="task-list">
       <li>
+        <input type="checkbox" class="task-check" data-id="gabriela-1">
         <div><strong>Pesquisa de hardware — HoloLens 2</strong><div class="desc">Specs técnicos, sensores, segurança embarcada (BitLocker, TPM, Defender). Documentar para o pitch.</div></div>
         <span class="due">13–14/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="gabriela-2">
         <div><strong>Diagrama da arquitetura física</strong><div class="desc">Desenhar infraestrutura: dispositivo → rede → servidor → Supabase. Visual técnico pro pitch.</div></div>
         <span class="due">14–15/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="gabriela-3">
         <div><strong>Testar protótipo e documentar bugs</strong><div class="desc">Abrir o protótipo, testar todos os cenários (5 níveis, cadastro, chat) e anotar problemas.</div></div>
         <span class="due">14–15/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="gabriela-4">
         <div><strong>Requisitos de energia e conectividade</strong><div class="desc">Autonomia de bateria do HoloLens, protocolos de comunicação, consumo do WireGuard.</div></div>
         <span class="due">15–16/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="gabriela-5">
         <div><strong>Apoio na gravação dos vídeos</strong><div class="desc">Câmera, iluminação, som — garantir qualidade de produção dos 2 vídeos.</div></div>
         <span class="due">15–16/04</span>
       </li>
@@ -456,22 +477,27 @@ a:hover { text-decoration:underline; }
   <div class="team-panel" id="panel-thauane">
     <ol class="task-list">
       <li>
+        <input type="checkbox" class="task-check" data-id="thauane-1">
         <div><strong>Documentar fluxo automatizado de segurança</strong><div class="desc">Mapear o fluxo completo: detecção → classificação de nível → resposta automática da IA. Visual para o pitch.</div></div>
         <span class="due">13–14/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="thauane-2">
         <div><strong>Revisar Design Thinking</strong><div class="desc">Validar personas, ideation, prototipação documentada em docs/06. Pode apresentar no pitch.</div></div>
         <span class="due">14/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="thauane-3">
         <div><strong>Testar os 5 cenários no protótipo</strong><div class="desc">Simular cada nível de segurança, verificar respostas da IA, detecção de observador.</div></div>
         <span class="due">14–15/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="thauane-4">
         <div><strong>Revisar toda documentação final</strong><div class="desc">Ler os 6 docs + index.html. Corrigir erros, garantir consistência entre documentos.</div></div>
         <span class="due">15–16/04</span>
       </li>
       <li>
+        <input type="checkbox" class="task-check" data-id="thauane-5">
         <div><strong>Apoio no pitch — parte técnica</strong><div class="desc">Se necessário, apresentar no vídeo a parte dos 5 níveis e automação de resposta.</div></div>
         <span class="due">16/04</span>
       </li>
@@ -494,6 +520,22 @@ function showTeam(name) {
   document.getElementById('panel-' + name).classList.add('active');
   event.target.closest('.team-tab').classList.add('active');
 }
+
+// Checkboxes — persist in localStorage
+function initChecks() {
+  const saved = JSON.parse(localStorage.getItem('blindar-tasks') || '{}');
+  document.querySelectorAll('.task-check').forEach(cb => {
+    const id = cb.dataset.id;
+    if (saved[id]) { cb.checked = true; cb.closest('li').classList.add('done'); }
+    cb.addEventListener('change', () => {
+      cb.closest('li').classList.toggle('done', cb.checked);
+      const state = JSON.parse(localStorage.getItem('blindar-tasks') || '{}');
+      if (cb.checked) state[id] = true; else delete state[id];
+      localStorage.setItem('blindar-tasks', JSON.stringify(state));
+    });
+  });
+}
+initChecks();
 </script>
 
 </body>
