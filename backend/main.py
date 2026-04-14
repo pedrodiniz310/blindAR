@@ -20,6 +20,7 @@ from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from supabase import create_client, Client
+from postgrest.constants import CountMethod
 
 load_dotenv()
 
@@ -436,8 +437,8 @@ async def dashboard():
     if not supabase:
         return DashboardStats(total_queries=0, total_alerts=0, active_devices=1, events=[])
 
-    queries = supabase.table("events").select("id", count="exact").eq("event_type", "ai_query").execute()
-    alerts = supabase.table("events").select("id", count="exact").in_("severity", ["warning", "critical"]).execute()
+    queries = supabase.table("events").select("id", count=CountMethod.exact).eq("event_type", "ai_query").execute()
+    alerts = supabase.table("events").select("id", count=CountMethod.exact).in_("severity", ["warning", "critical"]).execute()
     recent = supabase.table("events").select("*").order("created_at", desc=True).limit(20).execute()
 
     return DashboardStats(
