@@ -7,6 +7,7 @@
 <title>BlindAR — Protótipo Interativo</title>
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root {
   --bg: #09090b;
@@ -27,8 +28,8 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 
 /* NAV */
 .nav { display:flex; align-items:center; height:48px; padding:0 20px; background:var(--surface); border-bottom:1px solid var(--border); gap:16px; }
-.nav-logo { font-weight:800; font-size:15px; letter-spacing:-0.5px; }
-.nav-logo span { color:var(--accent2); }
+.nav-logo { display:flex; align-items:center; }
+.nav-logo img { height:28px; }
 .nav-tabs { display:flex; gap:2px; margin-left:24px; }
 .nav-tab { padding:6px 16px; font-size:13px; border-radius:6px; cursor:pointer; color:var(--muted); transition:all .15s; border:none; background:none; }
 .nav-tab:hover { color:var(--text); background:var(--surface2); }
@@ -51,7 +52,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .cam-box:hover { border-color:var(--accent); }
 .cam-box video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
 .cam-box canvas { position:absolute; top:0; left:0; width:100%; height:100%; transform:scaleX(-1); }
-.cam-status { position:absolute; bottom:0; left:0; right:0; padding:6px 10px; font-size:11px; font-weight:600; text-align:center; }
+.cam-status { padding:6px 10px; font-size:11px; font-weight:600; text-align:center; border-radius:0 0 8px 8px; }
 .cam-status.ok { background:rgba(34,197,94,0.85); color:#fff; }
 .cam-status.warn { background:rgba(249,115,22,0.85); color:#fff; }
 .cam-status.locked { background:rgba(239,68,68,0.9); color:#fff; }
@@ -195,7 +196,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 
 <!-- NAV -->
 <div class="nav">
-  <div class="nav-logo">🛡️ Blind<span>AR</span></div>
+  <div class="nav-logo"><img src="../images/blindar-logotype.png" alt="BlindAR"></div>
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchTab('assistant')">Assistente IA</button>
     <button class="nav-tab" onclick="switchTab('dashboard')">Dashboard</button>
@@ -258,8 +259,8 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
       <div class="cam-box">
         <video id="video" autoplay muted playsinline></video>
         <canvas id="overlay"></canvas>
-        <div class="cam-status loading" id="camStatus">Iniciando câmera...</div>
       </div>
+      <div class="cam-status loading" id="camStatus">Iniciando câmera...</div>
       <div id="identityBadge"></div>
       <div class="user-card" id="userCard" style="display:none;">
         <div class="name" id="userName"></div>
@@ -278,6 +279,17 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
         <input class="api-input" id="apiKey" type="password" placeholder="Cole sua API key do Groq" oninput="validateApiKey()">
         <div class="api-status" id="apiStatus"></div>
         <div class="api-hint" id="apiHint">Obtenha grátis em <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent2);">console.groq.com/keys</a></div>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-title">Supabase (Backend)</div>
+      <div class="api-section">
+        <input class="api-input" id="supabaseUrl" type="text" placeholder="URL do projeto (ex: https://xxx.supabase.co)">
+        <input class="api-input" id="supabaseKey" type="password" placeholder="Anon key do Supabase" style="margin-top:4px;">
+        <button onclick="connectSupabase()" style="width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid var(--border);background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Conectar</button>
+        <div class="api-status" id="supabaseStatus"></div>
+        <div class="api-hint">Configure em <a href="https://supabase.com/dashboard" target="_blank" style="color:var(--accent2);">supabase.com/dashboard</a></div>
       </div>
     </div>
 
@@ -421,6 +433,11 @@ let apiKey = '';
 let aiMode = 'local'; // 'local' or 'api'
 let aiProvider = 'groq'; // 'groq' or 'gemini'
 
+// Supabase
+let sb = null;
+let sbConnected = false;
+let sbUserId = null;
+
 const AI_PROVIDERS = {
   groq: {
     name: 'Groq (Llama 3.3 70B)',
@@ -527,6 +544,84 @@ function validateApiKey() {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  SUPABASE
+// ══════════════════════════════════════════════════════════════
+async function connectSupabase() {
+  const url = document.getElementById('supabaseUrl').value.trim();
+  const key = document.getElementById('supabaseKey').value.trim();
+  const status = document.getElementById('supabaseStatus');
+
+  if (!url || !key) {
+    status.innerHTML = '<span style="color:var(--yellow);">Preencha URL e anon key</span>';
+    return;
+  }
+
+  status.innerHTML = '<span style="color:var(--yellow);">⏳ Conectando...</span>';
+
+  try {
+    sb = window.supabase.createClient(url, key);
+    const { error } = await sb.from('users').select('id').limit(1);
+    if (error) throw error;
+    sbConnected = true;
+    status.innerHTML = '<span style="color:var(--green);">✓ Supabase conectado — dados serão persistidos</span>';
+    addLog('🗄️', 'Supabase conectado — eventos e cadastros serão salvos no banco', '#22c55e');
+  } catch(e) {
+    sb = null;
+    sbConnected = false;
+    status.innerHTML = `<span style="color:var(--red);">✗ ${e.message || 'Erro de conexão'}</span>`;
+  }
+}
+
+async function sbRegisterUser(name, role, descriptor) {
+  if (!sb || !sbConnected) return;
+  try {
+    const { data, error } = await sb.from('users').insert({
+      name: name,
+      role: role,
+      face_descriptor: descriptor ? Array.from(descriptor) : new Array(128).fill(0)
+    }).select().single();
+
+    if (error) throw error;
+    sbUserId = data.id;
+    addLog('🗄️', `Usuário salvo no Supabase (ID: ${sbUserId.substring(0,8)}...)`, '#22c55e');
+    sbLogEvent('registration', `Usuário ${name} registrado com ${descriptor ? 'biometria facial' : 'modo simulado'}`, 'info');
+  } catch(e) {
+    console.warn('Supabase registration failed:', e);
+    addLog('⚠️', `Falha ao salvar no Supabase: ${e.message}`, '#f97316');
+  }
+}
+
+async function sbLogEvent(eventType, description, severity, metadata) {
+  if (!sb || !sbConnected) return;
+  try {
+    await sb.from('events').insert({
+      event_type: eventType,
+      description: description,
+      severity: severity || 'info',
+      user_id: sbUserId,
+      metadata: { ...(metadata || {}), level: currentLevel, timestamp: new Date().toISOString() }
+    });
+  } catch(e) {
+    console.warn('Supabase event log failed:', e);
+  }
+}
+
+async function sbLoadEvents() {
+  if (!sb || !sbConnected) return [];
+  try {
+    const { data, error } = await sb.from('events')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if (error) throw error;
+    return data || [];
+  } catch(e) {
+    console.warn('Supabase events load failed:', e);
+    return [];
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
 //  TABS
 // ══════════════════════════════════════════════════════════════
 function switchTab(tab) {
@@ -559,6 +654,7 @@ function setLevel(level) {
 
   if(prevLevel !== level) {
     addLog('⚠️', `Nível alterado: ${LEVEL_CONFIG[prevLevel].name} → ${cfg.name}`, cfg.color);
+    sbLogEvent('level_change', `Nível alterado: ${prevLevel} → ${level}`, level >= 4 ? 'warning' : 'info');
   }
 
   if(level === 5) {
@@ -587,6 +683,7 @@ function lockSession(reason) {
   if (uv.srcObject) { uv.srcObject.getTracks().forEach(t => t.stop()); uv.srcObject = null; }
   alertCount++;
   addLog('🚨', 'SESSÃO TRAVADA — ' + (reason || 'rosto ausente'), '#ef4444');
+  sbLogEvent('session_lock', reason || 'Rosto ausente', 'critical');
 }
 
 function unlockSession() {
@@ -810,6 +907,7 @@ async function processChat(question) {
   queryCount++;
   hourlyCounts[new Date().getHours()]++;
   addLog('📋', `Query: "${escapeHtml(question.substring(0,40))}..." — ${LEVEL_CONFIG[currentLevel].name} [${aiMode}]`, LEVEL_CONFIG[currentLevel].color);
+  sbLogEvent('ai_query', question.substring(0,100), 'info', { provider: aiProvider, mode: aiMode });
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1005,6 +1103,22 @@ function updateDashboard() {
   document.getElementById('dashQueries').textContent = queryCount;
   document.getElementById('dashIdentity').textContent = lastMatchScore > 0 ? (lastMatchScore * 100).toFixed(0) + '%' : '—';
   renderLog();
+
+  // Load Supabase events into log if connected
+  if (sbConnected) {
+    sbLoadEvents().then(events => {
+      if (events.length > 0) {
+        const el = document.getElementById('logEntries');
+        const severityIcon = { info: '📋', warning: '⚠️', critical: '🚨' };
+        const severityColor = { info: '#a1a1aa', warning: '#f97316', critical: '#ef4444' };
+        const sbEntries = events.map(e => {
+          const t = new Date(e.created_at).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+          return `<div class="log-entry"><span class="log-time">${t}</span><span class="log-icon">${severityIcon[e.severity] || '📋'}</span><span class="log-text" style="color:${severityColor[e.severity] || '#a1a1aa'}">[DB] ${e.description}</span></div>`;
+        }).join('');
+        el.innerHTML += '<div style="border-top:1px solid var(--border);margin:8px 0;padding-top:4px;font-size:10px;color:var(--muted);">🗄️ Eventos do Supabase</div>' + sbEntries;
+      }
+    });
+  }
 
   const ctxL = document.getElementById('chartLevel');
   if (chartLevel) chartLevel.destroy();
@@ -1223,6 +1337,9 @@ function completeRegistration(descriptor) {
     startContinuousRecognition();
   }
 
+  // Save to Supabase
+  sbRegisterUser(registeredName, registeredRole, descriptor);
+
   updateWatermark();
 }
 
@@ -1291,6 +1408,7 @@ function startContinuousRecognition() {
           document.getElementById('lockReason').textContent = `Similaridade: ${(similarity*100).toFixed(0)}% (mínimo: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%) — Alerta enviado ao SOC`;
           alertCount++;
           addLog('🚨', `IDENTIDADE NÃO CONFERE — similaridade ${(similarity*100).toFixed(0)}% (pessoa diferente detectada)`, '#ef4444');
+          sbLogEvent('identity_mismatch', `Similaridade ${(similarity*100).toFixed(0)}% - pessoa não autorizada`, 'critical', { similarity: similarity });
         }
       }
 
@@ -1302,6 +1420,7 @@ function startContinuousRecognition() {
           if (currentLevel < 4) setLevel(4);
           addLog('🚨', `Observador detectado (${detections.length} rostos) — Nível elevado para 4`, '#f97316');
           alertCount++;
+          sbLogEvent('observer_detected', `${detections.length} rostos detectados`, 'warning', { face_count: detections.length });
         }
 
         // Draw observer boxes
