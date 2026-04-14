@@ -782,45 +782,68 @@ async function processChat(question) {
 // ══════════════════════════════════════════════════════════════
 //  GEMINI API
 // ══════════════════════════════════════════════════════════════
+const GEMINI_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-2.0-flash-lite',
+  'gemini-1.5-flash-8b'
+];
+
 async function callGemini(question) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`;
+  let lastError = null;
 
-  const body = {
-    system_instruction: {
-      parts: [{ text: getSystemPrompt() }]
-    },
-    contents: [{
-      parts: [{ text: question }]
-    }],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 500
+  for (const model of GEMINI_MODELS) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiApiKey}`;
+
+      const body = {
+        system_instruction: {
+          parts: [{ text: getSystemPrompt() }]
+        },
+        contents: [{
+          parts: [{ text: question }]
+        }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 500
+        }
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.error?.message || `HTTP ${res.status}`;
+        if (msg.includes('quota') || msg.includes('rate') || msg.includes('Quota') || msg.includes('429')) {
+          lastError = msg;
+          continue; // Try next model
+        }
+        throw new Error(msg);
+      }
+
+      const data = await res.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!text) throw new Error('Resposta vazia da API');
+
+      // Convert markdown-like formatting to HTML
+      return text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+
+    } catch(e) {
+      if (e.message && !e.message.includes('quota') && !e.message.includes('rate') && !e.message.includes('Quota')) {
+        throw e; // Non-quota error, throw immediately
+      }
+      lastError = e.message;
     }
-  };
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    const msg = err.error?.message || `HTTP ${res.status}`;
-    if (msg.includes('quota') || msg.includes('rate') || msg.includes('Quota')) {
-      throw new Error('Limite de uso da API atingido. Aguarde 1 minuto e tente novamente, ou gere uma nova API key.');
-    }
-    throw new Error(msg);
   }
 
-  const data = await res.json();
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Resposta vazia da API');
-
-  // Convert markdown-like formatting to HTML
-  return text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n/g, '<br>');
+  // All models exhausted
+  throw new Error('Limite de uso atingido em todos os modelos. Gere uma nova API key em aistudio.google.com/apikey');
 }
 
 // ══════════════════════════════════════════════════════════════
