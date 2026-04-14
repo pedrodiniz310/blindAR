@@ -326,7 +326,7 @@ async def update_session(data: SessionUpdate):
     if not supabase:
         return {"status": "no_db"}
 
-    update = {"last_verified_at": datetime.now(timezone.utc).isoformat()}
+    update: dict[str, object] = {"last_verified_at": datetime.now(timezone.utc).isoformat()}
     if data.security_level is not None:
         update["security_level"] = data.security_level
     if data.is_locked is not None:
