@@ -105,13 +105,21 @@ class SecurityEvent(BaseModel):
     user_id: Optional[str] = None
     metadata: Optional[dict] = None
 
+class SessionUpdate(BaseModel):
+    user_id: str
+    security_level: Optional[int] = None
+    is_locked: Optional[bool] = None
+    lock_reason: Optional[str] = None
+
 class DashboardStats(BaseModel):
     total_queries: int
     total_alerts: int
     active_devices: int
     total_users: int
+    active_sessions: int
     events: list[dict]
     users: list[dict]
+    sessions: list[dict]
 
 
 # ──────────────────────────────────────────────────────────────
@@ -220,6 +228,15 @@ async def register_user(user: UserRegister):
 
     token = generate_token(user_id)
 
+    # Create active session in Supabase
+    if supabase:
+        supabase.table("sessions").insert({
+            "user_id": str(user_id),
+            "token": token,
+            "security_level": 1,
+            "is_locked": False,
+        }).execute()
+
     # Log the registration event
     await log_event(SecurityEvent(
         event_type="user_registered",
@@ -290,7 +307,46 @@ async def verify_face(data: VerifyFace):
         metadata={"distance": distance, "similarity": similarity, "match": is_match},
     ))
 
+    # Update session last_verified_at on successful match
+    if is_match and supabase:
+        supabase.table("sessions").update({
+            "last_verified_at": datetime.now(timezone.utc).isoformat(),
+            "is_locked": False,
+        }).eq("user_id", data.user_id).execute()
+
     return VerifyResponse(match=is_match, similarity=similarity, distance=distance)
+
+
+# ──────────────────────────────────────────────────────────────
+#  Routes — Session Management
+# ──────────────────────────────────────────────────────────────
+@app.put("/api/sessions")
+async def update_session(data: SessionUpdate):
+    """Update a session — lock/unlock, change security level."""
+    if not supabase:
+        return {"status": "no_db"}
+
+    update = {"last_verified_at": datetime.now(timezone.utc).isoformat()}
+    if data.security_level is not None:
+        update["security_level"] = data.security_level
+    if data.is_locked is not None:
+        update["is_locked"] = data.is_locked
+    if data.lock_reason is not None:
+        update["lock_reason"] = data.lock_reason
+
+    result = supabase.table("sessions").update(update).eq("user_id", data.user_id).execute()
+    return {"status": "updated", "data": result.data}
+
+
+@app.get("/api/sessions")
+async def list_sessions():
+    """List all active sessions."""
+    if not supabase:
+        return []
+    result = supabase.table("sessions").select(
+        "id, user_id, security_level, started_at, last_verified_at, is_locked, lock_reason"
+    ).order("started_at", desc=True).execute()
+    return result.data
 
 
 # ──────────────────────────────────────────────────────────────
@@ -462,20 +518,23 @@ async def log_event(event: SecurityEvent):
 async def dashboard():
     """Get aggregated dashboard statistics."""
     if not supabase:
-        return DashboardStats(total_queries=0, total_alerts=0, active_devices=1, total_users=0, events=[], users=[])
+        return DashboardStats(total_queries=0, total_alerts=0, active_devices=1, total_users=0, active_sessions=0, events=[], users=[], sessions=[])
 
     queries = supabase.table("events").select("id", count=CountMethod.exact).eq("event_type", "ai_query").execute()
     alerts = supabase.table("events").select("id", count=CountMethod.exact).in_("severity", ["warning", "critical"]).execute()
     recent = supabase.table("events").select("*").order("created_at", desc=True).limit(50).execute()
     users = supabase.table("users").select("id, name, role, registered_at, is_active").order("registered_at", desc=True).execute()
+    sessions = supabase.table("sessions").select("id, user_id, security_level, started_at, last_verified_at, is_locked, lock_reason").order("started_at", desc=True).execute()
 
     return DashboardStats(
         total_queries=queries.count or 0,
         total_alerts=alerts.count or 0,
         active_devices=1,
         total_users=len(users.data) if users.data else 0,
+        active_sessions=len([s for s in (sessions.data or []) if not s.get("is_locked")]),
         events=recent.data,
         users=users.data or [],
+        sessions=sessions.data or [],
     )
 
 

@@ -717,6 +717,19 @@ async function apiLogEvent(eventType, description, severity, metadata) {
   }
 }
 
+async function apiUpdateSession(updates) {
+  if (!backendConnected || !backendUserId) return;
+  try {
+    await fetch(backendUrl + '/api/sessions', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: backendUserId, ...updates })
+    });
+  } catch(e) {
+    console.warn('Session update failed:', e);
+  }
+}
+
 async function apiLoadEvents() {
   if (!backendConnected) return [];
   try {
@@ -797,6 +810,7 @@ function setLevel(level) {
   if(prevLevel !== level) {
     addLog('⚠️', `Nível alterado: ${LEVEL_CONFIG[prevLevel].name} → ${cfg.name}`, cfg.color);
     apiLogEvent('level_change', `Nível alterado: ${prevLevel} → ${level}`, level >= 4 ? 'warning' : 'info');
+    apiUpdateSession({ security_level: level });
 
     // Blur messages from more secure levels when moving to less secure
     if (level > prevLevel) {
@@ -844,6 +858,7 @@ function lockSession(reason) {
   alertCount++;
   addLog('🚨', 'SESSÃO TRAVADA — ' + (reason || 'rosto ausente'), '#ef4444');
   apiLogEvent('session_lock', reason || 'Rosto ausente', 'critical');
+  apiUpdateSession({ is_locked: true, lock_reason: reason || 'Rosto ausente' });
 }
 
 function unlockSession() {
@@ -855,6 +870,7 @@ function unlockSession() {
   document.getElementById('unlockCamContainer').classList.remove('active');
   const uv = document.getElementById('unlockVideo');
   if (uv.srcObject) { uv.srcObject.getTracks().forEach(t => t.stop()); uv.srcObject = null; }
+  apiUpdateSession({ is_locked: false, lock_reason: null });
 }
 
 async function attemptUnlock() {
