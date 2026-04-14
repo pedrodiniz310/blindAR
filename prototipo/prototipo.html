@@ -7,7 +7,6 @@
 <title>BlindAR — Protótipo Interativo</title>
 <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 :root {
   --bg: #09090b;
@@ -283,13 +282,11 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
     </div>
 
     <div class="sb-section">
-      <div class="sb-title">Supabase (Backend)</div>
+      <div class="sb-title">Backend API</div>
       <div class="api-section">
-        <input class="api-input" id="supabaseUrl" type="text" placeholder="URL do projeto (ex: https://xxx.supabase.co)">
-        <input class="api-input" id="supabaseKey" type="password" placeholder="Anon key do Supabase" style="margin-top:4px;">
-        <button onclick="connectSupabase()" style="width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid var(--border);background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Conectar</button>
-        <div class="api-status" id="supabaseStatus"></div>
-        <div class="api-hint">Configure em <a href="https://supabase.com/dashboard" target="_blank" style="color:var(--accent2);">supabase.com/dashboard</a></div>
+        <input class="api-input" id="backendUrl" type="text" placeholder="URL do backend (ex: http://localhost:8000)" value="http://localhost:8000">
+        <button onclick="connectBackend()" style="width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid var(--border);background:var(--accent);color:#fff;font-size:12px;font-weight:600;cursor:pointer;">Conectar</button>
+        <div class="api-status" id="backendStatus"></div>
       </div>
     </div>
 
@@ -433,10 +430,10 @@ let apiKey = '';
 let aiMode = 'local'; // 'local' or 'api'
 let aiProvider = 'groq'; // 'groq' or 'gemini'
 
-// Supabase
-let sb = null;
-let sbConnected = false;
-let sbUserId = null;
+// Backend
+let backendUrl = 'http://localhost:8000';
+let backendConnected = false;
+let backendUserId = null;
 
 const AI_PROVIDERS = {
   groq: {
@@ -544,79 +541,81 @@ function validateApiKey() {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  SUPABASE
+//  BACKEND API
 // ══════════════════════════════════════════════════════════════
-async function connectSupabase() {
-  const url = document.getElementById('supabaseUrl').value.trim();
-  const key = document.getElementById('supabaseKey').value.trim();
-  const status = document.getElementById('supabaseStatus');
+async function connectBackend() {
+  const url = document.getElementById('backendUrl').value.trim().replace(/\/+$/, '');
+  const status = document.getElementById('backendStatus');
 
-  if (!url || !key) {
-    status.innerHTML = '<span style="color:var(--yellow);">Preencha URL e anon key</span>';
+  if (!url) {
+    status.innerHTML = '<span style="color:var(--yellow);">Preencha a URL do backend</span>';
     return;
   }
 
   status.innerHTML = '<span style="color:var(--yellow);">⏳ Conectando...</span>';
 
   try {
-    sb = window.supabase.createClient(url, key);
-    const { error } = await sb.from('users').select('id').limit(1);
-    if (error) throw error;
-    sbConnected = true;
-    status.innerHTML = '<span style="color:var(--green);">✓ Supabase conectado — dados serão persistidos</span>';
-    addLog('🗄️', 'Supabase conectado — eventos e cadastros serão salvos no banco', '#22c55e');
+    const res = await fetch(url + '/health');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    backendUrl = url;
+    backendConnected = true;
+    status.innerHTML = '<span style="color:var(--green);">✓ Backend conectado — dados persistidos no Supabase</span>';
+    addLog('🗄️', 'Backend BlindAR conectado — eventos e cadastros serão salvos', '#22c55e');
   } catch(e) {
-    sb = null;
-    sbConnected = false;
+    backendConnected = false;
     status.innerHTML = `<span style="color:var(--red);">✗ ${e.message || 'Erro de conexão'}</span>`;
   }
 }
 
-async function sbRegisterUser(name, role, descriptor) {
-  if (!sb || !sbConnected) return;
+async function apiRegisterUser(name, role, descriptor) {
+  if (!backendConnected) return;
   try {
-    const { data, error } = await sb.from('users').insert({
-      name: name,
-      role: role,
-      face_descriptor: descriptor ? Array.from(descriptor) : new Array(128).fill(0)
-    }).select().single();
-
-    if (error) throw error;
-    sbUserId = data.id;
-    addLog('🗄️', `Usuário salvo no Supabase (ID: ${sbUserId.substring(0,8)}...)`, '#22c55e');
-    sbLogEvent('registration', `Usuário ${name} registrado com ${descriptor ? 'biometria facial' : 'modo simulado'}`, 'info');
+    const res = await fetch(backendUrl + '/api/users/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name,
+        role: role,
+        face_descriptor: descriptor ? Array.from(descriptor) : new Array(128).fill(0)
+      })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    backendUserId = data.id;
+    addLog('🗄️', `Usuário salvo no banco (ID: ${backendUserId.substring(0,8)}...)`, '#22c55e');
   } catch(e) {
-    console.warn('Supabase registration failed:', e);
-    addLog('⚠️', `Falha ao salvar no Supabase: ${e.message}`, '#f97316');
+    console.warn('Backend registration failed:', e);
+    addLog('⚠️', `Falha ao salvar no backend: ${e.message}`, '#f97316');
   }
 }
 
-async function sbLogEvent(eventType, description, severity, metadata) {
-  if (!sb || !sbConnected) return;
+async function apiLogEvent(eventType, description, severity, metadata) {
+  if (!backendConnected) return;
   try {
-    await sb.from('events').insert({
-      event_type: eventType,
-      description: description,
-      severity: severity || 'info',
-      user_id: sbUserId,
-      metadata: { ...(metadata || {}), level: currentLevel, timestamp: new Date().toISOString() }
+    await fetch(backendUrl + '/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event_type: eventType,
+        description: description,
+        severity: severity || 'info',
+        user_id: backendUserId,
+        metadata: { ...(metadata || {}), level: currentLevel, timestamp: new Date().toISOString() }
+      })
     });
   } catch(e) {
-    console.warn('Supabase event log failed:', e);
+    console.warn('Backend event log failed:', e);
   }
 }
 
-async function sbLoadEvents() {
-  if (!sb || !sbConnected) return [];
+async function apiLoadEvents() {
+  if (!backendConnected) return [];
   try {
-    const { data, error } = await sb.from('events')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50);
-    if (error) throw error;
-    return data || [];
+    const res = await fetch(backendUrl + '/api/events?limit=50');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
   } catch(e) {
-    console.warn('Supabase events load failed:', e);
+    console.warn('Backend events load failed:', e);
     return [];
   }
 }
@@ -654,7 +653,7 @@ function setLevel(level) {
 
   if(prevLevel !== level) {
     addLog('⚠️', `Nível alterado: ${LEVEL_CONFIG[prevLevel].name} → ${cfg.name}`, cfg.color);
-    sbLogEvent('level_change', `Nível alterado: ${prevLevel} → ${level}`, level >= 4 ? 'warning' : 'info');
+    apiLogEvent('level_change', `Nível alterado: ${prevLevel} → ${level}`, level >= 4 ? 'warning' : 'info');
   }
 
   if(level === 5) {
@@ -683,7 +682,7 @@ function lockSession(reason) {
   if (uv.srcObject) { uv.srcObject.getTracks().forEach(t => t.stop()); uv.srcObject = null; }
   alertCount++;
   addLog('🚨', 'SESSÃO TRAVADA — ' + (reason || 'rosto ausente'), '#ef4444');
-  sbLogEvent('session_lock', reason || 'Rosto ausente', 'critical');
+  apiLogEvent('session_lock', reason || 'Rosto ausente', 'critical');
 }
 
 function unlockSession() {
@@ -907,7 +906,7 @@ async function processChat(question) {
   queryCount++;
   hourlyCounts[new Date().getHours()]++;
   addLog('📋', `Query: "${escapeHtml(question.substring(0,40))}..." — ${LEVEL_CONFIG[currentLevel].name} [${aiMode}]`, LEVEL_CONFIG[currentLevel].color);
-  sbLogEvent('ai_query', question.substring(0,100), 'info', { provider: aiProvider, mode: aiMode });
+  apiLogEvent('ai_query', question.substring(0,100), 'info', { provider: aiProvider, mode: aiMode });
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1104,18 +1103,18 @@ function updateDashboard() {
   document.getElementById('dashIdentity').textContent = lastMatchScore > 0 ? (lastMatchScore * 100).toFixed(0) + '%' : '—';
   renderLog();
 
-  // Load Supabase events into log if connected
-  if (sbConnected) {
-    sbLoadEvents().then(events => {
+  // Load events from backend if connected
+  if (backendConnected) {
+    apiLoadEvents().then(events => {
       if (events.length > 0) {
         const el = document.getElementById('logEntries');
         const severityIcon = { info: '📋', warning: '⚠️', critical: '🚨' };
         const severityColor = { info: '#a1a1aa', warning: '#f97316', critical: '#ef4444' };
-        const sbEntries = events.map(e => {
+        const dbEntries = events.map(e => {
           const t = new Date(e.created_at).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
           return `<div class="log-entry"><span class="log-time">${t}</span><span class="log-icon">${severityIcon[e.severity] || '📋'}</span><span class="log-text" style="color:${severityColor[e.severity] || '#a1a1aa'}">[DB] ${e.description}</span></div>`;
         }).join('');
-        el.innerHTML += '<div style="border-top:1px solid var(--border);margin:8px 0;padding-top:4px;font-size:10px;color:var(--muted);">🗄️ Eventos do Supabase</div>' + sbEntries;
+        el.innerHTML += '<div style="border-top:1px solid var(--border);margin:8px 0;padding-top:4px;font-size:10px;color:var(--muted);">🗄️ Eventos persistidos</div>' + dbEntries;
       }
     });
   }
@@ -1337,8 +1336,8 @@ function completeRegistration(descriptor) {
     startContinuousRecognition();
   }
 
-  // Save to Supabase
-  sbRegisterUser(registeredName, registeredRole, descriptor);
+  // Save to backend
+  apiRegisterUser(registeredName, registeredRole, descriptor);
 
   updateWatermark();
 }
@@ -1408,7 +1407,7 @@ function startContinuousRecognition() {
           document.getElementById('lockReason').textContent = `Similaridade: ${(similarity*100).toFixed(0)}% (mínimo: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%) — Alerta enviado ao SOC`;
           alertCount++;
           addLog('🚨', `IDENTIDADE NÃO CONFERE — similaridade ${(similarity*100).toFixed(0)}% (pessoa diferente detectada)`, '#ef4444');
-          sbLogEvent('identity_mismatch', `Similaridade ${(similarity*100).toFixed(0)}% - pessoa não autorizada`, 'critical', { similarity: similarity });
+          apiLogEvent('identity_mismatch', `Similaridade ${(similarity*100).toFixed(0)}% - pessoa não autorizada`, 'critical', { similarity: similarity });
         }
       }
 
@@ -1420,7 +1419,7 @@ function startContinuousRecognition() {
           if (currentLevel < 4) setLevel(4);
           addLog('🚨', `Observador detectado (${detections.length} rostos) — Nível elevado para 4`, '#f97316');
           alertCount++;
-          sbLogEvent('observer_detected', `${detections.length} rostos detectados`, 'warning', { face_count: detections.length });
+          apiLogEvent('observer_detected', `${detections.length} rostos detectados`, 'warning', { face_count: detections.length });
         }
 
         // Draw observer boxes
