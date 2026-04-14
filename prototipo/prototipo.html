@@ -506,8 +506,11 @@ let apiKey = '';
 let aiMode = 'local'; // 'local' or 'api'
 let aiProvider = 'groq'; // 'groq' or 'gemini'
 
-// Backend
-let backendUrl = 'http://localhost:8000';
+// Backend — auto-detect: Render (production) or localhost (dev)
+const RENDER_URL = 'https://blindar-api.onrender.com';
+let backendUrl = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  ? 'http://localhost:8000'
+  : RENDER_URL;
 let backendConnected = false;
 let backendUserId = null;
 
@@ -659,8 +662,22 @@ async function connectBackend() {
     backendUrl = url;
     backendConnected = true;
     status.innerHTML = '<span style="color:var(--green);">✓ Backend conectado — dados persistidos no Supabase</span>';
-    addLog('🗄️', 'Backend BlindAR conectado — eventos e cadastros serão salvos', '#22c55e');
+    addLog('🗄️', `Backend BlindAR conectado (${url.includes('render') ? 'nuvem' : 'local'})`, '#22c55e');
   } catch(e) {
+    // Fallback: if localhost failed, try Render
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+      status.innerHTML = '<span style="color:var(--yellow);">⏳ Local indisponível — tentando nuvem...</span>';
+      try {
+        const res2 = await fetch(RENDER_URL + '/health');
+        if (!res2.ok) throw new Error('HTTP ' + res2.status);
+        backendUrl = RENDER_URL;
+        backendConnected = true;
+        document.getElementById('backendUrl').value = RENDER_URL;
+        status.innerHTML = '<span style="color:var(--green);">✓ Backend conectado via nuvem (Render)</span>';
+        addLog('☁️', 'Backend conectado via Render (nuvem)', '#22c55e');
+        return;
+      } catch(e2) { /* Render also failed */ }
+    }
     backendConnected = false;
     status.innerHTML = `<span style="color:var(--red);">✗ ${e.message || 'Erro de conexão'}</span>`;
   }
@@ -1828,6 +1845,8 @@ document.addEventListener('DOMContentLoaded', () => {
   addLog('🔒', 'VPN WireGuard estabelecida — túnel criptografado ativo', '#22c55e');
   addLog('📡', 'Microsoft Sentinel conectado — logs ativos', '#3b82f6');
   addLog('🛡️', 'BlindAR Gateway iniciado', '#3b82f6');
+  // Set backend URL input to match auto-detected URL
+  document.getElementById('backendUrl').value = backendUrl;
   connectBackend();
   initCamera();
 });
