@@ -158,6 +158,15 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .session-locked-big h2 { font-size:28px; font-weight:800; color:var(--red); margin-bottom:8px; }
 .session-locked-big p { font-size:15px; color:var(--muted); }
 .session-locked-big .lock-reason { font-size:13px; color:var(--red); margin-top:12px; }
+.unlock-btn { margin-top:28px; padding:14px 36px; border-radius:10px; border:2px solid var(--accent); background:transparent; color:var(--accent); font-size:15px; font-weight:700; cursor:pointer; transition:all .2s; letter-spacing:0.5px; }
+.unlock-btn:hover { background:var(--accent); color:#fff; }
+.unlock-btn:disabled { opacity:.4; cursor:not-allowed; border-color:var(--muted); color:var(--muted); }
+.unlock-cam-container { display:none; position:relative; width:320px; aspect-ratio:4/3; margin:20px auto 0; border-radius:12px; overflow:hidden; border:2px solid var(--accent); background:#000; }
+.unlock-cam-container.active { display:block; animation:fadeIn .4s; }
+.unlock-cam-container video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
+.unlock-cam-container canvas { position:absolute; top:0; left:0; width:100%; height:100%; transform:scaleX(-1); }
+.unlock-cam-label { position:absolute; bottom:0; left:0; right:0; padding:8px; font-size:12px; font-weight:600; text-align:center; background:rgba(239,68,68,0.85); color:#fff; }
+.unlock-progress { margin-top:12px; font-size:13px; color:var(--muted); min-height:20px; }
 
 /* REGISTRATION MODAL */
 .reg-modal { display:none; position:fixed; inset:0; z-index:600; background:rgba(0,0,0,0.92); flex-direction:column; align-items:center; justify-content:center; }
@@ -209,6 +218,13 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
   <h2>SESSÃO TRAVADA</h2>
   <p id="lockMessage">Rosto não detectado — aproxime-se da câmera para desbloquear</p>
   <p class="lock-reason" id="lockReason">Alerta enviado ao SOC — Sentinel</p>
+  <div class="unlock-cam-container" id="unlockCamContainer">
+    <video id="unlockVideo" autoplay muted playsinline></video>
+    <canvas id="unlockOverlay"></canvas>
+    <div class="unlock-cam-label" id="unlockCamLabel">Aguardando verificação facial...</div>
+  </div>
+  <button class="unlock-btn" id="unlockBtn" onclick="attemptUnlock()">🔓 Verificar Identidade para Desbloquear</button>
+  <p class="unlock-progress" id="unlockProgress"></p>
 </div>
 
 <!-- REGISTRATION MODAL -->
@@ -533,6 +549,13 @@ function lockSession(reason) {
   document.getElementById('lockMessage').textContent = reason || 'Rosto não detectado — aproxime-se da câmera para desbloquear';
   document.getElementById('lockReason').textContent = 'Alerta enviado ao SOC — Sentinel';
   document.getElementById('sessionLocked').classList.add('show');
+  // Reset unlock UI
+  document.getElementById('unlockBtn').disabled = false;
+  document.getElementById('unlockBtn').textContent = '🔓 Verificar Identidade para Desbloquear';
+  document.getElementById('unlockProgress').textContent = '';
+  document.getElementById('unlockCamContainer').classList.remove('active');
+  const uv = document.getElementById('unlockVideo');
+  if (uv.srcObject) { uv.srcObject.getTracks().forEach(t => t.stop()); uv.srcObject = null; }
   alertCount++;
   addLog('🚨', 'SESSÃO TRAVADA — ' + (reason || 'rosto ausente'), '#ef4444');
 }
@@ -542,6 +565,132 @@ function unlockSession() {
   identityMismatch = false;
   document.getElementById('sessionLocked').classList.remove('show');
   document.getElementById('identityAlert').style.display = 'none';
+  // Cleanup unlock camera
+  document.getElementById('unlockCamContainer').classList.remove('active');
+  const uv = document.getElementById('unlockVideo');
+  if (uv.srcObject) { uv.srcObject.getTracks().forEach(t => t.stop()); uv.srcObject = null; }
+}
+
+async function attemptUnlock() {
+  if (!registeredDescriptor || !faceApiLoaded) {
+    // No face registered = simulated mode, just unlock
+    unlockSession();
+    addLog('🔓', 'Sessão desbloqueada (modo simulado)', '#eab308');
+    return;
+  }
+
+  const btn = document.getElementById('unlockBtn');
+  const progress = document.getElementById('unlockProgress');
+  const camContainer = document.getElementById('unlockCamContainer');
+  const unlockVideo = document.getElementById('unlockVideo');
+  const unlockOverlay = document.getElementById('unlockOverlay');
+  const unlockLabel = document.getElementById('unlockCamLabel');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Verificando...';
+  progress.textContent = 'Ativando câmera...';
+
+  // Show camera
+  camContainer.classList.add('active');
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:640, height:480 } });
+    unlockVideo.srcObject = stream;
+    await unlockVideo.play();
+  } catch(e) {
+    progress.textContent = 'Câmera não disponível.';
+    btn.disabled = false;
+    btn.textContent = '🔓 Verificar Identidade para Desbloquear';
+    return;
+  }
+
+  progress.textContent = 'Posicione seu rosto na câmera...';
+  unlockLabel.textContent = 'Detectando rosto...';
+  unlockLabel.style.background = 'rgba(239,68,68,0.85)';
+
+  let attempts = 0;
+  const maxAttempts = 20;
+
+  const tryVerify = async () => {
+    attempts++;
+    if (attempts > maxAttempts) {
+      progress.textContent = '❌ Não foi possível verificar identidade. Tente novamente.';
+      progress.style.color = '#ef4444';
+      unlockLabel.textContent = 'Verificação falhou';
+      btn.disabled = false;
+      btn.textContent = '🔓 Verificar Identidade para Desbloquear';
+      camContainer.classList.remove('active');
+      if (unlockVideo.srcObject) { unlockVideo.srcObject.getTracks().forEach(t => t.stop()); unlockVideo.srcObject = null; }
+      addLog('❌', 'Tentativa de desbloqueio falhou — rosto não detectado', '#ef4444');
+      return;
+    }
+
+    unlockLabel.textContent = `Detectando rosto... (${attempts}/${maxAttempts})`;
+
+    const detection = await faceapi
+      .detectSingleFace(unlockVideo, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+      .withFaceLandmarks()
+      .withFaceDescriptor();
+
+    if (detection) {
+      const distance = faceapi.euclideanDistance(registeredDescriptor, detection.descriptor);
+      const similarity = Math.max(0, 1 - distance);
+      const isMatch = distance < MATCH_THRESHOLD;
+
+      // Draw face box
+      unlockOverlay.width = unlockVideo.videoWidth;
+      unlockOverlay.height = unlockVideo.videoHeight;
+      const ctx = unlockOverlay.getContext('2d');
+      ctx.clearRect(0, 0, unlockOverlay.width, unlockOverlay.height);
+      const box = detection.detection.box;
+      ctx.strokeStyle = isMatch ? '#22c55e' : '#ef4444';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
+      ctx.fillStyle = isMatch ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)';
+      ctx.fillRect(box.x, box.y - 22, 140, 22);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px Segoe UI';
+      ctx.fillText(`${(similarity*100).toFixed(0)}% similaridade`, box.x + 6, box.y - 7);
+
+      if (isMatch) {
+        unlockLabel.textContent = `✓ Identidade confirmada — ${(similarity*100).toFixed(0)}%`;
+        unlockLabel.style.background = 'rgba(34,197,94,0.85)';
+        progress.textContent = '✓ Identidade verificada! Desbloqueando...';
+        progress.style.color = '#22c55e';
+        lastMatchScore = similarity;
+        setTimeout(() => {
+          camContainer.classList.remove('active');
+          if (unlockVideo.srcObject) { unlockVideo.srcObject.getTracks().forEach(t => t.stop()); unlockVideo.srcObject = null; }
+          unlockSession();
+          isAuthenticated = true;
+          faceDetected = true;
+          document.getElementById('camStatus').textContent = `✓ ${registeredName} — Identidade verificada`;
+          document.getElementById('camStatus').className = 'cam-status ok';
+          addLog('🔓', `Sessão desbloqueada — identidade confirmada (${(similarity*100).toFixed(0)}%)`, '#22c55e');
+        }, 800);
+      } else {
+        unlockLabel.textContent = `✗ Não corresponde — ${(similarity*100).toFixed(0)}%`;
+        unlockLabel.style.background = 'rgba(239,68,68,0.85)';
+        progress.textContent = `❌ Identidade não confere (${(similarity*100).toFixed(0)}% — mínimo: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%). Apenas ${registeredName} pode desbloquear.`;
+        progress.style.color = '#ef4444';
+        btn.disabled = false;
+        btn.textContent = '🔓 Tentar Novamente';
+        addLog('🚨', `Tentativa de desbloqueio NEGADA — similaridade ${(similarity*100).toFixed(0)}% (pessoa diferente)`, '#ef4444');
+        alertCount++;
+        setTimeout(() => {
+          camContainer.classList.remove('active');
+          if (unlockVideo.srcObject) { unlockVideo.srcObject.getTracks().forEach(t => t.stop()); unlockVideo.srcObject = null; }
+        }, 2000);
+      }
+    } else {
+      unlockOverlay.width = unlockVideo.videoWidth;
+      unlockOverlay.height = unlockVideo.videoHeight;
+      const ctx = unlockOverlay.getContext('2d');
+      ctx.clearRect(0, 0, unlockOverlay.width, unlockOverlay.height);
+      setTimeout(tryVerify, 500);
+    }
+  };
+
+  setTimeout(tryVerify, 600);
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -657,7 +806,11 @@ async function callGemini(question) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `HTTP ${res.status}`);
+    const msg = err.error?.message || `HTTP ${res.status}`;
+    if (msg.includes('quota') || msg.includes('rate') || msg.includes('Quota')) {
+      throw new Error('Limite de uso da API atingido. Aguarde 1 minuto e tente novamente, ou gere uma nova API key.');
+    }
+    throw new Error(msg);
   }
 
   const data = await res.json();
@@ -1076,13 +1229,13 @@ function startContinuousRecognition() {
     } else {
       // No face detected
       noFaceFrames++;
-      if (noFaceFrames > 2 && isAuthenticated && !isLocked) {
+      if (noFaceFrames >= 1 && isAuthenticated && !isLocked) {
         faceDetected = false;
-        status.textContent = '⚠ Rosto não detectado';
+        status.textContent = `⚠ Rosto não detectado (${noFaceFrames * 10}s)`;
         status.className = 'cam-status locked';
         document.getElementById('identityBadge').innerHTML = '';
-        if (noFaceFrames > 3) {
-          lockSession('Rosto ausente — possível remoção do dispositivo');
+        if (noFaceFrames >= 3) {
+          lockSession('Rosto ausente há 30 segundos — sessão travada por segurança');
         }
       }
     }
