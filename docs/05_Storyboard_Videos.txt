@@ -1,269 +1,538 @@
-================================================================================
-  STORYBOARD DOS VÍDEOS — BlindAR
-  Grand Prix SENAI de Inovação 2026 — Desafio Petrobras (Cibersegurança)
-  Equipe: Pedro D. / Thauana P. / Xuiy K.
-================================================================================
-
-
-================================================================================
-  VÍDEO 1 — PROTÓTIPO CONCEITO (2 minutos)
-================================================================================
-
-Formato: Gravação de tela + webcam + narração
-Resolução: 1920x1080 (Full HD)
-Duração: 1:50 - 2:00
-
-────────────────────────────────────────────────────────────────────────────────
-CENA 1: AUTENTICAÇÃO FACIAL
-Tempo: 0:00 - 0:25
-────────────────────────────────────────────────────────────────────────────────
-
-  VISUAL:
-  ┌──────────────────────────────────────────────────────────────────────┐
-  │                                                                      │
-  │   ┌─────────────────┐    ┌────────────────────────────────────────┐  │
-  │   │                 │    │                                        │  │
-  │   │   WEBCAM FEED   │    │  ✓ Identidade verificada               │  │
-  │   │   (rosto do     │    │  Nome: Pedro Diniz                     │  │
-  │   │    usuário)     │    │  Cargo: Técnico de Manutenção          │  │
-  │   │                 │    │  Nível: 1 (VERDE - Sala Segura)        │  │
-  │   │   [Caixa verde  │    │                                        │  │
-  │   │    ao redor do  │    │  Localização: Escritório Central       │  │
-  │   │    rosto]       │    │  Rede: Corporativa (interna)           │  │
-  │   │                 │    │  Status: AUTENTICADO                   │  │
-  │   └─────────────────┘    └────────────────────────────────────────┘  │
-  │                                                                      │
-  └──────────────────────────────────────────────────────────────────────┘
-
-  NARRAÇÃO:
-  "O BlindAR começa com autenticação facial. A câmera do óculos
-  reconhece o rosto do colaborador e calcula automaticamente o nível
-  de segurança baseado no contexto."
-
-  AÇÃO:
-  1. Abrir prototipo_BlindAR.html no navegador
-  2. Permitir acesso à webcam
-  3. Rosto aparece → borda verde → "Identidade verificada"
-  4. DEMO: tapar a câmera → "SESSÃO TRAVADA" (vermelho)
-  5. Destampar → volta ao normal
-
-
-────────────────────────────────────────────────────────────────────────────────
-CENA 2: CONSULTA À IA COM FILTRO
-Tempo: 0:25 - 0:55
-────────────────────────────────────────────────────────────────────────────────
-
-  VISUAL:
-  ┌──────────────────────────────────────────────────────────────────────┐
-  │  BlindAR AI Assistant              Nível: 1 🟢                  │
-  │  ──────────────────────────────────────────────────────────────────  │
-  │                                                                      │
-  │  Você: Qual a pressão atual do poço P-47?                           │
-  │                                                                      │
-  │  IA: A pressão atual do poço P-47 é de 42.7 bar, dentro da         │
-  │  faixa operacional (38-45 bar). Última leitura às 14:32.            │
-  │  Responsável: João Silva (ID: 28471).                                │
-  │  Recomendação: manter monitoramento padrão.                          │
-  │                                                                      │
-  │  ┌────────────────────────────────────────────────────────────────┐  │
-  │  │ 🔒 Watermark: Pedro Diniz | 13/04/2026 14:35 | Nível 1       │  │
-  │  └────────────────────────────────────────────────────────────────┘  │
-  └──────────────────────────────────────────────────────────────────────┘
-
-  NARRAÇÃO:
-  "No nível 1 — sala segura, rede interna — o assistente responde com
-  dados completos. Valores exatos, nomes, recomendações. Note o
-  watermark dinâmico no rodapé: nome, data e nível."
-
-  AÇÃO:
-  1. Clicar na pergunta pré-configurada "Pressão do poço P-47"
-  2. Mostrar resposta completa aparecendo
-  3. Apontar para o watermark
-
-
-────────────────────────────────────────────────────────────────────────────────
-CENA 3: MUDANÇA DE CONTEXTO
-Tempo: 0:55 - 1:25
-────────────────────────────────────────────────────────────────────────────────
-
-  VISUAL (ANTES - Nível 3):
-  ┌──────────────────────────────────────────────────────────────────────┐
-  │  BlindAR AI Assistant              Nível: 3 🟡                  │
-  │  ──────────────────────────────────────────────────────────────────  │
-  │                                                                      │
-  │  ⚠️ Contexto: Rede de terceiro detectada                            │
-  │                                                                      │
-  │  Você: Qual a pressão atual do poço P-47?                           │
-  │                                                                      │
-  │  IA: A pressão do poço P-47 está dentro dos parâmetros normais      │
-  │  de operação. Não foram identificadas anomalias.                     │
-  │  Para detalhes, consulte em uma rede segura.                         │
-  │                                                                      │
-  │  [Valores numéricos e nomes foram omitidos por segurança]            │
-  └──────────────────────────────────────────────────────────────────────┘
-
-  VISUAL (DEPOIS - Nível 4, observador):
-  ┌──────────────────────────────────────────────────────────────────────┐
-  │  BlindAR AI Assistant              Nível: 4 🟠                  │
-  │  ──────────────────────────────────────────────────────────────────  │
-  │                                                                      │
-  │  ⚠️ OBSERVADOR DETECTADO — Dados protegidos                         │
-  │                                                                      │
-  │  IA: ██████████████████████████████████████████                      │
-  │  ████████████████████████████████████████████                        │
-  │  ████████████████████████████████████████████                        │
-  │                                                                      │
-  │  [Mova-se para uma área segura para visualizar]                      │
-  └──────────────────────────────────────────────────────────────────────┘
-
-  NARRAÇÃO:
-  "Agora simulamos que o técnico saiu para campo e conectou numa rede
-  de terceiro. O nível muda para 3 — amarelo. A mesma pergunta agora
-  retorna apenas informações genéricas, sem valores exatos.
-
-  E se alguém se aproxima... a câmera detecta outro rosto. Nível 4.
-  Todos os dados ficam borrados automaticamente."
-
-  AÇÃO:
-  1. Clicar no botão "Rede de Terceiro" → nível muda para 3
-  2. Clicar na mesma pergunta → resposta diferente (genérica)
-  3. Segundo rosto aparece na webcam → nível sobe para 4
-  4. Dados ficam borrados com ████
-
-
-────────────────────────────────────────────────────────────────────────────────
-CENA 4: DASHBOARD DE GOVERNANÇA
-Tempo: 1:25 - 1:55
-────────────────────────────────────────────────────────────────────────────────
-
-  VISUAL:
-  ┌──────────────────────────────────────────────────────────────────────┐
-  │  BlindAR — Dashboard de Governança                              │
-  │  ──────────────────────────────────────────────────────────────────  │
-  │                                                                      │
-  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │
-  │  │ Dispositivos: 3  │  │ Alertas: 1       │  │ Acessos: 12      │   │
-  │  │ ativos           │  │ (Nível 5)        │  │ hoje             │   │
-  │  └──────────────────┘  └──────────────────┘  └──────────────────┘   │
-  │                                                                      │
-  │  LOG DE EVENTOS:                                                     │
-  │  14:35:12  ✓ Auth facial — Pedro Diniz — Nível 1                    │
-  │  14:35:28  📋 Query: "pressão poço P-47" — Nível 1 — COMPLETO       │
-  │  14:36:01  ⚠️ Mudança de rede: interna → terceiro — Nível 3         │
-  │  14:36:15  📋 Query: "pressão poço P-47" — Nível 3 — FILTRADO       │
-  │  14:36:32  🚨 Observador detectado — Nível 4                         │
-  │  14:36:45  📋 Query: "pressão poço P-47" — Nível 4 — BLOQUEADO      │
-  │                                                                      │
-  │  [Gráfico de pizza: distribuição por nível]                          │
-  │  [Gráfico de barras: acessos por hora]                               │
-  └──────────────────────────────────────────────────────────────────────┘
-
-  NARRAÇÃO:
-  "E aqui está a visão do time de segurança. O dashboard mostra em
-  tempo real: cada autenticação, cada consulta, cada mudança de nível.
-  Tudo auditável. Tudo em conformidade com a LGPD."
-
-  AÇÃO:
-  1. Clicar na aba "Dashboard"
-  2. Mostrar log de eventos (todas as ações feitas nas cenas anteriores)
-  3. Mostrar gráficos
-  4. Apontar para métricas de auditoria
-
-
-────────────────────────────────────────────────────────────────────────────────
-ENCERRAMENTO
-Tempo: 1:55 - 2:00
-────────────────────────────────────────────────────────────────────────────────
-
-  VISUAL:
-  ┌──────────────────────────────────────────────────────────────────────┐
-  │                                                                      │
-  │                          🛡️ BlindAR                             │
-  │                                                                      │
-  │              Acesso seguro a IA via dispositivos vestíveis            │
-  │                                                                      │
-  │                   Grand Prix SENAI de Inovação 2026                  │
-  │                      Desafio Petrobras                                │
-  │                                                                      │
-  │               Pedro D. | Thauana P. | Xuiy K.                        │
-  │                                                                      │
-  └──────────────────────────────────────────────────────────────────────┘
-
-  NARRAÇÃO:
-  "BlindAR. Sem fricção. Com visibilidade total."
-
-
-
-================================================================================
-  VÍDEO 2 — PITCH (3 minutos)
-================================================================================
-
-Formato: Apresentação da equipe + slides + demo
-Resolução: 1920x1080 (Full HD)
-Duração: 2:50 - 3:00
-
-────────────────────────────────────────────────────────────────────────────────
-CENA 1: GANCHO (0:00 - 0:40)
-────────────────────────────────────────────────────────────────────────────────
-
-  VISUAL: Pessoa falando para câmera, fundo neutro
-  SLIDE ATRÁS: "2026. Plataforma Offshore. 200km da costa."
-
-  [Ver script completo em 04_Script_Pitch_3min.txt]
-
-────────────────────────────────────────────────────────────────────────────────
-CENA 2: SOLUÇÃO (0:40 - 1:20)
-────────────────────────────────────────────────────────────────────────────────
-
-  VISUAL: Slides com os 4 pilares (ícones + texto curto)
-  TRANSIÇÃO: Cada pilar aparece um por vez
-
-────────────────────────────────────────────────────────────────────────────────
-CENA 3: DEMO (1:20 - 2:00)
-────────────────────────────────────────────────────────────────────────────────
-
-  VISUAL: Gravação do protótipo funcionando
-  PIP (Picture-in-Picture): pequena webcam do narrador no canto
-
-────────────────────────────────────────────────────────────────────────────────
-CENA 4: DIFERENCIAL (2:00 - 2:30)
-────────────────────────────────────────────────────────────────────────────────
-
-  VISUAL: Slide com logos da stack (Azure, WireGuard, HoloLens)
-  TEXTO NA TELA: "100% testável com soluções de mercado"
-
-────────────────────────────────────────────────────────────────────────────────
-CENA 5: FECHAMENTO (2:30 - 3:00)
-────────────────────────────────────────────────────────────────────────────────
-
-  VISUAL: Equipe lado a lado (ou um por um)
-  TELA FINAL: Logo BlindAR + Grand Prix SENAI 2026
-
-
-================================================================================
-  CHECKLIST DE PRODUÇÃO
-================================================================================
-
-  ANTES DE GRAVAR:
-  [ ] Protótipo testado e funcionando no navegador
-  [ ] Script do pitch decorado (pontos-chave, não decorar palavra por palavra)
-  [ ] Webcam e microfone testados
-  [ ] Iluminação adequada (frontal, sem sombras)
-  [ ] Fundo limpo (parede branca ou fundo virtual)
-  [ ] Celular/computador carregado
-  [ ] Notificações desligadas
-  [ ] Ensaio geral feito pelo menos 2x
-
-  DURANTE A GRAVAÇÃO:
-  [ ] Olhar para a câmera
-  [ ] Falar devagar e com clareza
-  [ ] Não ler — pontos-chave na memória
-  [ ] Demonstrar o protótipo com calma
-  [ ] Se errar, voltar e regravar o trecho
-
-  DEPOIS DE GRAVAR:
-  [ ] Editar no CapCut/DaVinci Resolve
-  [ ] Adicionar legendas
-  [ ] Checar duração: protótipo ≤ 2:00, pitch ≤ 3:00
-  [ ] Exportar em 1080p, MP4
-  [ ] Assistir do início ao fim antes de entregar
+================================================================================
+
+  STORYBOARD DOS VÍDEOS — BlindAR
+
+  Grand Prix SENAI de Inovação 2026 — Desafio Petrobras (Cibersegurança)
+
+  Equipe FIREWALL: Pedro D. / Thauane P. / Yury K. / Gabriela P.
+
+================================================================================
+
+
+
+
+
+================================================================================
+
+  VÍDEO 1 — PROTÓTIPO CONCEITO (2 minutos)
+
+================================================================================
+
+
+
+Formato: Gravação de tela + webcam + narração
+
+Resolução: 1920x1080 (Full HD)
+
+Duração: 1:50 - 2:00
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+CENA 1: AUTENTICAÇÃO FACIAL
+
+Tempo: 0:00 - 0:25
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+  VISUAL:
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+
+  │                                                                      │
+
+  │   ┌─────────────────┐    ┌────────────────────────────────────────┐  │
+
+  │   │                 │    │                                        │  │
+
+  │   │   WEBCAM FEED   │    │  ✓ Identidade verificada               │  │
+
+  │   │   (rosto do     │    │  Nome: Pedro Diniz                     │  │
+
+  │   │    usuário)     │    │  Cargo: Técnico de Manutenção          │  │
+
+  │   │                 │    │  Nível: 1 (VERDE - Sala Segura)        │  │
+
+  │   │   [Caixa verde  │    │                                        │  │
+
+  │   │    ao redor do  │    │  Localização: Escritório Central       │  │
+
+  │   │    rosto]       │    │  Rede: Corporativa (interna)           │  │
+
+  │   │                 │    │  Status: AUTENTICADO                   │  │
+
+  │   └─────────────────┘    └────────────────────────────────────────┘  │
+
+  │                                                                      │
+
+  └──────────────────────────────────────────────────────────────────────┘
+
+
+
+  NARRAÇÃO:
+
+  "O BlindAR começa com autenticação facial. A câmera do óculos
+
+  reconhece o rosto do colaborador e calcula automaticamente o nível
+
+  de segurança baseado no contexto."
+
+
+
+  AÇÃO:
+
+  1. Abrir prototipo/prototipo.html no navegador
+
+  2. Permitir acesso à webcam
+
+  3. Rosto aparece → borda verde → "Identidade verificada"
+
+  4. DEMO: tapar a câmera → "SESSÃO TRAVADA" (vermelho)
+
+  5. Destampar → volta ao normal
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+CENA 2: CONSULTA À IA COM FILTRO
+
+Tempo: 0:25 - 0:55
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+  VISUAL:
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+
+  │  BlindAR AI Assistant              Nível: 1 🟢                  │
+
+  │  ──────────────────────────────────────────────────────────────────  │
+
+  │                                                                      │
+
+  │  Você: Qual a pressão atual do poço P-47?                           │
+
+  │                                                                      │
+
+  │  IA: A pressão atual do poço P-47 é de 42.7 bar, dentro da         │
+
+  │  faixa operacional (38-45 bar). Última leitura às 14:32.            │
+
+  │  Responsável: João Silva (ID: 28471).                                │
+
+  │  Recomendação: manter monitoramento padrão.                          │
+
+  │                                                                      │
+
+  │  ┌────────────────────────────────────────────────────────────────┐  │
+
+  │  │ 🔒 Watermark: Pedro Diniz | 13/04/2026 14:35 | Nível 1       │  │
+
+  │  └────────────────────────────────────────────────────────────────┘  │
+
+  └──────────────────────────────────────────────────────────────────────┘
+
+
+
+  NARRAÇÃO:
+
+  "No nível 1 — sala segura, rede interna — o assistente responde com
+
+  dados completos. Valores exatos, nomes, recomendações. Note o
+
+  watermark dinâmico no rodapé: nome, data e nível."
+
+
+
+  AÇÃO:
+
+  1. Clicar na pergunta pré-configurada "Pressão do poço P-47"
+
+  2. Mostrar resposta completa aparecendo
+
+  3. Apontar para o watermark
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+CENA 3: MUDANÇA DE CONTEXTO
+
+Tempo: 0:55 - 1:25
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+  VISUAL (ANTES - Nível 3):
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+
+  │  BlindAR AI Assistant              Nível: 3 🟡                  │
+
+  │  ──────────────────────────────────────────────────────────────────  │
+
+  │                                                                      │
+
+  │  ⚠️ Contexto: Rede de terceiro detectada                            │
+
+  │                                                                      │
+
+  │  Você: Qual a pressão atual do poço P-47?                           │
+
+  │                                                                      │
+
+  │  IA: A pressão do poço P-47 está dentro dos parâmetros normais      │
+
+  │  de operação. Não foram identificadas anomalias.                     │
+
+  │  Para detalhes, consulte em uma rede segura.                         │
+
+  │                                                                      │
+
+  │  [Valores numéricos e nomes foram omitidos por segurança]            │
+
+  └──────────────────────────────────────────────────────────────────────┘
+
+
+
+  VISUAL (DEPOIS - Nível 4, observador):
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+
+  │  BlindAR AI Assistant              Nível: 4 🟠                  │
+
+  │  ──────────────────────────────────────────────────────────────────  │
+
+  │                                                                      │
+
+  │  ⚠️ OBSERVADOR DETECTADO — Dados protegidos                         │
+
+  │                                                                      │
+
+  │  IA: ██████████████████████████████████████████                      │
+
+  │  ████████████████████████████████████████████                        │
+
+  │  ████████████████████████████████████████████                        │
+
+  │                                                                      │
+
+  │  [Mova-se para uma área segura para visualizar]                      │
+
+  └──────────────────────────────────────────────────────────────────────┘
+
+
+
+  NARRAÇÃO:
+
+  "Agora simulamos que o técnico saiu para campo e conectou numa rede
+
+  de terceiro. O nível muda para 3 — amarelo. A mesma pergunta agora
+
+  retorna apenas informações genéricas, sem valores exatos.
+
+
+
+  E se alguém se aproxima... a câmera detecta outro rosto. Nível 4.
+
+  Todos os dados ficam borrados automaticamente."
+
+
+
+  AÇÃO:
+
+  1. Clicar no botão "Rede de Terceiro" → nível muda para 3
+
+  2. Clicar na mesma pergunta → resposta diferente (genérica)
+
+  3. Segundo rosto aparece na webcam → nível sobe para 4
+
+  4. Dados ficam borrados com ████
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+CENA 4: DASHBOARD DE GOVERNANÇA
+
+Tempo: 1:25 - 1:55
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+  VISUAL:
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+
+  │  BlindAR — Dashboard de Governança                              │
+
+  │  ──────────────────────────────────────────────────────────────────  │
+
+  │                                                                      │
+
+  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐   │
+
+  │  │ Dispositivos: 3  │  │ Alertas: 1       │  │ Acessos: 12      │   │
+
+  │  │ ativos           │  │ (Nível 5)        │  │ hoje             │   │
+
+  │  └──────────────────┘  └──────────────────┘  └──────────────────┘   │
+
+  │                                                                      │
+
+  │  LOG DE EVENTOS:                                                     │
+
+  │  14:35:12  ✓ Auth facial — Pedro Diniz — Nível 1                    │
+
+  │  14:35:28  📋 Query: "pressão poço P-47" — Nível 1 — COMPLETO       │
+
+  │  14:36:01  ⚠️ Mudança de rede: interna → terceiro — Nível 3         │
+
+  │  14:36:15  📋 Query: "pressão poço P-47" — Nível 3 — FILTRADO       │
+
+  │  14:36:32  🚨 Observador detectado — Nível 4                         │
+
+  │  14:36:45  📋 Query: "pressão poço P-47" — Nível 4 — BLOQUEADO      │
+
+  │                                                                      │
+
+  │  [Gráfico de pizza: distribuição por nível]                          │
+
+  │  [Gráfico de barras: acessos por hora]                               │
+
+  └──────────────────────────────────────────────────────────────────────┘
+
+
+
+  NARRAÇÃO:
+
+  "E aqui está a visão do time de segurança. O dashboard mostra em
+
+  tempo real: cada autenticação, cada consulta, cada mudança de nível.
+
+  Tudo auditável. Tudo em conformidade com a LGPD."
+
+
+
+  AÇÃO:
+
+  1. Clicar na aba "Dashboard"
+
+  2. Mostrar log de eventos (todas as ações feitas nas cenas anteriores)
+
+  3. Mostrar gráficos
+
+  4. Apontar para métricas de auditoria
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+ENCERRAMENTO
+
+Tempo: 1:55 - 2:00
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+  VISUAL:
+
+  ┌──────────────────────────────────────────────────────────────────────┐
+
+  │                                                                      │
+
+  │                          🛡️ BlindAR                             │
+
+  │                                                                      │
+
+  │              Acesso seguro a IA via dispositivos vestíveis            │
+
+  │                                                                      │
+
+  │                   Grand Prix SENAI de Inovação 2026                  │
+
+  │                      Desafio Petrobras                                │
+
+  │                                                                      │
+
+  │       Pedro D. | Thauane P. | Yury K. | Gabriela P.                  │
+
+  │                                                                      │
+
+  └──────────────────────────────────────────────────────────────────────┘
+
+
+
+  NARRAÇÃO:
+
+  "BlindAR. Sem fricção. Com visibilidade total."
+
+
+
+
+
+
+
+================================================================================
+
+  VÍDEO 2 — PITCH (3 minutos)
+
+================================================================================
+
+
+
+Formato: Apresentação da equipe + slides + demo
+
+Resolução: 1920x1080 (Full HD)
+
+Duração: 2:50 - 3:00
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+CENA 1: GANCHO (0:00 - 0:40)
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+  VISUAL: Pessoa falando para câmera, fundo neutro
+
+  SLIDE ATRÁS: "2026. Plataforma Offshore. 200km da costa."
+
+
+
+  [Ver script completo em 04_Script_Pitch_3min.txt]
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+CENA 2: SOLUÇÃO (0:40 - 1:20)
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+  VISUAL: Slides com os 4 pilares (ícones + texto curto)
+
+  TRANSIÇÃO: Cada pilar aparece um por vez
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+CENA 3: DEMO (1:20 - 2:00)
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+  VISUAL: Gravação do protótipo funcionando
+
+  PIP (Picture-in-Picture): pequena webcam do narrador no canto
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+CENA 4: DIFERENCIAL (2:00 - 2:30)
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+  VISUAL: Slide com logos da stack (Azure, WireGuard, HoloLens)
+
+  TEXTO NA TELA: "100% testável com soluções de mercado"
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+
+CENA 5: FECHAMENTO (2:30 - 3:00)
+
+────────────────────────────────────────────────────────────────────────────────
+
+
+
+  VISUAL: Equipe lado a lado (ou um por um)
+
+  TELA FINAL: Logo BlindAR + Grand Prix SENAI 2026
+
+
+
+
+
+================================================================================
+
+  CHECKLIST DE PRODUÇÃO
+
+================================================================================
+
+
+
+  ANTES DE GRAVAR:
+
+  [ ] Protótipo testado e funcionando no navegador
+
+  [ ] Script do pitch decorado (pontos-chave, não decorar palavra por palavra)
+
+  [ ] Webcam e microfone testados
+
+  [ ] Iluminação adequada (frontal, sem sombras)
+
+  [ ] Fundo limpo (parede branca ou fundo virtual)
+
+  [ ] Celular/computador carregado
+
+  [ ] Notificações desligadas
+
+  [ ] Ensaio geral feito pelo menos 2x
+
+
+
+  DURANTE A GRAVAÇÃO:
+
+  [ ] Olhar para a câmera
+
+  [ ] Falar devagar e com clareza
+
+  [ ] Não ler — pontos-chave na memória
+
+  [ ] Demonstrar o protótipo com calma
+
+  [ ] Se errar, voltar e regravar o trecho
+
+
+
+  DEPOIS DE GRAVAR:
+
+  [ ] Editar no CapCut/DaVinci Resolve
+
+  [ ] Adicionar legendas
+
+  [ ] Checar duração: protótipo ≤ 2:00, pitch ≤ 3:00
+
+  [ ] Exportar em 1080p, MP4
+
+  [ ] Assistir do início ao fim antes de entregar
+

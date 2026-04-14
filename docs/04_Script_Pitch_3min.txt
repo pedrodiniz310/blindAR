@@ -1,196 +1,392 @@
-================================================================================
-  SCRIPT DO PITCH — BlindAR (3 minutos)
-  Grand Prix SENAI de Inovação 2026 — Desafio Petrobras (Cibersegurança)
-  Equipe: Pedro D. / Thauana P. / Xuiy K.
-================================================================================
-
-
-FORMATO: Vídeo de 3 minutos
-QUEM APRESENTA: Todos os 3 integrantes (revezar ou 1 apresenta com apoio)
-TOM: Confiante, direto, técnico mas acessível
-
-
-================================================================================
-BLOCO 1 — ABERTURA / GANCHO (0:00 - 0:30)
-================================================================================
-
-[VISUAL: Tela escura com o logo BlindAR aparecendo]
-[FALA: Pedro ou Thauana]
-
-  "Imaginem um técnico da Petrobras em uma plataforma offshore,
-  usando óculos de realidade aumentada para consultar um assistente
-  de IA sobre a pressão de um equipamento crítico.
-
-  A IA responde: 'A pressão do poço P-47 é 42.7 bar. Responsável:
-  João Silva. Dados de produção: 85 mil barris por dia.'
-
-  Agora imaginem que ele está conectado por uma rede de satélite
-  de terceiro. E que há um visitante ao lado olhando a tela.
-
-  Esses dados acabaram de vazar.
-
-  É exatamente esse problema que o BlindAR resolve."
-
-[TEMPO: ~25 segundos]
-
-
-================================================================================
-BLOCO 2 — O PROBLEMA (0:30 - 1:00)
-================================================================================
-
-[VISUAL: Slide com os 4 problemas-raiz e ícones]
-[FALA: Segundo integrante]
-
-  "O desafio da Petrobras pergunta: como garantir acesso seguro
-  a sistemas de IA via óculos de realidade aumentada?
-
-  Identificamos 4 problemas-raiz:
-
-  PRIMEIRO — Autenticação. Óculos AR não têm teclado. Como provar
-  que é o usuário certo? E como garantir que continua sendo ele?
-
-  SEGUNDO — Proteção de dados. Os dados trafegam por redes que
-  não controlamos — Wi-Fi de fornecedor, satélite de terceiro.
-
-  TERCEIRO — Vazamento visual. Óculos AR projetam informações que
-  qualquer pessoa ao redor pode ver. Screenshots e reflexos são
-  vetores de vazamento.
-
-  QUARTO — Redes de terceiros. A solução precisa funcionar em
-  qualquer rede, sem depender da infraestrutura da Petrobras."
-
-[TEMPO: ~30 segundos]
-
-
-================================================================================
-BLOCO 3 — A SOLUÇÃO (1:00 - 2:00)
-================================================================================
-
-[VISUAL: Demonstração do protótipo + diagrama de arquitetura]
-[FALA: Terceiro integrante ou revezar]
-
-  "O BlindAR é um gateway de segurança inteligente que se
-  posiciona entre os óculos AR e a IA da Petrobras.
-
-  Ele funciona em 4 pilares:
-
-  PILAR 1 — IDENTIDADE CONTÍNUA.
-  Quando o colaborador veste os óculos, a câmera frontal reconhece
-  seu rosto. Se os óculos saírem do rosto, a sessão trava em
-  menos de 1 segundo. Sem PIN. Sem senha. Sem fricção.
-
-  [Mostrar no protótipo: rosto detectado → autenticado → cobrir câmera → travou]
-
-  PILAR 2 — CANAL BLINDADO.
-  Todo o tráfego passa por um túnel criptografado WireGuard.
-  Funciona em Wi-Fi público, satélite, 5G. Dados nunca trafegam
-  em aberto, independente da rede.
-
-  PILAR 3 — PROTEÇÃO INTELIGENTE.
-  Aqui está o diferencial. O BlindAR tem 5 níveis de
-  segurança contextual. A IA adapta AUTOMATICAMENTE o que mostra
-  baseado no contexto.
-
-  Nível 1: sala segura, rede interna — dados completos.
-  Nível 3: rede de terceiro — dados genéricos. Em vez de
-  '42.7 bar', a IA diz 'pressão dentro do normal'.
-  Nível 4: observador detectado pela câmera — dados borrados.
-
-  [Mostrar no protótipo: mudar de rede → resposta muda → observador → blurra]
-
-  A IA não bloqueia. Ela TRANSFORMA. O colaborador não perde
-  produtividade — a informação só chega no nível adequado.
-
-  PILAR 4 — GOVERNANÇA TOTAL.
-  Tudo é logado no Microsoft Sentinel. O time de segurança
-  vê em tempo real: quem acessou o quê, de onde, por qual rede,
-  em qual nível.
-
-  [Mostrar dashboard brevemente]"
-
-[TEMPO: ~60 segundos]
-
-
-================================================================================
-BLOCO 4 — VIABILIDADE E DIFERENCIAL (2:00 - 2:40)
-================================================================================
-
-[VISUAL: Slide com stack tecnológico + comparação]
-[FALA: Qualquer integrante]
-
-  "A métrica principal do desafio é: ter uma arquitetura testável
-  com soluções já disponíveis no mercado.
-
-  O BlindAR usa EXCLUSIVAMENTE ferramentas de mercado:
-  Azure AD para autenticação, WireGuard para VPN, Azure OpenAI
-  para a IA, Microsoft Purview para classificação de dados, e
-  Microsoft Sentinel para auditoria.
-
-  Inclusive, a segurança nativa do HoloLens 2 já cobre a camada
-  de dispositivo — BitLocker, TPM, firewall always-on, Secure Boot.
-  O BlindAR complementa com as camadas que os óculos não
-  cobrem sozinhos: rede, dados em exibição e acesso contextual.
-
-  Nenhuma solução hoje combina autenticação contínua, níveis
-  contextuais e transformação de dados para dispositivos vestíveis.
-
-  E o protótipo que vocês viram funciona sem óculos reais —
-  usamos webcam como simulador, exatamente como o enunciado
-  permite."
-
-[TEMPO: ~40 segundos]
-
-
-================================================================================
-BLOCO 5 — FECHAMENTO / CALL TO ACTION (2:40 - 3:00)
-================================================================================
-
-[VISUAL: Logo BlindAR + tagline + nomes da equipe]
-[FALA: Todos juntos ou o apresentador principal]
-
-  "BlindAR. Acesso seguro a IA via dispositivos vestíveis.
-  Sem fricção para o usuário. Com visibilidade total para
-  a segurança.
-
-  A IA não bloqueia. Ela transforma.
-
-  Equipe: Pedro, Thauana e Xuiy. Obrigado."
-
-[TEMPO: ~20 segundos]
-
-
-================================================================================
-DICAS PARA A GRAVAÇÃO DO PITCH
-================================================================================
-
-1. ENSAIAR pelo menos 5 vezes antes de gravar.
-
-2. CRONOMETRAR cada bloco. O total deve ficar entre 2:50 e 3:00.
-
-3. Se apenas 1 pessoa apresenta:
-   → Revezar slides com demonstração do protótipo
-   → Os outros 2 aparecem no início e/ou fim
-
-4. Se todos apresentam:
-   → Pedro: Blocos 1 + 5 (abertura e fechamento)
-   → Thauana: Bloco 2 + 4 (problema e viabilidade)
-   → Xuiy: Bloco 3 (solução e demo do protótipo)
-
-5. VISUAL do vídeo:
-   → Slides simples e limpos (fundo escuro, texto grande)
-   → Demonstração do protótipo ao vivo durante o Bloco 3
-   → Evitar ler texto — falar olhando para a câmera
-
-6. ÁUDIO:
-   → Gravar em lugar silencioso
-   → Usar fone com microfone se não tiver mic externo
-   → Falar devagar e com pausas entre os blocos
-
-7. EDIÇÃO:
-   → Cortar pausas longas e erros
-   → Adicionar transições simples entre blocos
-   → Adicionar legendas se possível (acessibilidade)
-
-8. FERRAMENTA sugerida:
-   → OBS Studio (grátis) ou Canva (grátis para slides + gravação)
-   → CapCut (grátis) para edição do vídeo final
+================================================================================
+
+  SCRIPT DO PITCH — BlindAR (3 minutos)
+
+  Grand Prix SENAI de Inovação 2026 — Desafio Petrobras (Cibersegurança)
+
+  Equipe FIREWALL: Pedro D. / Thauane P. / Yury K. / Gabriela P.
+
+================================================================================
+
+
+
+
+
+FORMATO: Vídeo de 3 minutos
+
+QUEM APRESENTA: Todos os 4 integrantes (revezar ou 1 apresenta com apoio)
+
+TOM: Confiante, direto, técnico mas acessível
+
+
+
+
+
+================================================================================
+
+BLOCO 1 — ABERTURA / GANCHO (0:00 - 0:30)
+
+================================================================================
+
+
+
+[VISUAL: Tela escura com o logo BlindAR aparecendo]
+
+[FALA: Pedro ou Thauana]
+
+
+
+  "Imaginem um técnico da Petrobras em uma plataforma offshore,
+
+  usando óculos de realidade aumentada para consultar um assistente
+
+  de IA sobre a pressão de um equipamento crítico.
+
+
+
+  A IA responde: 'A pressão do poço P-47 é 42.7 bar. Responsável:
+
+  João Silva. Dados de produção: 85 mil barris por dia.'
+
+
+
+  Agora imaginem que ele está conectado por uma rede de satélite
+
+  de terceiro. E que há um visitante ao lado olhando a tela.
+
+
+
+  Esses dados acabaram de vazar.
+
+
+
+  É exatamente esse problema que o BlindAR resolve."
+
+
+
+[TEMPO: ~25 segundos]
+
+
+
+
+
+================================================================================
+
+BLOCO 2 — O PROBLEMA (0:30 - 1:00)
+
+================================================================================
+
+
+
+[VISUAL: Slide com os 4 problemas-raiz e ícones]
+
+[FALA: Segundo integrante]
+
+
+
+  "O desafio da Petrobras pergunta: como garantir acesso seguro
+
+  a sistemas de IA via óculos de realidade aumentada?
+
+
+
+  Identificamos 4 problemas-raiz:
+
+
+
+  PRIMEIRO — Autenticação. Óculos AR não têm teclado. Como provar
+
+  que é o usuário certo? E como garantir que continua sendo ele?
+
+
+
+  SEGUNDO — Proteção de dados. Os dados trafegam por redes que
+
+  não controlamos — Wi-Fi de fornecedor, satélite de terceiro.
+
+
+
+  TERCEIRO — Vazamento visual. Óculos AR projetam informações que
+
+  qualquer pessoa ao redor pode ver. Screenshots e reflexos são
+
+  vetores de vazamento.
+
+
+
+  QUARTO — Redes de terceiros. A solução precisa funcionar em
+
+  qualquer rede, sem depender da infraestrutura da Petrobras."
+
+
+
+[TEMPO: ~30 segundos]
+
+
+
+
+
+================================================================================
+
+BLOCO 3 — A SOLUÇÃO (1:00 - 2:00)
+
+================================================================================
+
+
+
+[VISUAL: Demonstração do protótipo + diagrama de arquitetura]
+
+[FALA: Terceiro integrante ou revezar]
+
+
+
+  "O BlindAR é um gateway de segurança inteligente que se
+
+  posiciona entre os óculos AR e a IA da Petrobras.
+
+
+
+  Ele funciona em 4 pilares:
+
+
+
+  PILAR 1 — IDENTIDADE CONTÍNUA.
+
+  Quando o colaborador veste os óculos, a câmera frontal reconhece
+
+  seu rosto. Se os óculos saírem do rosto, a sessão trava em
+
+  menos de 1 segundo. Sem PIN. Sem senha. Sem fricção.
+
+
+
+  [Mostrar no protótipo: rosto detectado → autenticado → cobrir câmera → travou]
+
+
+
+  PILAR 2 — CANAL BLINDADO.
+
+  Todo o tráfego passa por um túnel criptografado WireGuard.
+
+  Funciona em Wi-Fi público, satélite, 5G. Dados nunca trafegam
+
+  em aberto, independente da rede.
+
+
+
+  PILAR 3 — PROTEÇÃO INTELIGENTE.
+
+  Aqui está o diferencial. O BlindAR tem 5 níveis de
+
+  segurança contextual. A IA adapta AUTOMATICAMENTE o que mostra
+
+  baseado no contexto.
+
+
+
+  Nível 1: sala segura, rede interna — dados completos.
+
+  Nível 3: rede de terceiro — dados genéricos. Em vez de
+
+  '42.7 bar', a IA diz 'pressão dentro do normal'.
+
+  Nível 4: observador detectado pela câmera — dados borrados.
+
+
+
+  [Mostrar no protótipo: mudar de rede → resposta muda → observador → blurra]
+
+
+
+  A IA não bloqueia. Ela TRANSFORMA. O colaborador não perde
+
+  produtividade — a informação só chega no nível adequado.
+
+
+
+  PILAR 4 — GOVERNANÇA TOTAL.
+
+  Tudo é logado no Microsoft Sentinel. O time de segurança
+
+  vê em tempo real: quem acessou o quê, de onde, por qual rede,
+
+  em qual nível.
+
+
+
+  [Mostrar dashboard brevemente]"
+
+
+
+[TEMPO: ~60 segundos]
+
+
+
+
+
+================================================================================
+
+BLOCO 4 — VIABILIDADE E DIFERENCIAL (2:00 - 2:40)
+
+================================================================================
+
+
+
+[VISUAL: Slide com stack tecnológico + comparação]
+
+[FALA: Qualquer integrante]
+
+
+
+  "A métrica principal do desafio é: ter uma arquitetura testável
+
+  com soluções já disponíveis no mercado.
+
+
+
+  O BlindAR usa EXCLUSIVAMENTE ferramentas de mercado:
+
+  Azure AD para autenticação, WireGuard para VPN, Azure OpenAI
+
+  para a IA, Microsoft Purview para classificação de dados, e
+
+  Microsoft Sentinel para auditoria.
+
+
+
+  Inclusive, a segurança nativa do HoloLens 2 já cobre a camada
+
+  de dispositivo — BitLocker, TPM, firewall always-on, Secure Boot.
+
+  O BlindAR complementa com as camadas que os óculos não
+
+  cobrem sozinhos: rede, dados em exibição e acesso contextual.
+
+
+
+  Nenhuma solução hoje combina autenticação contínua, níveis
+
+  contextuais e transformação de dados para dispositivos vestíveis.
+
+
+
+  E o protótipo que vocês viram funciona sem óculos reais —
+
+  usamos webcam como simulador, exatamente como o enunciado
+
+  permite."
+
+
+
+[TEMPO: ~40 segundos]
+
+
+
+
+
+================================================================================
+
+BLOCO 5 — FECHAMENTO / CALL TO ACTION (2:40 - 3:00)
+
+================================================================================
+
+
+
+[VISUAL: Logo BlindAR + tagline + nomes da equipe]
+
+[FALA: Todos juntos ou o apresentador principal]
+
+
+
+  "BlindAR. Acesso seguro a IA via dispositivos vestíveis.
+
+  Sem fricção para o usuário. Com visibilidade total para
+
+  a segurança.
+
+
+
+  A IA não bloqueia. Ela transforma.
+
+
+
+  Equipe FIREWALL: Pedro, Thauane, Yury e Gabriela. Obrigado."
+
+
+
+[TEMPO: ~20 segundos]
+
+
+
+
+
+================================================================================
+
+DICAS PARA A GRAVAÇÃO DO PITCH
+
+================================================================================
+
+
+
+1. ENSAIAR pelo menos 5 vezes antes de gravar.
+
+
+
+2. CRONOMETRAR cada bloco. O total deve ficar entre 2:50 e 3:00.
+
+
+
+3. Se apenas 1 pessoa apresenta:
+
+   → Revezar slides com demonstração do protótipo
+
+   → Os outros 3 aparecem no início e/ou fim
+
+
+
+4. Se todos apresentam:
+
+   → Pedro: Blocos 1 + 5 (abertura e fechamento)
+
+   → Thauane: Bloco 2 (problema)
+
+   → Xuiy: Bloco 3 (solução e demo do protótipo)
+
+
+
+5. VISUAL do vídeo:
+
+   → Slides simples e limpos (fundo escuro, texto grande)
+
+   → Demonstração do protótipo ao vivo durante o Bloco 3
+
+   → Evitar ler texto — falar olhando para a câmera
+
+
+
+6. ÁUDIO:
+
+   → Gravar em lugar silencioso
+
+   → Usar fone com microfone se não tiver mic externo
+
+   → Falar devagar e com pausas entre os blocos
+
+
+
+7. EDIÇÃO:
+
+   → Cortar pausas longas e erros
+
+   → Adicionar transições simples entre blocos
+
+   → Adicionar legendas se possível (acessibilidade)
+
+
+
+8. FERRAMENTA sugerida:
+
+   → OBS Studio (grátis) ou Canva (grátis para slides + gravação)
+
+   → CapCut (grátis) para edição do vídeo final
+
