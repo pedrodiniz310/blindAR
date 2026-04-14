@@ -967,6 +967,7 @@ function completeRegistration(descriptor) {
 
   // Start continuous recognition
   if (descriptor && faceApiLoaded) {
+    if (detectionInterval) clearInterval(detectionInterval);
     startContinuousRecognition();
   }
 
