@@ -1,0 +1,230 @@
+══════════════════════════════════════════════════════════════
+ BlindAR — Setup do HoloLens 2 Emulator
+ Guia completo de instalação e execução
+ Grand Prix SENAI de Inovação 2026
+══════════════════════════════════════════════════════════════
+
+────────────────────────────────────────────────────────────
+1. PRÉ-REQUISITOS
+────────────────────────────────────────────────────────────
+
+  • Windows 10/11 Pro ou Enterprise (64-bit)
+  • Hyper-V habilitado (todos os componentes)
+  • Mínimo 8 GB RAM (recomendado 16 GB)
+  • CPU com suporte a virtualização (Intel VT-x / AMD-V)
+  • Python 3.10+ instalado
+
+  Para habilitar Hyper-V (PowerShell como Admin):
+    Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+    Enable-WindowsOptionalFeature -Online -FeatureName HypervisorPlatform -All
+    (Requer reinicialização)
+
+────────────────────────────────────────────────────────────
+2. INSTALAÇÃO DO HOLOLENS 2 EMULATOR
+────────────────────────────────────────────────────────────
+
+  Versão instalada: HoloLens 2 Emulator build 10.0.22621.1402
+  (Windows Holographic, version 24H1 October 2024 Update)
+
+  Download oficial:
+    https://go.microsoft.com/fwlink/?linkid=2290700
+
+  Link direto do instalador:
+    https://download.microsoft.com/download/b/8/b/b8b45ff1-6784-4bec-ba02-c3f895c40755/emulator/HoloLensEmulatorSetup.exe
+
+  Página de arquivo (todas as versões):
+    https://learn.microsoft.com/en-us/windows/mixed-reality/develop/advanced-concepts/hololens-emulator-archive
+
+  Processo:
+    1. Baixar o instalador (~1.3 MB, web installer)
+    2. Executar como Administrador
+    3. Aceitar termos de licença
+    4. Aguardar download + instalação (~5.9 GB de imagem VHDX)
+    5. Reiniciar se solicitado
+
+  Arquivos instalados:
+    VHD:      C:\Program Files (x86)\Windows Kits\10\Emulation\HoloLens\10.0.22621.1402\Flash.vhdx
+    Launcher: C:\Program Files (x86)\Windows Kits\10\Emulation\HoloLens\10.0.22621.1402\HoloLensEmulator.exe
+    Atalho:   Menu Iniciar > Windows Kits > HoloLens 2 Emulator (10.0.22621.1402)
+
+  NOTA: O HoloLens 2 usa .vhdx (não .vhd como o HoloLens 1)
+  NOTA: O HoloLens 2 tem seu próprio launcher (HoloLensEmulator.exe),
+        não precisa usar XDE.exe diretamente
+
+────────────────────────────────────────────────────────────
+3. EXECUÇÃO RÁPIDA (start-hololens.bat)
+────────────────────────────────────────────────────────────
+
+  Na raiz do projeto existe o arquivo start-hololens.bat que:
+    1. Limpa VMs antigas do Hyper-V
+    2. Inicia o backend FastAPI (porta 8000)
+    3. Inicia o frontend HTTP (porta 8080)
+    4. Abre o HoloLens 2 Emulator
+
+  Para executar:
+    - Clique direito no start-hololens.bat > "Executar como administrador"
+    - OU via PowerShell:
+      Start-Process "start-hololens.bat" -Verb RunAs
+
+────────────────────────────────────────────────────────────
+4. EXECUÇÃO MANUAL (passo a passo)
+────────────────────────────────────────────────────────────
+
+  Passo 1 — Iniciar o Backend
+    cd blindAR\backend
+    python -m uvicorn main:app --host 0.0.0.0 --port 8000
+
+  Passo 2 — Iniciar o Frontend
+    cd blindAR
+    python -m http.server 8080 --bind 0.0.0.0
+
+  Passo 3 — Abrir o Emulador (como Admin)
+    PowerShell:
+      Start-Process "C:\Program Files (x86)\Windows Kits\10\Emulation\HoloLens\10.0.22621.1402\HoloLensEmulator.exe" -Verb RunAs
+    OU:
+      Menu Iniciar > Windows Kits > HoloLens 2 Emulator (10.0.22621.1402)
+
+  Passo 4 — Acessar o BlindAR no Emulador
+    Dentro do emulador, abrir o Edge e navegar para:
+      http://<IP_HOST>:8080/prototipo/prototipo.html
+
+    Para descobrir o IP do host (executar no PC host):
+      PowerShell: Get-NetIPAddress -InterfaceAlias "*vEthernet*" -AddressFamily IPv4
+      Geralmente: 172.x.x.1
+
+    Na tela do protótipo, configurar o Backend URL para:
+      http://<IP_HOST>:8000
+
+────────────────────────────────────────────────────────────
+5. CONTROLES DO EMULADOR
+────────────────────────────────────────────────────────────
+
+  Navegação:
+    Setas (←↑↓→)     Mover olhar (gaze)
+    PgUp / PgDn       Olhar para cima / baixo
+    WASD               Andar no ambiente
+    Q / E              Subir / descer
+
+  Interação:
+    Enter              Air tap (clicar)
+    Espaço             Air tap (alternativo)
+    Win ou F2          Bloom (abrir menu Iniciar)
+
+  Simulação de mãos:
+    Tab                Alternar entre mão esquerda/direita
+    Alt + seta         Mover mão simulada
+
+  Outros:
+    F4                 Alternar modo teclado
+    F5                 Alternar modo mouse
+    Ctrl + Scroll      Zoom
+
+────────────────────────────────────────────────────────────
+6. DEVICE PORTAL (DEBUG)
+────────────────────────────────────────────────────────────
+
+  O Device Portal permite gerenciar o emulador remotamente.
+  
+  Como acessar:
+    1. No emulador, vá em Configurações > Atualização e Segurança > Para Desenvolvedores
+    2. Ative o Modo de Desenvolvedor
+    3. Ative o Device Portal
+    4. Descubra o IP do emulador:
+       - Na aba "Network" das ferramentas do emulador
+       - OU: PowerShell (como admin): Get-VM | Get-VMNetworkAdapter | Select-Object VMName, IPAddresses
+    5. Acesse no navegador do PC: https://<IP_EMULADOR>
+       (Aceite o certificado auto-assinado)
+
+  Funcionalidades úteis:
+    - Instalar apps (.appx)
+    - Capturar screenshots/vídeos
+    - Monitorar performance
+    - Abrir URLs diretamente no Edge do emulador
+
+────────────────────────────────────────────────────────────
+7. DIFERENÇAS: HOLOLENS 1 vs HOLOLENS 2 EMULATOR
+────────────────────────────────────────────────────────────
+
+  HoloLens 1 (10.0.17763.134):
+    - Usa XDE.exe como launcher
+    - Imagem: Flash.vhd (~2 GB)
+    - SKU: HDE
+    - Requer Visual Studio 2017
+    - Simulation tab para input
+    - Mais problemas de compatibilidade
+
+  HoloLens 2 (10.0.22621.1402):
+    - Launcher próprio: HoloLensEmulator.exe
+    - Imagem: Flash.vhdx (~5.9 GB)
+    - Não requer Visual Studio
+    - Simulação de mãos integrada
+    - Melhor compatibilidade com Windows 10/11 atuais
+    - Suporte a eye tracking e spatial mapping
+
+────────────────────────────────────────────────────────────
+8. TROUBLESHOOTING
+────────────────────────────────────────────────────────────
+
+  Erro: "Hyper-V não habilitado"
+    → Executar como Admin:
+      Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+      Reiniciar o PC
+
+  Erro: "Sem memória suficiente"
+    → Fechar aplicações pesadas (navegadores, editores)
+    → O emulador usa ~2 GB de RAM por padrão
+    → Sistema precisa de pelo menos 4 GB livres
+
+  Emulador não conecta à rede:
+    → Verificar se o "Default Switch" existe no Hyper-V Manager
+    → Recriar: PowerShell (admin):
+      Get-VMSwitch | Where-Object { $_.SwitchType -eq 'Internal' }
+
+  Não consigo acessar o protótipo do emulador:
+    → Verificar IP do host: Get-NetIPAddress -InterfaceAlias "*vEthernet*"
+    → Verificar se backend/frontend estão rodando
+    → Certificar que --host 0.0.0.0 está sendo usado (não localhost)
+    → Testar no navegador do PC: http://localhost:8080/prototipo/prototipo.html
+
+  VHD corrompido (erro "Invalid signature"):
+    → Reinstalar o emulador (baixar novamente do link acima)
+    → Limpar VMs antigas antes: Get-VM | Remove-VM -Force
+
+────────────────────────────────────────────────────────────
+9. ARQUITETURA DA DEMO
+────────────────────────────────────────────────────────────
+
+  ┌──────────────────────────┐
+  │  HoloLens 2 Emulator     │
+  │  (Hyper-V VM)             │
+  │                           │
+  │  Edge Browser             │
+  │  └─ prototipo.html        │
+  │     (face-api.js, câmera) │
+  └────────┬──────────────────┘
+           │ HTTP (porta 8080 / 8000)
+           │ via Hyper-V Default Switch
+  ┌────────┴──────────────────┐
+  │  PC Host (Windows)         │
+  │                            │
+  │  Frontend (porta 8080)     │
+  │  └─ python http.server     │
+  │                            │
+  │  Backend (porta 8000)      │
+  │  └─ FastAPI + Uvicorn      │
+  │     └─ Supabase (cloud)    │
+  │     └─ Gemini AI (cloud)   │
+  └────────────────────────────┘
+
+  Fluxo:
+    1. Emulador abre Edge → http://<HOST_IP>:8080/prototipo/prototipo.html
+    2. Protótipo carrega face-api.js, inicia câmera
+    3. Reconhecimento facial → envia para backend (porta 8000)
+    4. Backend consulta Supabase, usa Gemini AI para análise
+    5. Resposta volta ao protótipo no emulador
+
+══════════════════════════════════════════════════════════════
+ Documento criado em: 15/04/2026
+ Projeto: BlindAR — Gateway de Segurança AR — Petrobras
+ Grand Prix SENAI de Inovação 2026
+══════════════════════════════════════════════════════════════
