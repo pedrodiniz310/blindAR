@@ -63,6 +63,20 @@ app.add_middleware(
 )
 
 # ──────────────────────────────────────────────────────────────
+#  Role → Security Level Mapping
+# ──────────────────────────────────────────────────────────────
+ROLE_CONFIG = {
+    "Administrador de Segurança": {"max_level": 1, "is_admin": True},
+    "Engenheiro de Produção":     {"max_level": 1, "is_admin": False},
+    "Analista de Produção":       {"max_level": 2, "is_admin": False},
+    "Técnico de Automação":       {"max_level": 2, "is_admin": False},
+    "Engenheiro de Campo":        {"max_level": 3, "is_admin": False},
+    "Técnico de Manutenção":      {"max_level": 3, "is_admin": False},
+    "Operador de Campo":          {"max_level": 3, "is_admin": False},
+    "Visitante":                  {"max_level": 4, "is_admin": False},
+}
+
+# ──────────────────────────────────────────────────────────────
 #  Models (Pydantic)
 # ──────────────────────────────────────────────────────────────
 class UserRegister(BaseModel):
@@ -74,6 +88,8 @@ class UserResponse(BaseModel):
     id: str
     name: str
     role: str
+    max_security_level: int
+    is_admin: bool
     registered_at: str
     token: str
 
@@ -227,20 +243,23 @@ async def register_user(user: UserRegister):
         user_id = hashlib.sha256(f"{user.name}:{now}".encode()).hexdigest()[:12]
 
     token = generate_token(user_id)
+    role_cfg = ROLE_CONFIG.get(user.role, {"max_level": 3, "is_admin": False})
+    max_level = role_cfg["max_level"]
+    is_admin = role_cfg["is_admin"]
 
     # Create active session in Supabase
     if supabase:
         supabase.table("sessions").insert({
             "user_id": str(user_id),
             "token": token,
-            "security_level": 1,
+            "security_level": max_level,
             "is_locked": False,
         }).execute()
 
     # Log the registration event
     await log_event(SecurityEvent(
         event_type="user_registered",
-        description=f"Usuário '{user.name}' cadastrado com biometria facial",
+        description=f"Usuário '{user.name}' ({user.role}) cadastrado — nível máx: {max_level}",
         severity="info",
         user_id=str(user_id),
     ))
@@ -249,6 +268,8 @@ async def register_user(user: UserRegister):
         id=str(user_id),
         name=user.name,
         role=user.role,
+        max_security_level=max_level,
+        is_admin=is_admin,
         registered_at=now,
         token=token,
     )
@@ -271,12 +292,16 @@ async def get_user(user_id: str):
     if not user.get("is_active", True):
         raise HTTPException(status_code=403, detail="Usuário desativado")
 
+    role_cfg = ROLE_CONFIG.get(user["role"], {"max_level": 3, "is_admin": False})
+
     return {
         "id": str(user["id"]),
         "name": user["name"],
         "role": user["role"],
         "face_descriptor": user["face_descriptor"],
         "registered_at": user["registered_at"],
+        "max_security_level": role_cfg["max_level"],
+        "is_admin": role_cfg["is_admin"],
     }
 
 
@@ -487,6 +512,18 @@ async def get_events(limit: int = 50, severity: Optional[str] = None, event_type
 
 
 # ──────────────────────────────────────────────────────────────
+#  Routes — Roles (available roles for registration)
+# ──────────────────────────────────────────────────────────────
+@app.get("/api/roles")
+async def list_roles():
+    """Return all available roles with their security configuration."""
+    return [
+        {"role": role, "max_level": cfg["max_level"], "is_admin": cfg["is_admin"]}
+        for role, cfg in ROLE_CONFIG.items()
+    ]
+
+
+# ──────────────────────────────────────────────────────────────
 #  Routes — Users List (Organization)
 # ──────────────────────────────────────────────────────────────
 @app.get("/api/users")
@@ -495,7 +532,36 @@ async def list_users():
     if not supabase:
         return []
     result = supabase.table("users").select("id, name, role, registered_at, is_active").order("registered_at", desc=True).execute()
-    return result.data
+    # Enrich with role config
+    users = []
+    for u in result.data:
+        role_cfg = ROLE_CONFIG.get(u.get("role", ""), {"max_level": 3, "is_admin": False})
+        users.append({**u, "max_security_level": role_cfg["max_level"], "is_admin": role_cfg["is_admin"]})
+    return users
+
+
+@app.patch("/api/users/{user_id}")
+async def update_user(user_id: str, updates: dict):
+    """Admin: update a user's role or active status."""
+    if not supabase:
+        raise HTTPException(status_code=503, detail="Supabase não configurado")
+
+    allowed_fields = {"role", "is_active"}
+    clean = {k: v for k, v in updates.items() if k in allowed_fields}
+    if not clean:
+        raise HTTPException(status_code=400, detail="Nenhum campo válido para atualizar")
+
+    result = supabase.table("users").update(clean).eq("id", user_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    await log_event(SecurityEvent(
+        event_type="user_updated",
+        description=f"Usuário {user_id[:8]}... atualizado: {clean}",
+        severity="warning",
+        user_id=user_id,
+    ))
+    return {"status": "updated", "data": result.data}
 
 
 async def log_event(event: SecurityEvent):

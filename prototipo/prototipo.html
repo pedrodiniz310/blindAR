@@ -284,7 +284,17 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
     <h2>Cadastro Facial BlindAR</h2>
     <p>Para usar o dispositivo, é necessário cadastrar sua identidade. O sistema vai capturar seu rosto pela câmera e criar um descritor biométrico único.</p>
     <input class="reg-name-input" id="regName" placeholder="Seu nome completo" value="">
-    <input class="reg-name-input" id="regRole" placeholder="Cargo (ex: Técnico de Manutenção)" value="">
+    <select class="reg-name-input" id="regRole" style="cursor:pointer;">
+      <option value="" disabled selected>Selecione seu cargo</option>
+      <option value="Administrador de Segurança">Administrador de Segurança (Nível 1)</option>
+      <option value="Engenheiro de Produção">Engenheiro de Produção (Nível 1)</option>
+      <option value="Analista de Produção">Analista de Produção (Nível 2)</option>
+      <option value="Técnico de Automação">Técnico de Automação (Nível 2)</option>
+      <option value="Engenheiro de Campo">Engenheiro de Campo (Nível 3)</option>
+      <option value="Técnico de Manutenção">Técnico de Manutenção (Nível 3)</option>
+      <option value="Operador de Campo">Operador de Campo (Nível 3)</option>
+      <option value="Visitante">Visitante (Nível 4)</option>
+    </select>
     <div class="reg-cam-container" id="regCamContainer">
       <video id="regVideo" autoplay muted playsinline></video>
       <canvas id="regOverlay"></canvas>
@@ -448,6 +458,12 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
           <div id="usersList" style="font-size:12px;color:var(--muted);">Conecte ao backend para ver os usuários cadastrados.</div>
         </div>
 
+        <!-- Admin: Critical Alerts (only visible to admins) -->
+        <div class="log-card" style="margin-bottom:14px;display:none;border-color:rgba(239,68,68,0.3);" id="adminAlertsCard">
+          <h3>🛡️ Painel do Administrador — Alertas Críticos</h3>
+          <div id="adminAlertsList" style="font-size:12px;color:var(--muted);">Nenhum alerta crítico.</div>
+        </div>
+
         <!-- Event Log -->
         <div class="log-card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -491,8 +507,22 @@ let registeredDescriptor = null; // Float32Array of 128 dims (averaged)
 let registeredName = '';
 let registeredRole = '';
 let lastMatchScore = 0;
+let maxSecurityLevel = 1; // maximum level the user can access (lower = more access)
+let isAdmin = false;
 const MATCH_THRESHOLD = 0.6; // euclidean distance < 0.6 = same person
 const REG_SAMPLES = 5; // number of face samples to average during registration
+
+// Role → security level mapping (mirrors backend ROLE_CONFIG)
+const ROLE_CONFIG = {
+  'Administrador de Segurança': { max_level: 1, is_admin: true },
+  'Engenheiro de Produção':     { max_level: 1, is_admin: false },
+  'Analista de Produção':       { max_level: 2, is_admin: false },
+  'Técnico de Automação':       { max_level: 2, is_admin: false },
+  'Engenheiro de Campo':        { max_level: 3, is_admin: false },
+  'Técnico de Manutenção':      { max_level: 3, is_admin: false },
+  'Operador de Campo':          { max_level: 3, is_admin: false },
+  'Visitante':                  { max_level: 4, is_admin: false },
+};
 
 function averageDescriptors(descriptors) {
   const avg = new Float32Array(128);
@@ -698,6 +728,11 @@ async function apiRegisterUser(name, role, descriptor) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     backendUserId = data.id;
+
+    // Update security config from backend response
+    if (data.max_security_level) maxSecurityLevel = data.max_security_level;
+    if (data.is_admin !== undefined) isAdmin = data.is_admin;
+
     addLog('🗄️', `Usuário salvo no banco (ID: ${backendUserId.substring(0,8)}...)`, '#22c55e');
 
     // Persist session to localStorage for auto-login
@@ -706,6 +741,8 @@ async function apiRegisterUser(name, role, descriptor) {
       name: name,
       role: role,
       token: data.token,
+      maxSecurityLevel: maxSecurityLevel,
+      isAdmin: isAdmin,
       backendUrl: backendUrl
     }));
     addLog('💾', 'Sessão salva — login persistente ativado', '#3b82f6');
@@ -808,6 +845,11 @@ function toggleFullscreen() {
 //  LEVEL SYSTEM
 // ══════════════════════════════════════════════════════════════
 function setLevel(level) {
+  // Enforce: user cannot go to a level more privileged than their max
+  if (level < maxSecurityLevel) {
+    addLog('🚫', `Acesso negado: seu cargo (${registeredRole}) permite no máximo Nível ${maxSecurityLevel}`, '#ef4444');
+    return;
+  }
   const prevLevel = currentLevel;
   currentLevel = level;
   const cfg = LEVEL_CONFIG[level];
@@ -818,6 +860,16 @@ function setLevel(level) {
 
   document.querySelectorAll('.level-btn').forEach((btn,i) => {
     btn.classList.toggle('active', i+1 === level);
+    // Visually disable levels the user can't access
+    if (i+1 < maxSecurityLevel) {
+      btn.style.opacity = '0.3';
+      btn.style.pointerEvents = 'none';
+      btn.title = `Requer cargo de nível ${i+1}`;
+    } else {
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+      btn.title = '';
+    }
   });
 
   document.getElementById('networkStatus').innerHTML = `🌐 Rede: <span style="color:${cfg.color}">${cfg.network}</span>`;
@@ -1321,6 +1373,32 @@ async function updateDashboard() {
 
       // Render users list
       renderUsers(backendUsers);
+
+      // Admin: show critical alerts panel
+      const adminPanel = document.getElementById('adminAlertsCard');
+      if (isAdmin) {
+        adminPanel.style.display = 'block';
+        const criticals = backendEvents.filter(e => e.severity === 'critical' || e.severity === 'warning');
+        const adminList = document.getElementById('adminAlertsList');
+        if (criticals.length === 0) {
+          adminList.innerHTML = '<div style="padding:8px 0;color:var(--green);">✅ Nenhum alerta crítico — sistema operando normalmente.</div>';
+        } else {
+          adminList.innerHTML = criticals.slice(0, 20).map(e => {
+            const time = new Date(e.created_at).toLocaleString('pt-BR');
+            const icon = e.severity === 'critical' ? '🚨' : '⚠️';
+            const color = e.severity === 'critical' ? '#ef4444' : '#f97316';
+            const userId = e.user_id ? ` [User: ${e.user_id.substring(0,8)}...]` : '';
+            return `<div class="log-entry">
+              <span class="log-time">${time}</span>
+              <span class="log-severity ${e.severity}">${e.severity === 'critical' ? 'CRIT' : 'WARN'}</span>
+              <span class="log-icon">${icon}</span>
+              <span class="log-text" style="color:${color}">${e.description}${userId}</span>
+            </div>`;
+          }).join('');
+        }
+      } else {
+        adminPanel.style.display = 'none';
+      }
     }
   }
 
@@ -1359,6 +1437,7 @@ function renderUsers(users) {
     el.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:8px 0;">Nenhum usuário cadastrado ainda.</div>';
     return;
   }
+  const levelColors = { 1: '#22c55e', 2: '#3b82f6', 3: '#eab308', 4: '#f97316' };
   const colors = ['#22c55e','#3b82f6','#eab308','#f97316','#9333ea','#ec4899'];
   el.innerHTML = users.map((u, i) => {
     const initials = (u.name || '?').split(' ').map(w => w[0]).join('').substring(0,2).toUpperCase();
@@ -1366,15 +1445,44 @@ function renderUsers(users) {
     const active = u.is_active !== false;
     const date = new Date(u.registered_at).toLocaleDateString('pt-BR');
     const isCurrent = u.id === backendUserId;
-    return `<div class="user-row">
+    const uLevel = u.max_security_level || 3;
+    const uAdmin = u.is_admin || false;
+
+    // Admin controls (only shown to admins, not for themselves)
+    let adminControls = '';
+    if (isAdmin && !isCurrent) {
+      adminControls = `<div style="display:flex;gap:4px;margin-top:4px;">
+        <button onclick="adminToggleUser('${u.id}', ${!active})" style="padding:2px 8px;border:1px solid ${active ? '#ef4444' : '#22c55e'};background:transparent;color:${active ? '#ef4444' : '#22c55e'};border-radius:4px;font-size:10px;cursor:pointer;">${active ? 'Desativar' : 'Ativar'}</button>
+      </div>`;
+    }
+
+    return `<div class="user-row" style="flex-wrap:wrap;">
       <div class="user-avatar" style="background:${color};">${initials}</div>
       <div class="user-info">
-        <div class="uname">${u.name}${isCurrent ? ' <span style="font-size:10px;color:var(--accent2);">(você)</span>' : ''}</div>
-        <div class="urole">${u.role || 'Colaborador'} · Cadastrado em ${date}</div>
+        <div class="uname">${u.name}${isCurrent ? ' <span style="font-size:10px;color:var(--accent2);">(você)</span>' : ''}${uAdmin ? ' 🛡️' : ''}</div>
+        <div class="urole">${u.role || 'Colaborador'} · <span style="color:${levelColors[uLevel] || '#71717a'}">Nível ${uLevel}</span> · ${date}</div>
+        ${adminControls}
       </div>
       <span class="user-status" style="background:${active ? 'rgba(34,197,94,0.15);color:#22c55e' : 'rgba(239,68,68,0.15);color:#ef4444'}">${active ? 'Ativo' : 'Inativo'}</span>
     </div>`;
   }).join('');
+}
+
+async function adminToggleUser(userId, newActive) {
+  if (!isAdmin || !backendConnected) return;
+  try {
+    const res = await fetch(backendUrl + '/api/users/' + userId, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: newActive })
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    addLog('🛡️', `Admin: usuário ${userId.substring(0,8)}... ${newActive ? 'ativado' : 'desativado'}`, newActive ? '#22c55e' : '#ef4444');
+    // Refresh dashboard
+    updateDashboard();
+  } catch(e) {
+    addLog('⚠️', `Erro ao atualizar usuário: ${e.message}`, '#ef4444');
+  }
 }
 
 function renderLog() {
@@ -1513,6 +1621,11 @@ async function tryRestoreSession() {
     registeredRole = userData.role;
     backendUserId = userData.id;
 
+    // Restore security config from backend
+    const roleCfg = ROLE_CONFIG[userData.role] || { max_level: 3, is_admin: false };
+    maxSecurityLevel = userData.max_security_level || roleCfg.max_level;
+    isAdmin = userData.is_admin || roleCfg.is_admin;
+
     // Restore face descriptor from DB
     if (userData.face_descriptor && userData.face_descriptor.length === 128) {
       registeredDescriptor = new Float32Array(userData.face_descriptor);
@@ -1542,11 +1655,17 @@ function logoutSession() {
 
 async function startRegistration() {
   const name = document.getElementById('regName').value.trim();
-  const role = document.getElementById('regRole').value.trim();
+  const role = document.getElementById('regRole').value;
   if (!name) { document.getElementById('regProgress').textContent = 'Digite seu nome.'; return; }
+  if (!role) { document.getElementById('regProgress').textContent = 'Selecione seu cargo.'; return; }
 
   registeredName = name;
-  registeredRole = role || 'Colaborador';
+  registeredRole = role;
+
+  // Set security level from role
+  const roleCfg = ROLE_CONFIG[role] || { max_level: 3, is_admin: false };
+  maxSecurityLevel = roleCfg.max_level;
+  isAdmin = roleCfg.is_admin;
 
   const btn = document.getElementById('regBtn');
   const progress = document.getElementById('regProgress');
@@ -1686,10 +1805,12 @@ function completeRegistration(descriptor) {
   document.getElementById('userCard').style.display = 'block';
   document.getElementById('userName').textContent = registeredName;
   document.getElementById('userRole').textContent = registeredRole + ' — Petrobras';
-  document.getElementById('userMeta').innerHTML = `Autenticado: ${getTime()}<br>Nível: ${currentLevel} | Biometria: ${descriptor ? 'Ativa' : 'Simulada'}`;
-  document.getElementById('navUser').textContent = registeredName + ' — Autenticado';
+  document.getElementById('userMeta').innerHTML = `Autenticado: ${getTime()}<br>Nível máx: ${maxSecurityLevel} | Biometria: ${descriptor ? 'Ativa' : 'Simulada'}${isAdmin ? '<br>🛡️ <strong>Administrador</strong>' : ''}`;
+  document.getElementById('navUser').textContent = registeredName + (isAdmin ? ' 🛡️' : '') + ' — Autenticado';
 
-  levelCounts[0]++;
+  // Set initial level based on role
+  setLevel(maxSecurityLevel);
+  addLog('🔑', `Cargo: ${registeredRole} — Nível máximo: ${maxSecurityLevel}${isAdmin ? ' (Admin)' : ''}`, '#3b82f6');
 
   // Start continuous recognition
   if (descriptor && faceApiLoaded) {
