@@ -1027,10 +1027,13 @@ let mainStreamPaused = false; // track if we paused the main camera for AR
 let gyroActive = false;
 let gyroBaseOrientation = null; // baseline when AR starts
 let gyroStableCount = 0;
-const GYRO_TILT_THRESHOLD = 35; // degrees deviation to trigger removal alert
-const GYRO_ACCEL_THRESHOLD = 25; // m/s² sudden acceleration = device yanked
-const GYRO_STABLE_FRAMES = 10; // frames of stability before setting baseline
+const GYRO_TILT_THRESHOLD = 40; // degrees deviation to trigger removal alert
+const GYRO_ACCEL_THRESHOLD = 30; // m/s² sudden acceleration = device yanked
+const GYRO_STABLE_FRAMES = 60; // ~3s of orientation events before calibrating
+const GYRO_GRACE_PERIOD = 8000; // 8s grace period after AR starts (time to put phone in headset)
 let gyroRemovalDetected = false;
+let gyroGraceTimeout = null; // grace period timer
+let gyroMonitoringEnabled = false; // only true after grace period
 
 async function toggleARMode() {
   if (arActive) {
@@ -1173,6 +1176,16 @@ function startGyroMonitoring() {
   gyroBaseOrientation = null;
   gyroStableCount = 0;
   gyroRemovalDetected = false;
+  gyroMonitoringEnabled = false;
+
+  // Grace period: ignore all gyro data for first N seconds
+  // (user needs time to put phone inside headset)
+  if (gyroGraceTimeout) clearTimeout(gyroGraceTimeout);
+  gyroGraceTimeout = setTimeout(() => {
+    gyroMonitoringEnabled = true;
+    addLog('⏱️', `Período de graça encerrado — giroscópio monitorando remoção`, '#22c55e');
+  }, GYRO_GRACE_PERIOD);
+  addLog('⏳', `Giroscópio: ${GYRO_GRACE_PERIOD/1000}s de graça para posicionar o celular no óculos`, '#3b82f6');
 
   // Request permission on iOS 13+
   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -1191,14 +1204,24 @@ function _attachGyroListeners() {
     const { alpha, beta, gamma } = e;
     if (alpha === null && beta === null && gamma === null) return; // no sensor
 
+    gyroActive = true;
+
+    // During grace period: just show indicator but don't calibrate or check
+    if (!gyroMonitoringEnabled) {
+      ['L', 'R'].forEach(side => {
+        document.getElementById('arGyroDot' + side).style.background = 'var(--yellow)';
+        document.getElementById('arGyroLabel' + side).textContent = 'Gyro ⏳';
+      });
+      return;
+    }
+
     // Update gyro indicator in HUD
     ['L', 'R'].forEach(side => {
       document.getElementById('arGyroDot' + side).style.background = 'var(--green)';
       document.getElementById('arGyroLabel' + side).textContent = 'Gyro ✓';
     });
-    gyroActive = true;
 
-    // Establish baseline after device is stable for a bit
+    // Establish baseline after device is stable for a bit (post grace period)
     if (!gyroBaseOrientation) {
       gyroStableCount++;
       if (gyroStableCount >= GYRO_STABLE_FRAMES) {
@@ -1218,7 +1241,7 @@ function _attachGyroListeners() {
   };
 
   _gyroMotionHandler = (e) => {
-    if (!arActive || gyroRemovalDetected || !gyroBaseOrientation) return;
+    if (!arActive || gyroRemovalDetected || !gyroMonitoringEnabled || !gyroBaseOrientation) return;
     const acc = e.acceleration || e.accelerationIncludingGravity;
     if (!acc) return;
 
@@ -1265,6 +1288,8 @@ function stopGyroMonitoring() {
   gyroActive = false;
   gyroBaseOrientation = null;
   gyroRemovalDetected = false;
+  gyroMonitoringEnabled = false;
+  if (gyroGraceTimeout) { clearTimeout(gyroGraceTimeout); gyroGraceTimeout = null; }
 }
 
 function syncARHud() {
@@ -2349,6 +2374,8 @@ function startContinuousRecognition() {
 
   detectionInterval = setInterval(async () => {
     if (!video.videoWidth || (isLocked && identityMismatch)) return;
+    if (arActive) return; // skip face detection while AR mode is active (camera is stopped)
+    if (!video.srcObject) return; // camera stream was stopped
     if (isDetecting) return; // skip if previous detection still running
     isDetecting = true;
 
