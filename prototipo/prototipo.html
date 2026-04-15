@@ -335,6 +335,29 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
   .dash-grid { grid-template-columns:1fr; }
 }
 
+/* ── VOICE ASSISTANT (JARVIS) ── */
+.voice-btn { padding:4px 10px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); border-radius:6px; font-size:11px; cursor:pointer; transition:all .2s; }
+.voice-btn:hover { color:var(--text); border-color:var(--accent); }
+.voice-btn.listening { background:rgba(239,68,68,0.2); border-color:var(--red); color:var(--red); animation:voicePulse 1.2s infinite; }
+.voice-btn.processing { background:rgba(37,99,235,0.2); border-color:var(--accent); color:var(--accent); }
+.voice-btn.speaking { background:rgba(34,197,94,0.2); border-color:var(--green); color:var(--green); }
+@keyframes voicePulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+.voice-status { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); padding:10px 24px; border-radius:12px; font-size:13px; font-weight:600; z-index:300; display:none; backdrop-filter:blur(12px); text-align:center; max-width:90%; }
+.voice-status.show { display:block; animation:fadeIn .3s; }
+.voice-status.idle { background:rgba(37,99,235,0.15); color:var(--accent2); border:1px solid rgba(37,99,235,0.3); }
+.voice-status.listening { background:rgba(239,68,68,0.15); color:var(--red); border:1px solid rgba(239,68,68,0.3); }
+.voice-status.processing { background:rgba(234,179,8,0.15); color:var(--yellow); border:1px solid rgba(234,179,8,0.3); }
+.voice-status.speaking { background:rgba(34,197,94,0.15); color:var(--green); border:1px solid rgba(34,197,94,0.3); }
+
+/* AR voice indicator */
+.ar-voice-indicator { position:absolute; bottom:50px; left:50%; transform:translateX(-50%); padding:6px 14px; border-radius:20px; font-size:8px; font-weight:700; letter-spacing:1px; pointer-events:none; display:none; text-align:center; max-width:80%; }
+.ar-voice-indicator.show { display:block; }
+.ar-voice-indicator.wake { background:rgba(37,99,235,0.3); color:rgba(255,255,255,0.9); border:1px solid rgba(37,99,235,0.4); }
+.ar-voice-indicator.listening { background:rgba(239,68,68,0.3); color:#fff; border:1px solid rgba(239,68,68,0.5); animation:voicePulse 1.2s infinite; }
+.ar-voice-indicator.processing { background:rgba(234,179,8,0.3); color:#fff; border:1px solid rgba(234,179,8,0.4); }
+.ar-voice-indicator.speaking { background:rgba(34,197,94,0.3); color:#fff; border:1px solid rgba(34,197,94,0.4); }
+
 </style>
 </head>
 <body>
@@ -349,6 +372,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
   </div>
   <div class="nav-right">
     <button class="ar-btn" id="arToggle" onclick="toggleARMode()" title="Modo AR Cardboard">🥽 AR</button>
+    <button class="voice-btn" id="voiceToggle" onclick="toggleVoice()" title="Assistente de voz (diga 'BlindAR')">🎙️ Voz</button>
     <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Tela cheia (HoloLens)">⛶</button>
     <div class="nav-level" id="navLevel" style="background:rgba(34,197,94,0.15);color:var(--green);">NÍVEL 1</div>
     <div class="nav-user" id="navUser">Aguardando cadastro...</div>
@@ -384,6 +408,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
           <div class="ar-scan-label">RECONHECIMENTO FACIAL</div>
         </div>
         <div class="ar-hud-observer" id="arObserverL">⚠ OBSERVADOR DETECTADO</div>
+        <div class="ar-voice-indicator" id="arVoiceL">🎙️ DIGA "BLINDAR"</div>
         <div class="ar-hud-bottom" id="arMessagesL"></div>
         <div class="ar-hud-user" id="arUserL">
           <div class="ar-hud-user-dot" id="arUserDotL"></div>
@@ -416,6 +441,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
           <div class="ar-scan-label">RECONHECIMENTO FACIAL</div>
         </div>
         <div class="ar-hud-observer" id="arObserverR">⚠ OBSERVADOR DETECTADO</div>
+        <div class="ar-voice-indicator" id="arVoiceR">🎙️ DIGA "BLINDAR"</div>
         <div class="ar-hud-bottom" id="arMessagesR"></div>
         <div class="ar-hud-user" id="arUserR">
           <div class="ar-hud-user-dot" id="arUserDotR"></div>
@@ -425,6 +451,9 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
     </div>
   </div>
 </div>
+
+<!-- VOICE STATUS -->
+<div class="voice-status" id="voiceStatus"></div>
 
 <!-- OBSERVER ALERT -->
 <div class="observer-alert" id="observerAlert">⚠️ OBSERVADOR DETECTADO — Dados protegidos automaticamente</div>
@@ -578,6 +607,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
         <div class="chat-input-area">
           <div class="chat-input-row">
             <input class="chat-input" id="chatInput" placeholder="Faça uma pergunta ao assistente de IA..." onkeydown="if(event.key==='Enter')sendMessage()">
+            <button class="voice-btn" onclick="toggleVoice()" title="Comando por voz" style="padding:10px 14px;font-size:16px;">🎙️</button>
             <button class="chat-send" onclick="sendMessage()" id="sendBtn">Enviar</button>
           </div>
           <div class="quick-questions">
@@ -1087,6 +1117,8 @@ async function enterARMode() {
     // Sync HUD with current state
     syncARHud();
     startGyroMonitoring();
+    // Auto-enable voice in AR mode (can't touch screen in Cardboard)
+    if (!voiceEnabled) startVoice();
     addLog('🥽', 'Modo AR Cardboard ativado — câmera passthrough + HUD estereoscópico', '#3b82f6');
   } catch (e) {
     console.warn('AR rear camera failed:', e);
@@ -1290,6 +1322,333 @@ function stopGyroMonitoring() {
   gyroRemovalDetected = false;
   gyroMonitoringEnabled = false;
   if (gyroGraceTimeout) { clearTimeout(gyroGraceTimeout); gyroGraceTimeout = null; }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  VOICE ASSISTANT — "JARVIS" style (Wake word + STT + TTS)
+// ══════════════════════════════════════════════════════════════
+const WAKE_WORD = 'blindar';
+let voiceEnabled = false;
+let voiceState = 'off'; // off | wake | listening | processing | speaking
+let recognition = null;
+let synth = window.speechSynthesis;
+let ttsEnabled = true;
+let voiceAutoRestart = false; // restart wake word listening after TTS ends
+
+function toggleVoice() {
+  if (voiceEnabled) {
+    stopVoice();
+  } else {
+    startVoice();
+  }
+}
+
+function startVoice() {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    addLog('⚠️', 'Reconhecimento de voz não suportado neste navegador', '#ef4444');
+    return;
+  }
+
+  voiceEnabled = true;
+  document.getElementById('voiceToggle').classList.add('listening');
+  addLog('🎙️', 'Assistente de voz ativado — diga "BlindAR" para comandar', '#3b82f6');
+  startWakeWordListening();
+}
+
+function stopVoice() {
+  voiceEnabled = false;
+  voiceAutoRestart = false;
+  voiceState = 'off';
+  if (recognition) { try { recognition.abort(); } catch(e){} recognition = null; }
+  if (synth.speaking) synth.cancel();
+  document.getElementById('voiceToggle').classList.remove('listening', 'processing', 'speaking');
+  updateVoiceUI();
+  addLog('🔇', 'Assistente de voz desativado', '#71717a');
+}
+
+function startWakeWordListening() {
+  if (!voiceEnabled) return;
+  voiceState = 'wake';
+  updateVoiceUI();
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'pt-BR';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 3;
+
+  recognition.onresult = (event) => {
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript.toLowerCase().trim();
+      // Check all alternatives for wake word
+      for (let j = 0; j < event.results[i].length; j++) {
+        const alt = event.results[i][j].transcript.toLowerCase().trim();
+        if (alt.includes(WAKE_WORD) || alt.includes('blind ar') || alt.includes('blaind ar') || alt.includes('blainder')) {
+          // Wake word detected!
+          try { recognition.abort(); } catch(e){}
+          recognition = null;
+          onWakeWordDetected();
+          return;
+        }
+      }
+    }
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === 'no-speech' || e.error === 'aborted') {
+      // Restart silently
+      if (voiceEnabled && voiceState === 'wake') {
+        setTimeout(() => startWakeWordListening(), 300);
+      }
+      return;
+    }
+    console.warn('Speech recognition error:', e.error);
+    if (voiceEnabled && voiceState === 'wake') {
+      setTimeout(() => startWakeWordListening(), 1000);
+    }
+  };
+
+  recognition.onend = () => {
+    // Auto-restart for continuous wake word listening
+    if (voiceEnabled && voiceState === 'wake') {
+      setTimeout(() => startWakeWordListening(), 300);
+    }
+  };
+
+  try {
+    recognition.start();
+  } catch(e) {
+    console.warn('Recognition start failed:', e);
+    setTimeout(() => startWakeWordListening(), 1000);
+  }
+}
+
+function onWakeWordDetected() {
+  voiceState = 'listening';
+  updateVoiceUI();
+
+  // Play activation sound effect via oscillator
+  try {
+    const actx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = actx.createOscillator();
+    const gain = actx.createGain();
+    osc.connect(gain);
+    gain.connect(actx.destination);
+    osc.frequency.setValueAtTime(800, actx.currentTime);
+    osc.frequency.linearRampToValueAtTime(1200, actx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.15, actx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, actx.currentTime + 0.2);
+    osc.start(actx.currentTime);
+    osc.stop(actx.currentTime + 0.2);
+  } catch(e){}
+
+  addLog('🤖', 'Wake word "BlindAR" detectado — ouvindo comando...', '#22c55e');
+
+  // Now listen for the actual command
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'pt-BR';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  let finalTranscript = '';
+  let interimTranscript = '';
+  let silenceTimeout = null;
+
+  recognition.onresult = (event) => {
+    interimTranscript = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript;
+      } else {
+        interimTranscript += event.results[i][0].transcript;
+      }
+    }
+    // Show interim text in UI
+    updateVoiceUI(interimTranscript || finalTranscript);
+
+    // Reset silence timeout on new speech
+    if (silenceTimeout) clearTimeout(silenceTimeout);
+    silenceTimeout = setTimeout(() => {
+      // Silence detected after speech — submit
+      if (finalTranscript.trim()) {
+        try { recognition.stop(); } catch(e){}
+      }
+    }, 1500);
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === 'no-speech') {
+      addLog('🔇', 'Nenhuma fala detectada — voltando a ouvir wake word', '#71717a');
+      voiceState = 'wake';
+      updateVoiceUI();
+      if (voiceEnabled) startWakeWordListening();
+      return;
+    }
+    console.warn('Command recognition error:', e.error);
+    voiceState = 'wake';
+    updateVoiceUI();
+    if (voiceEnabled) startWakeWordListening();
+  };
+
+  recognition.onend = () => {
+    if (silenceTimeout) clearTimeout(silenceTimeout);
+    const command = finalTranscript.trim();
+    if (command) {
+      voiceProcessCommand(command);
+    } else if (voiceEnabled) {
+      voiceState = 'wake';
+      updateVoiceUI();
+      startWakeWordListening();
+    }
+  };
+
+  try {
+    recognition.start();
+  } catch(e) {
+    console.warn('Command recognition failed:', e);
+    voiceState = 'wake';
+    updateVoiceUI();
+    if (voiceEnabled) startWakeWordListening();
+  }
+}
+
+async function voiceProcessCommand(command) {
+  voiceState = 'processing';
+  updateVoiceUI(command);
+  addLog('🗣️', `Comando de voz: "${command}"`, '#3b82f6');
+
+  // Send through existing chat pipeline
+  await processChat(command, true); // true = from voice, trigger TTS
+}
+
+function speakResponse(text) {
+  if (!ttsEnabled || !synth) return;
+
+  // Clean HTML tags and special chars for TTS
+  const clean = text
+    .replace(/<br\s*\/?>/gi, '. ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&[a-z]+;/gi, ' ')
+    .replace(/[*_#`]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!clean) return;
+
+  // Cancel any ongoing speech
+  if (synth.speaking) synth.cancel();
+
+  voiceState = 'speaking';
+  updateVoiceUI();
+
+  const utterance = new SpeechSynthesisUtterance(clean);
+  utterance.lang = 'pt-BR';
+  utterance.rate = 1.1;
+  utterance.pitch = 1.0;
+  utterance.volume = 1.0;
+
+  // Try to pick a good PT-BR voice
+  const voices = synth.getVoices();
+  const ptVoice = voices.find(v => v.lang.startsWith('pt') && v.name.includes('Google')) ||
+                  voices.find(v => v.lang.startsWith('pt-BR')) ||
+                  voices.find(v => v.lang.startsWith('pt'));
+  if (ptVoice) utterance.voice = ptVoice;
+
+  utterance.onend = () => {
+    if (voiceEnabled) {
+      voiceState = 'wake';
+      updateVoiceUI();
+      // Play deactivation tone
+      try {
+        const actx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        osc.frequency.setValueAtTime(1200, actx.currentTime);
+        osc.frequency.linearRampToValueAtTime(800, actx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.1, actx.currentTime);
+        gain.gain.linearRampToValueAtTime(0, actx.currentTime + 0.15);
+        osc.start(actx.currentTime);
+        osc.stop(actx.currentTime + 0.15);
+      } catch(e){}
+      startWakeWordListening();
+    } else {
+      voiceState = 'off';
+      updateVoiceUI();
+    }
+  };
+
+  utterance.onerror = () => {
+    if (voiceEnabled) {
+      voiceState = 'wake';
+      updateVoiceUI();
+      startWakeWordListening();
+    }
+  };
+
+  synth.speak(utterance);
+}
+
+function updateVoiceUI(transcript) {
+  const btn = document.getElementById('voiceToggle');
+  const status = document.getElementById('voiceStatus');
+
+  // Nav button state
+  btn.classList.remove('listening', 'processing', 'speaking');
+  if (voiceState === 'wake') btn.classList.add('listening');
+  else if (voiceState === 'listening') btn.classList.add('listening');
+  else if (voiceState === 'processing') btn.classList.add('processing');
+  else if (voiceState === 'speaking') btn.classList.add('speaking');
+
+  // Status bar
+  if (voiceState === 'off') {
+    status.classList.remove('show');
+  } else {
+    status.classList.add('show');
+    status.classList.remove('idle', 'listening', 'processing', 'speaking');
+
+    if (voiceState === 'wake') {
+      status.classList.add('idle');
+      status.innerHTML = '🎙️ Diga <strong>"BlindAR"</strong> para ativar comando de voz';
+    } else if (voiceState === 'listening') {
+      status.classList.add('listening');
+      status.innerHTML = `🔴 Ouvindo... ${transcript ? `<br><em>"${transcript}"</em>` : ''}`;
+    } else if (voiceState === 'processing') {
+      status.classList.add('processing');
+      status.innerHTML = `⏳ Processando: <em>"${transcript || ''}"</em>`;
+    } else if (voiceState === 'speaking') {
+      status.classList.add('speaking');
+      status.innerHTML = '🔊 BlindAR está falando...';
+    }
+  }
+
+  // AR HUD voice indicator
+  ['L', 'R'].forEach(side => {
+    const el = document.getElementById('arVoice' + side);
+    if (!el) return;
+    el.classList.remove('show', 'wake', 'listening', 'processing', 'speaking');
+
+    if (voiceState === 'off' || !arActive) return;
+
+    el.classList.add('show');
+    if (voiceState === 'wake') {
+      el.classList.add('wake');
+      el.textContent = '🎙️ DIGA "BLINDAR"';
+    } else if (voiceState === 'listening') {
+      el.classList.add('listening');
+      el.textContent = `🔴 OUVINDO${transcript ? ': ' + transcript.substring(0, 40) : '...'}`;
+    } else if (voiceState === 'processing') {
+      el.classList.add('processing');
+      el.textContent = '⏳ PROCESSANDO...';
+    } else if (voiceState === 'speaking') {
+      el.classList.add('speaking');
+      el.textContent = '🔊 BLINDAR FALANDO...';
+    }
+  });
 }
 
 function syncARHud() {
@@ -1616,7 +1975,7 @@ function askQuick(idx) {
   processChat(questions[idx]);
 }
 
-async function processChat(question) {
+async function processChat(question, fromVoice = false) {
   const msgs = document.getElementById('chatMessages');
 
   // Add user message
@@ -1679,6 +2038,11 @@ async function processChat(question) {
 
   isSendingMessage = false;
   syncARMessages();
+
+  // TTS: read response aloud if triggered by voice command
+  if (fromVoice && voiceEnabled) {
+    speakResponse(response);
+  }
 
   // Update stats
   queryCount++;
