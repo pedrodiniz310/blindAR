@@ -7,6 +7,7 @@
 """
 
 import os
+import io
 import json
 import hashlib
 import secrets
@@ -645,31 +646,24 @@ async def dashboard():
 
 
 # ──────────────────────────────────────────────────────────────
-#  Routes — Text-to-Speech (ElevenLabs)
+#  Routes — Text-to-Speech (ElevenLabs + Edge TTS fallback)
 # ──────────────────────────────────────────────────────────────
 class TTSRequest(BaseModel):
     text: str = Field(..., max_length=500)
     voice_id: str = Field(default="cjVigY5qzO86Huf0OWal")  # Eric — Smooth, Trustworthy
 
 
-@app.post("/api/tts")
-async def text_to_speech(req: TTSRequest):
-    """Convert text to speech using ElevenLabs Multilingual v2."""
-    if not ELEVENLABS_API_KEY:
-        raise HTTPException(503, "TTS service not configured")
-
-    if not req.text.strip():
-        raise HTTPException(400, "Empty text")
-
+async def _tts_elevenlabs(text: str, voice_id: str) -> bytes:
+    """Try ElevenLabs TTS. Raises on failure."""
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            f"https://api.elevenlabs.io/v1/text-to-speech/{req.voice_id}",
+            f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
             headers={
                 "xi-api-key": ELEVENLABS_API_KEY,
                 "Content-Type": "application/json",
             },
             json={
-                "text": req.text.strip(),
+                "text": text,
                 "model_id": "eleven_multilingual_v2",
                 "voice_settings": {
                     "stability": 0.4,
@@ -679,15 +673,52 @@ async def text_to_speech(req: TTSRequest):
             },
             timeout=30.0,
         )
-
     if resp.status_code != 200:
-        raise HTTPException(502, f"ElevenLabs error: {resp.status_code}")
+        raise RuntimeError(f"ElevenLabs {resp.status_code}")
+    return resp.content
 
-    return Response(
-        content=resp.content,
-        media_type="audio/mpeg",
-        headers={"Cache-Control": "public, max-age=3600"},
-    )
+
+async def _tts_edge(text: str) -> bytes:
+    """Free fallback TTS via Microsoft Edge neural voices."""
+    import edge_tts
+    communicate = edge_tts.Communicate(text, voice="pt-BR-AntonioNeural")
+    buf = io.BytesIO()
+    async for chunk in communicate.stream():
+        if chunk["type"] == "audio":
+            buf.write(chunk["data"])
+    return buf.getvalue()
+
+
+@app.post("/api/tts")
+async def text_to_speech(req: TTSRequest):
+    """TTS with automatic fallback: ElevenLabs → Edge TTS."""
+    if not req.text.strip():
+        raise HTTPException(400, "Empty text")
+
+    clean = req.text.strip()
+
+    # 1) Try ElevenLabs (premium)
+    if ELEVENLABS_API_KEY:
+        try:
+            audio = await _tts_elevenlabs(clean, req.voice_id)
+            return Response(
+                content=audio,
+                media_type="audio/mpeg",
+                headers={"Cache-Control": "public, max-age=3600", "X-TTS-Engine": "elevenlabs"},
+            )
+        except Exception:
+            pass  # fall through to Edge TTS
+
+    # 2) Fallback: Edge TTS (free, unlimited)
+    try:
+        audio = await _tts_edge(clean)
+        return Response(
+            content=audio,
+            media_type="audio/mpeg",
+            headers={"Cache-Control": "public, max-age=3600", "X-TTS-Engine": "edge"},
+        )
+    except Exception as e:
+        raise HTTPException(502, f"All TTS engines failed: {e}")
 
 
 # ──────────────────────────────────────────────────────────────
