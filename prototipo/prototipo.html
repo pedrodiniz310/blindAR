@@ -1118,7 +1118,9 @@ async function enterARMode() {
     syncARHud();
     startGyroMonitoring();
     // Auto-enable voice in AR mode (can't touch screen in Cardboard)
-    if (!voiceEnabled) startVoice();
+    if (!voiceEnabled && (('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window))) {
+      startVoice();
+    }
     addLog('🥽', 'Modo AR Cardboard ativado — câmera passthrough + HUD estereoscópico', '#3b82f6');
   } catch (e) {
     console.warn('AR rear camera failed:', e);
@@ -1344,15 +1346,30 @@ function toggleVoice() {
 }
 
 function startVoice() {
-  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-    addLog('⚠️', 'Reconhecimento de voz não suportado neste navegador', '#ef4444');
+  const hasSpeechAPI = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+
+  if (!hasSpeechAPI) {
+    // Show visible alert for unsupported browsers
+    alert('Reconhecimento de voz não suportado neste navegador.\n\nUse o Google Chrome para ativar comandos de voz.');
+    addLog('⚠️', 'Reconhecimento de voz não suportado — use Chrome', '#ef4444');
     return;
   }
 
   voiceEnabled = true;
   document.getElementById('voiceToggle').classList.add('listening');
   addLog('🎙️', 'Assistente de voz ativado — diga "BlindAR" para comandar', '#3b82f6');
-  startWakeWordListening();
+
+  // Request microphone permission first (required on mobile)
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    // Got permission, stop the stream (SpeechRecognition handles its own audio)
+    stream.getTracks().forEach(t => t.stop());
+    startWakeWordListening();
+  }).catch(err => {
+    alert('Permissão do microfone negada.\n\nPermita o acesso ao microfone para usar comandos de voz.');
+    addLog('⚠️', 'Permissão do microfone negada: ' + err.message, '#ef4444');
+    voiceEnabled = false;
+    document.getElementById('voiceToggle').classList.remove('listening');
+  });
 }
 
 function stopVoice() {
@@ -1403,7 +1420,16 @@ function startWakeWordListening() {
       }
       return;
     }
+    if (e.error === 'not-allowed') {
+      addLog('⚠️', 'Microfone bloqueado pelo navegador — permita o acesso', '#ef4444');
+      voiceEnabled = false;
+      voiceState = 'off';
+      document.getElementById('voiceToggle').classList.remove('listening', 'processing', 'speaking');
+      updateVoiceUI();
+      return;
+    }
     console.warn('Speech recognition error:', e.error);
+    addLog('⚠️', `Erro no reconhecimento de voz: ${e.error}`, '#f97316');
     if (voiceEnabled && voiceState === 'wake') {
       setTimeout(() => startWakeWordListening(), 1000);
     }
