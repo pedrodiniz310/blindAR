@@ -1637,8 +1637,8 @@ async function tryRestoreSession() {
       addLog('🧬', `Descritor facial restaurado do banco de dados (128-dim)`, '#22c55e');
     }
 
-    // Complete authentication
-    completeRegistration(registeredDescriptor);
+    // Complete authentication (skip re-saving to backend)
+    completeRegistration(registeredDescriptor, true);
     addLog('🔓', `Login persistente — ${registeredName} restaurado do Supabase`, '#22c55e');
     apiLogEvent('session_restored', `Sessão restaurada para ${registeredName}`, 'info');
 
@@ -1788,7 +1788,7 @@ function stopRegCamera() {
   document.getElementById('regCamContainer').classList.remove('active');
 }
 
-function completeRegistration(descriptor) {
+function completeRegistration(descriptor, skipBackendSave = false) {
   document.getElementById('regModal').classList.remove('show');
 
   isAuthenticated = true;
@@ -1827,8 +1827,10 @@ function completeRegistration(descriptor) {
     startContinuousRecognition();
   }
 
-  // Save to backend
-  apiRegisterUser(registeredName, registeredRole, descriptor);
+  // Save to backend (skip if restoring existing session)
+  if (!skipBackendSave) {
+    apiRegisterUser(registeredName, registeredRole, descriptor);
+  }
 
   updateWatermark();
 }

@@ -228,17 +228,33 @@ async def health():
 # ──────────────────────────────────────────────────────────────
 @app.post("/api/users/register", response_model=UserResponse)
 async def register_user(user: UserRegister):
-    """Register a new user with face descriptor."""
+    """Register or update a user with face descriptor (upsert by name+role)."""
     now = datetime.now(timezone.utc).isoformat()
+    is_update = False
 
     if supabase:
-        result = supabase.table("users").insert({
-            "name": user.name,
-            "role": user.role,
-            "face_descriptor": user.face_descriptor,
-            "registered_at": now,
-        }).execute()
-        user_id = result.data[0]["id"]
+        # Check if user with same name and role already exists
+        existing = supabase.table("users").select("id").eq(
+            "name", user.name
+        ).eq("role", user.role).eq("is_active", True).execute()
+
+        if existing.data:
+            # Update existing user's face descriptor
+            user_id = existing.data[0]["id"]
+            supabase.table("users").update({
+                "face_descriptor": user.face_descriptor,
+                "registered_at": now,
+            }).eq("id", user_id).execute()
+            is_update = True
+        else:
+            # Create new user
+            result = supabase.table("users").insert({
+                "name": user.name,
+                "role": user.role,
+                "face_descriptor": user.face_descriptor,
+                "registered_at": now,
+            }).execute()
+            user_id = result.data[0]["id"]
     else:
         user_id = hashlib.sha256(f"{user.name}:{now}".encode()).hexdigest()[:12]
 
@@ -257,9 +273,10 @@ async def register_user(user: UserRegister):
         }).execute()
 
     # Log the registration event
+    desc = f"Usuário '{user.name}' ({user.role}) atualizado — descritor facial renovado" if is_update else f"Usuário '{user.name}' ({user.role}) cadastrado — nível máx: {max_level}"
     await log_event(SecurityEvent(
         event_type="user_registered",
-        description=f"Usuário '{user.name}' ({user.role}) cadastrado — nível máx: {max_level}",
+        description=desc,
         severity="info",
         user_id=str(user_id),
     ))
