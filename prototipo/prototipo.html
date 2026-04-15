@@ -238,6 +238,103 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
   .dash-charts { grid-template-columns:1fr; }
 }
 
+/* ── AR MODE (Cardboard / Split-Screen Stereoscopic) ── */
+.ar-btn { padding:4px 10px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); border-radius:6px; font-size:11px; cursor:pointer; }
+.ar-btn:hover { color:var(--text); border-color:var(--accent); }
+.ar-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+.ar-overlay { display:none; position:fixed; inset:0; z-index:9000; background:#000; }
+.ar-overlay.active { display:flex; }
+
+.ar-split { display:flex; width:100%; height:100%; }
+.ar-eye { position:relative; width:50%; height:100%; overflow:hidden; border-right:2px solid #000; }
+.ar-eye:last-child { border-right:none; border-left:2px solid #000; }
+
+.ar-eye video { width:100%; height:100%; object-fit:cover; }
+
+/* HUD overlay on each eye */
+.ar-hud { position:absolute; inset:0; pointer-events:none; display:flex; flex-direction:column; padding:12px; }
+
+/* Top bar */
+.ar-hud-top { display:flex; justify-content:space-between; align-items:flex-start; }
+.ar-hud-logo { height:18px; opacity:0.85; }
+.ar-hud-level { padding:3px 8px; border-radius:12px; font-size:9px; font-weight:700; letter-spacing:1px; }
+.ar-hud-status { font-size:8px; color:rgba(255,255,255,0.6); margin-top:4px; text-align:right; }
+
+/* Scan frame */
+.ar-scan-frame { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:120px; height:120px; pointer-events:none; }
+.ar-scan-frame .corner { position:absolute; width:20px; height:20px; border:2px solid rgba(37,99,235,0.6); }
+.ar-scan-frame .corner.tl { top:0; left:0; border-right:none; border-bottom:none; }
+.ar-scan-frame .corner.tr { top:0; right:0; border-left:none; border-bottom:none; }
+.ar-scan-frame .corner.bl { bottom:0; left:0; border-right:none; border-top:none; }
+.ar-scan-frame .corner.br { bottom:0; right:0; border-left:none; border-top:none; }
+.ar-scan-label { position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size:7px; color:rgba(37,99,235,0.7); white-space:nowrap; letter-spacing:1px; }
+
+/* Bottom: AI chat messages */
+.ar-hud-bottom { margin-top:auto; max-height:45%; overflow:hidden; }
+.ar-hud-msg { background:rgba(0,0,0,0.65); border:1px solid rgba(37,99,235,0.3); border-radius:8px; padding:6px 10px; margin-top:6px; font-size:8px; line-height:1.4; color:rgba(255,255,255,0.9); backdrop-filter:blur(8px); max-height:80px; overflow:hidden; }
+.ar-hud-msg.user-msg { border-color:rgba(37,99,235,0.5); text-align:right; }
+.ar-hud-msg.ai-msg { border-color:rgba(34,197,94,0.3); }
+.ar-hud-msg.blurred { filter:blur(8px); }
+.ar-hud-msg-label { font-size:6px; font-weight:700; letter-spacing:1px; color:rgba(255,255,255,0.4); margin-bottom:2px; }
+
+/* User info strip */
+.ar-hud-user { display:flex; align-items:center; gap:6px; margin-top:6px; padding:4px 8px; background:rgba(0,0,0,0.5); border-radius:6px; border:1px solid rgba(255,255,255,0.08); }
+.ar-hud-user-dot { width:6px; height:6px; border-radius:50%; background:var(--green); flex-shrink:0; }
+.ar-hud-user-name { font-size:7px; color:rgba(255,255,255,0.7); }
+
+/* Observer alert in AR */
+.ar-hud-observer { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); padding:8px 16px; background:rgba(249,115,22,0.9); color:#fff; font-size:9px; font-weight:700; border-radius:8px; text-align:center; white-space:nowrap; pointer-events:none; animation:arPulse 1s infinite; }
+.ar-hud-observer.show { display:block; }
+@keyframes arPulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+/* Indicators strip */
+.ar-hud-indicators { display:flex; gap:8px; margin-top:4px; }
+.ar-indicator { font-size:7px; color:rgba(255,255,255,0.5); display:flex; align-items:center; gap:3px; }
+.ar-indicator-dot { width:5px; height:5px; border-radius:50%; }
+
+/* Close AR button */
+.ar-close { position:absolute; top:8px; right:8px; z-index:9001; padding:6px 12px; background:rgba(0,0,0,0.7); border:1px solid rgba(255,255,255,0.2); border-radius:6px; color:#fff; font-size:10px; cursor:pointer; pointer-events:all; }
+.ar-close:hover { background:rgba(239,68,68,0.8); }
+
+/* ── MOBILE RESPONSIVENESS ── */
+@media (max-width:600px) {
+  .nav { padding:0 10px; gap:8px; height:44px; }
+  .nav-logo img { height:22px; }
+  .nav-tabs { margin-left:8px; gap:0; }
+  .nav-tab { padding:6px 10px; font-size:11px; }
+  .nav-right { gap:6px; }
+  .nav-level { font-size:9px; padding:3px 8px; }
+  .nav-user { display:none; }
+  .fullscreen-btn, .ar-btn { font-size:10px; padding:4px 8px; }
+  .chat-messages { padding:12px; }
+  .chat-msg { max-width:95%; }
+  .msg-bubble { padding:10px 12px; font-size:12px; }
+  .chat-input-area { padding:8px 12px; }
+  .chat-input { font-size:12px; padding:10px 12px; }
+  .chat-send { padding:10px 14px; font-size:12px; }
+  .quick-questions { gap:4px; }
+  .quick-q { padding:6px 10px; font-size:10px; }
+  .dash { padding:12px; }
+  .dash-grid { grid-template-columns:1fr 1fr; gap:8px; }
+  .dash-card .num { font-size:24px; }
+  .dash-charts { grid-template-columns:1fr; gap:8px; }
+  .reg-modal .reg-box { padding:24px 20px; }
+  .reg-modal h2 { font-size:18px; }
+
+  /* AR mode on small screens */
+  .ar-hud { padding:8px; }
+  .ar-hud-logo { height:14px; }
+  .ar-hud-level { font-size:7px; }
+  .ar-scan-frame { width:80px; height:80px; }
+  .ar-hud-msg { font-size:7px; padding:4px 8px; max-height:60px; }
+}
+
+@media (max-width:400px) {
+  .nav-tabs { display:none; }
+  .dash-grid { grid-template-columns:1fr; }
+}
+
 </style>
 </head>
 <body>
@@ -251,9 +348,79 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
     <button class="nav-tab" onclick="switchTab('dashboard')">Dashboard</button>
   </div>
   <div class="nav-right">
+    <button class="ar-btn" id="arToggle" onclick="toggleARMode()" title="Modo AR Cardboard">🥽 AR</button>
     <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Tela cheia (HoloLens)">⛶</button>
     <div class="nav-level" id="navLevel" style="background:rgba(34,197,94,0.15);color:var(--green);">NÍVEL 1</div>
     <div class="nav-user" id="navUser">Aguardando cadastro...</div>
+  </div>
+</div>
+
+<!-- AR MODE OVERLAY -->
+<div class="ar-overlay" id="arOverlay">
+  <button class="ar-close" onclick="toggleARMode()">✕ Sair do AR</button>
+  <div class="ar-split">
+    <!-- LEFT EYE -->
+    <div class="ar-eye" id="arEyeLeft">
+      <video id="arVideoLeft" autoplay muted playsinline></video>
+      <div class="ar-hud">
+        <div class="ar-hud-top">
+          <div>
+            <img src="../images/blindar-logotype.png" class="ar-hud-logo" alt="BlindAR">
+            <div class="ar-hud-indicators">
+              <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--green);"></div> VPN</div>
+              <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--accent2);"></div> Sentinel</div>
+              <div class="ar-indicator"><div class="ar-indicator-dot" id="arFaceDotL" style="background:var(--muted);"></div> <span id="arFaceLabelL">Face</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="ar-hud-level" id="arLevelL" style="background:rgba(34,197,94,0.2);color:var(--green);">NV 1</div>
+            <div class="ar-hud-status" id="arStatusL">Autenticado</div>
+          </div>
+        </div>
+        <div class="ar-scan-frame" id="arScanL">
+          <div class="corner tl"></div><div class="corner tr"></div>
+          <div class="corner bl"></div><div class="corner br"></div>
+          <div class="ar-scan-label">RECONHECIMENTO FACIAL</div>
+        </div>
+        <div class="ar-hud-observer" id="arObserverL">⚠ OBSERVADOR DETECTADO</div>
+        <div class="ar-hud-bottom" id="arMessagesL"></div>
+        <div class="ar-hud-user" id="arUserL">
+          <div class="ar-hud-user-dot" id="arUserDotL"></div>
+          <div class="ar-hud-user-name" id="arUserNameL">Aguardando...</div>
+        </div>
+      </div>
+    </div>
+    <!-- RIGHT EYE -->
+    <div class="ar-eye" id="arEyeRight">
+      <video id="arVideoRight" autoplay muted playsinline></video>
+      <div class="ar-hud">
+        <div class="ar-hud-top">
+          <div>
+            <img src="../images/blindar-logotype.png" class="ar-hud-logo" alt="BlindAR">
+            <div class="ar-hud-indicators">
+              <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--green);"></div> VPN</div>
+              <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--accent2);"></div> Sentinel</div>
+              <div class="ar-indicator"><div class="ar-indicator-dot" id="arFaceDotR" style="background:var(--muted);"></div> <span id="arFaceLabelR">Face</span></div>
+            </div>
+          </div>
+          <div>
+            <div class="ar-hud-level" id="arLevelR" style="background:rgba(34,197,94,0.2);color:var(--green);">NV 1</div>
+            <div class="ar-hud-status" id="arStatusR">Autenticado</div>
+          </div>
+        </div>
+        <div class="ar-scan-frame" id="arScanR">
+          <div class="corner tl"></div><div class="corner tr"></div>
+          <div class="corner bl"></div><div class="corner br"></div>
+          <div class="ar-scan-label">RECONHECIMENTO FACIAL</div>
+        </div>
+        <div class="ar-hud-observer" id="arObserverR">⚠ OBSERVADOR DETECTADO</div>
+        <div class="ar-hud-bottom" id="arMessagesR"></div>
+        <div class="ar-hud-user" id="arUserR">
+          <div class="ar-hud-user-dot" id="arUserDotR"></div>
+          <div class="ar-hud-user-name" id="arUserNameR">Aguardando...</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -847,6 +1014,161 @@ function toggleFullscreen() {
 }
 
 // ══════════════════════════════════════════════════════════════
+//  AR MODE — Cardboard Split-Screen Stereoscopic
+// ══════════════════════════════════════════════════════════════
+let arActive = false;
+let arStream = null;
+
+async function toggleARMode() {
+  if (arActive) {
+    exitARMode();
+  } else {
+    await enterARMode();
+  }
+}
+
+async function enterARMode() {
+  const overlay = document.getElementById('arOverlay');
+  const videoL = document.getElementById('arVideoLeft');
+  const videoR = document.getElementById('arVideoRight');
+
+  try {
+    // Request rear camera (environment) for passthrough
+    arStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
+      audio: false
+    });
+
+    videoL.srcObject = arStream;
+    videoR.srcObject = arStream;
+
+    arActive = true;
+    overlay.classList.add('active');
+    document.getElementById('arToggle').classList.add('active');
+
+    // Go fullscreen on mobile for immersion
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+    // Lock to landscape if supported
+    if (screen.orientation && screen.orientation.lock) {
+      screen.orientation.lock('landscape').catch(() => {});
+    }
+
+    // Sync HUD with current state
+    syncARHud();
+    addLog('🥽', 'Modo AR Cardboard ativado — câmera passthrough + HUD estereoscópico', '#3b82f6');
+  } catch (e) {
+    console.warn('AR camera failed:', e);
+    // Fallback: try front camera
+    try {
+      arStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false
+      });
+      videoL.srcObject = arStream;
+      videoR.srcObject = arStream;
+      arActive = true;
+      overlay.classList.add('active');
+      document.getElementById('arToggle').classList.add('active');
+      syncARHud();
+      addLog('🥽', 'Modo AR ativado (câmera frontal — traseira indisponível)', '#f97316');
+    } catch (e2) {
+      addLog('⚠️', 'Modo AR indisponível: nenhuma câmera acessível', '#ef4444');
+    }
+  }
+}
+
+function exitARMode() {
+  const overlay = document.getElementById('arOverlay');
+  overlay.classList.remove('active');
+  document.getElementById('arToggle').classList.remove('active');
+  arActive = false;
+
+  // Stop AR camera stream
+  if (arStream) {
+    arStream.getTracks().forEach(t => t.stop());
+    arStream = null;
+  }
+
+  // Unlock orientation
+  if (screen.orientation && screen.orientation.unlock) {
+    screen.orientation.unlock();
+  }
+
+  addLog('🖥️', 'Modo AR desativado — voltando ao modo desktop', '#3b82f6');
+}
+
+function syncARHud() {
+  if (!arActive) return;
+
+  // Level
+  const levelColors = {
+    1: { bg: 'rgba(34,197,94,0.2)', color: 'var(--green)', label: 'NV 1' },
+    2: { bg: 'rgba(59,130,246,0.2)', color: 'var(--accent2)', label: 'NV 2' },
+    3: { bg: 'rgba(234,179,8,0.2)', color: 'var(--yellow)', label: 'NV 3' },
+    4: { bg: 'rgba(249,115,22,0.2)', color: 'var(--orange)', label: 'NV 4' },
+    5: { bg: 'rgba(239,68,68,0.2)', color: 'var(--red)', label: 'NV 5' }
+  };
+  const lc = levelColors[currentLevel] || levelColors[1];
+  ['L', 'R'].forEach(side => {
+    const el = document.getElementById('arLevel' + side);
+    el.textContent = lc.label;
+    el.style.background = lc.bg;
+    el.style.color = lc.color;
+  });
+
+  // User
+  const userName = registeredName || 'Não autenticado';
+  const statusText = isAuthenticated ? (isLocked ? 'Bloqueado' : 'Autenticado') : 'Aguardando';
+  const dotColor = isAuthenticated ? (isLocked ? 'var(--red)' : 'var(--green)') : 'var(--muted)';
+  ['L', 'R'].forEach(side => {
+    document.getElementById('arUserName' + side).textContent = userName + ' — ' + (registeredRole || '');
+    document.getElementById('arUserDot' + side).style.background = dotColor;
+    document.getElementById('arStatus' + side).textContent = statusText;
+  });
+
+  // Face detection indicator
+  const faceColor = faceDetected ? 'var(--green)' : 'var(--muted)';
+  const faceLabel = faceDetected ? 'Face ✓' : 'Face';
+  ['L', 'R'].forEach(side => {
+    document.getElementById('arFaceDot' + side).style.background = faceColor;
+    document.getElementById('arFaceLabel' + side).textContent = faceLabel;
+  });
+
+  // Observer
+  const showObs = observerDetected;
+  ['L', 'R'].forEach(side => {
+    document.getElementById('arObserver' + side).classList.toggle('show', showObs);
+  });
+
+  // Sync last messages from chat
+  syncARMessages();
+}
+
+function syncARMessages() {
+  if (!arActive) return;
+  const chatMsgs = document.querySelectorAll('#chatMessages .chat-msg');
+  const lastMsgs = Array.from(chatMsgs).slice(-3); // last 3 messages
+
+  ['L', 'R'].forEach(side => {
+    const container = document.getElementById('arMessages' + side);
+    container.innerHTML = '';
+    lastMsgs.forEach(msg => {
+      const isUser = msg.classList.contains('user');
+      const bubble = msg.querySelector('.msg-bubble');
+      if (!bubble) return;
+      const text = bubble.textContent.substring(0, 150) + (bubble.textContent.length > 150 ? '...' : '');
+      const div = document.createElement('div');
+      div.className = 'ar-hud-msg ' + (isUser ? 'user-msg' : 'ai-msg');
+      if (observerDetected && !isUser) div.className += ' blurred';
+      div.innerHTML = `<div class="ar-hud-msg-label">${isUser ? 'VOCÊ' : 'BLINDAR IA'}</div>${text}`;
+      container.appendChild(div);
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
 //  LEVEL SYSTEM
 // ══════════════════════════════════════════════════════════════
 function setLevel(level) {
@@ -909,6 +1231,7 @@ function setLevel(level) {
   }
 
   updateWatermark();
+  syncARHud();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1153,6 +1476,7 @@ async function processChat(question) {
   msgs.scrollTop = msgs.scrollHeight;
 
   isSendingMessage = false;
+  syncARMessages();
 
   // Update stats
   queryCount++;
@@ -1946,6 +2270,7 @@ function startContinuousRecognition() {
             addLog('🚨', `Observador detectado (${validObservers.length + 1} rostos) — Nível elevado para 4`, '#f97316');
             alertCount++;
             apiLogEvent('observer_detected', `${validObservers.length + 1} rostos detectados`, 'warning', { face_count: validObservers.length + 1 });
+            syncARHud();
           }
 
           // Draw observer boxes (even before confirmed, for visual feedback)
@@ -1970,6 +2295,7 @@ function startContinuousRecognition() {
             document.querySelectorAll('#chatMessages .chat-msg.ai.msg-blurred').forEach(m => m.classList.remove('msg-blurred'));
             if (levelBeforeObserver && levelBeforeObserver < 4) setLevel(levelBeforeObserver);
             addLog('✅', 'Observador saiu — nível restaurado', '#22c55e');
+            syncARHud();
           }
         }
       } else {
