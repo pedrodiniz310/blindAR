@@ -370,6 +370,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
               <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--green);"></div> VPN</div>
               <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--accent2);"></div> Sentinel</div>
               <div class="ar-indicator"><div class="ar-indicator-dot" id="arFaceDotL" style="background:var(--muted);"></div> <span id="arFaceLabelL">Face</span></div>
+              <div class="ar-indicator"><div class="ar-indicator-dot" id="arGyroDotL" style="background:var(--muted);"></div> <span id="arGyroLabelL">Gyro</span></div>
             </div>
           </div>
           <div>
@@ -401,6 +402,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
               <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--green);"></div> VPN</div>
               <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--accent2);"></div> Sentinel</div>
               <div class="ar-indicator"><div class="ar-indicator-dot" id="arFaceDotR" style="background:var(--muted);"></div> <span id="arFaceLabelR">Face</span></div>
+              <div class="ar-indicator"><div class="ar-indicator-dot" id="arGyroDotR" style="background:var(--muted);"></div> <span id="arGyroLabelR">Gyro</span></div>
             </div>
           </div>
           <div>
@@ -1021,6 +1023,15 @@ let arActive = false;
 let arStream = null;
 let mainStreamPaused = false; // track if we paused the main camera for AR
 
+// Gyroscope removal detection
+let gyroActive = false;
+let gyroBaseOrientation = null; // baseline when AR starts
+let gyroStableCount = 0;
+const GYRO_TILT_THRESHOLD = 35; // degrees deviation to trigger removal alert
+const GYRO_ACCEL_THRESHOLD = 25; // m/s² sudden acceleration = device yanked
+const GYRO_STABLE_FRAMES = 10; // frames of stability before setting baseline
+let gyroRemovalDetected = false;
+
 async function toggleARMode() {
   if (arActive) {
     exitARMode();
@@ -1072,6 +1083,7 @@ async function enterARMode() {
 
     // Sync HUD with current state
     syncARHud();
+    startGyroMonitoring();
     addLog('🥽', 'Modo AR Cardboard ativado — câmera passthrough + HUD estereoscópico', '#3b82f6');
   } catch (e) {
     console.warn('AR rear camera failed:', e);
@@ -1088,6 +1100,7 @@ async function enterARMode() {
       overlay.classList.add('active');
       document.getElementById('arToggle').classList.add('active');
       syncARHud();
+      startGyroMonitoring();
       addLog('🥽', 'Modo AR ativado (câmera frontal — traseira indisponível)', '#f97316');
     } catch (e2) {
       console.warn('AR fallback camera also failed:', e2);
@@ -1120,6 +1133,9 @@ function exitARMode() {
     screen.orientation.unlock();
   }
 
+  // Stop gyroscope monitoring
+  stopGyroMonitoring();
+
   // Restore main camera for face detection
   restoreMainCamera();
 
@@ -1145,6 +1161,110 @@ async function restoreMainCamera() {
     console.warn('Failed to restore main camera:', e);
     addLog('⚠️', 'Erro ao restaurar câmera principal', '#f97316');
   }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GYROSCOPE / ACCELEROMETER — Device removal detection
+// ══════════════════════════════════════════════════════════════
+let _gyroOrientHandler = null;
+let _gyroMotionHandler = null;
+
+function startGyroMonitoring() {
+  gyroBaseOrientation = null;
+  gyroStableCount = 0;
+  gyroRemovalDetected = false;
+
+  // Request permission on iOS 13+
+  if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().then(state => {
+      if (state === 'granted') _attachGyroListeners();
+      else addLog('⚠️', 'Permissão de giroscópio negada', '#f97316');
+    }).catch(() => _attachGyroListeners());
+  } else {
+    _attachGyroListeners();
+  }
+}
+
+function _attachGyroListeners() {
+  _gyroOrientHandler = (e) => {
+    if (!arActive || gyroRemovalDetected) return;
+    const { alpha, beta, gamma } = e;
+    if (alpha === null && beta === null && gamma === null) return; // no sensor
+
+    // Update gyro indicator in HUD
+    ['L', 'R'].forEach(side => {
+      document.getElementById('arGyroDot' + side).style.background = 'var(--green)';
+      document.getElementById('arGyroLabel' + side).textContent = 'Gyro ✓';
+    });
+    gyroActive = true;
+
+    // Establish baseline after device is stable for a bit
+    if (!gyroBaseOrientation) {
+      gyroStableCount++;
+      if (gyroStableCount >= GYRO_STABLE_FRAMES) {
+        gyroBaseOrientation = { alpha, beta, gamma };
+        addLog('📐', `Giroscópio calibrado — monitorando remoção do dispositivo`, '#22c55e');
+      }
+      return;
+    }
+
+    // Check deviation from baseline
+    const deltaBeta = Math.abs(beta - gyroBaseOrientation.beta);
+    const deltaGamma = Math.abs(gamma - gyroBaseOrientation.gamma);
+
+    if (deltaBeta > GYRO_TILT_THRESHOLD || deltaGamma > GYRO_TILT_THRESHOLD) {
+      _triggerRemovalAlert('tilt', Math.max(deltaBeta, deltaGamma).toFixed(0));
+    }
+  };
+
+  _gyroMotionHandler = (e) => {
+    if (!arActive || gyroRemovalDetected || !gyroBaseOrientation) return;
+    const acc = e.acceleration || e.accelerationIncludingGravity;
+    if (!acc) return;
+
+    const totalAccel = Math.sqrt((acc.x||0)**2 + (acc.y||0)**2 + (acc.z||0)**2);
+    if (totalAccel > GYRO_ACCEL_THRESHOLD) {
+      _triggerRemovalAlert('accel', totalAccel.toFixed(0));
+    }
+  };
+
+  window.addEventListener('deviceorientation', _gyroOrientHandler);
+  window.addEventListener('devicemotion', _gyroMotionHandler);
+}
+
+function _triggerRemovalAlert(type, value) {
+  if (gyroRemovalDetected) return;
+  gyroRemovalDetected = true;
+
+  const reason = type === 'tilt'
+    ? `Dispositivo removido do óculos — inclinação ${value}° detectada`
+    : `Movimento brusco detectado — aceleração ${value} m/s²`;
+
+  // Update HUD indicators
+  ['L', 'R'].forEach(side => {
+    document.getElementById('arGyroDot' + side).style.background = 'var(--red)';
+    document.getElementById('arGyroLabel' + side).textContent = 'Gyro ⚠';
+  });
+
+  addLog('🚨', `REMOÇÃO DETECTADA — ${reason}`, '#ef4444');
+  alertCount++;
+  apiLogEvent('device_removal', reason, 'critical');
+
+  // Exit AR and lock session
+  exitARMode();
+  if (isAuthenticated && !isLocked) {
+    lockSession(`Dispositivo removido do óculos AR — ${reason}`);
+  }
+}
+
+function stopGyroMonitoring() {
+  if (_gyroOrientHandler) window.removeEventListener('deviceorientation', _gyroOrientHandler);
+  if (_gyroMotionHandler) window.removeEventListener('devicemotion', _gyroMotionHandler);
+  _gyroOrientHandler = null;
+  _gyroMotionHandler = null;
+  gyroActive = false;
+  gyroBaseOrientation = null;
+  gyroRemovalDetected = false;
 }
 
 function syncARHud() {
@@ -1182,6 +1302,14 @@ function syncARHud() {
   ['L', 'R'].forEach(side => {
     document.getElementById('arFaceDot' + side).style.background = faceColor;
     document.getElementById('arFaceLabel' + side).textContent = faceLabel;
+  });
+
+  // Gyroscope indicator
+  const gyroColor = gyroActive ? (gyroBaseOrientation ? 'var(--green)' : 'var(--yellow)') : 'var(--muted)';
+  const gyroLabel = gyroActive ? (gyroBaseOrientation ? 'Gyro ✓' : 'Gyro ⏳') : 'Gyro';
+  ['L', 'R'].forEach(side => {
+    document.getElementById('arGyroDot' + side).style.background = gyroColor;
+    document.getElementById('arGyroLabel' + side).textContent = gyroLabel;
   });
 
   // Observer
