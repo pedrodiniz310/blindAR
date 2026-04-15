@@ -18,6 +18,7 @@ import numpy as np
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from supabase import create_client, Client
 from postgrest.types import CountMethod
@@ -30,6 +31,7 @@ load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 JWT_SECRET = os.getenv("JWT_SECRET", secrets.token_hex(32))
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
 
@@ -639,6 +641,52 @@ async def dashboard():
         events=recent.data,
         users=users.data or [],
         sessions=sessions.data or [],
+    )
+
+
+# ──────────────────────────────────────────────────────────────
+#  Routes — Text-to-Speech (ElevenLabs)
+# ──────────────────────────────────────────────────────────────
+class TTSRequest(BaseModel):
+    text: str = Field(..., max_length=500)
+    voice_id: str = Field(default="cjVigY5qzO86Huf0OWal")  # Eric — Smooth, Trustworthy
+
+
+@app.post("/api/tts")
+async def text_to_speech(req: TTSRequest):
+    """Convert text to speech using ElevenLabs Multilingual v2."""
+    if not ELEVENLABS_API_KEY:
+        raise HTTPException(503, "TTS service not configured")
+
+    if not req.text.strip():
+        raise HTTPException(400, "Empty text")
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{req.voice_id}",
+            headers={
+                "xi-api-key": ELEVENLABS_API_KEY,
+                "Content-Type": "application/json",
+            },
+            json={
+                "text": req.text.strip(),
+                "model_id": "eleven_multilingual_v2",
+                "voice_settings": {
+                    "stability": 0.4,
+                    "similarity_boost": 0.8,
+                    "style": 0.15,
+                },
+            },
+            timeout=30.0,
+        )
+
+    if resp.status_code != 200:
+        raise HTTPException(502, f"ElevenLabs error: {resp.status_code}")
+
+    return Response(
+        content=resp.content,
+        media_type="audio/mpeg",
+        headers={"Cache-Control": "public, max-age=3600"},
     )
 
 

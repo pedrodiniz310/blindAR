@@ -1550,8 +1550,10 @@ async function voiceProcessCommand(command) {
   await processChat(command, true); // true = from voice, trigger TTS
 }
 
+let _ttsAudio = null; // current ElevenLabs audio element
+
 function speakResponse(text) {
-  if (!ttsEnabled || !synth) return;
+  if (!ttsEnabled) return;
 
   // Clean HTML tags and special chars for TTS
   const clean = text
@@ -1564,11 +1566,46 @@ function speakResponse(text) {
 
   if (!clean) return;
 
-  // Cancel any ongoing speech
-  if (synth.speaking) synth.cancel();
+  // Stop any ongoing speech
+  if (_ttsAudio) { _ttsAudio.pause(); _ttsAudio = null; }
+  if (synth && synth.speaking) synth.cancel();
 
   voiceState = 'speaking';
   updateVoiceUI();
+
+  // Try ElevenLabs via backend first, fallback to browser TTS
+  _speakElevenLabs(clean).catch(() => _speakBrowserTTS(clean));
+}
+
+async function _speakElevenLabs(clean) {
+  const truncated = clean.substring(0, 500); // ElevenLabs limit
+  const resp = await fetch(`${backendUrl}/api/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: truncated }),
+  });
+
+  if (!resp.ok) throw new Error('ElevenLabs unavailable');
+
+  const blob = await resp.blob();
+  const url = URL.createObjectURL(blob);
+  _ttsAudio = new Audio(url);
+  _ttsAudio.onended = () => {
+    URL.revokeObjectURL(url);
+    _ttsAudio = null;
+    _onSpeechDone();
+  };
+  _ttsAudio.onerror = () => {
+    URL.revokeObjectURL(url);
+    _ttsAudio = null;
+    _onSpeechDone();
+  };
+  _ttsAudio.play();
+  addLog('🔊', 'TTS ElevenLabs — voz neural', '#a78bfa');
+}
+
+function _speakBrowserTTS(clean) {
+  if (!synth) { _onSpeechDone(); return; }
 
   const utterance = new SpeechSynthesisUtterance(clean);
   utterance.lang = 'pt-BR';
@@ -1576,47 +1613,40 @@ function speakResponse(text) {
   utterance.pitch = 1.0;
   utterance.volume = 1.0;
 
-  // Try to pick a good PT-BR voice
   const voices = synth.getVoices();
   const ptVoice = voices.find(v => v.lang.startsWith('pt') && v.name.includes('Google')) ||
                   voices.find(v => v.lang.startsWith('pt-BR')) ||
                   voices.find(v => v.lang.startsWith('pt'));
   if (ptVoice) utterance.voice = ptVoice;
 
-  utterance.onend = () => {
-    if (voiceEnabled) {
-      voiceState = 'wake';
-      updateVoiceUI();
-      // Play deactivation tone
-      try {
-        const actx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = actx.createOscillator();
-        const gain = actx.createGain();
-        osc.connect(gain);
-        gain.connect(actx.destination);
-        osc.frequency.setValueAtTime(1200, actx.currentTime);
-        osc.frequency.linearRampToValueAtTime(800, actx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.1, actx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, actx.currentTime + 0.15);
-        osc.start(actx.currentTime);
-        osc.stop(actx.currentTime + 0.15);
-      } catch(e){}
-      startWakeWordListening();
-    } else {
-      voiceState = 'off';
-      updateVoiceUI();
-    }
-  };
-
-  utterance.onerror = () => {
-    if (voiceEnabled) {
-      voiceState = 'wake';
-      updateVoiceUI();
-      startWakeWordListening();
-    }
-  };
-
+  utterance.onend = () => _onSpeechDone();
+  utterance.onerror = () => _onSpeechDone();
   synth.speak(utterance);
+  addLog('🔊', 'TTS fallback — voz do navegador', '#94a3b8');
+}
+
+function _onSpeechDone() {
+  if (voiceEnabled) {
+    voiceState = 'wake';
+    updateVoiceUI();
+    try {
+      const actx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = actx.createOscillator();
+      const gain = actx.createGain();
+      osc.connect(gain);
+      gain.connect(actx.destination);
+      osc.frequency.setValueAtTime(1200, actx.currentTime);
+      osc.frequency.linearRampToValueAtTime(800, actx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.1, actx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, actx.currentTime + 0.15);
+      osc.start(actx.currentTime);
+      osc.stop(actx.currentTime + 0.15);
+    } catch(e){}
+    startWakeWordListening();
+  } else {
+    voiceState = 'off';
+    updateVoiceUI();
+  }
 }
 
 function updateVoiceUI(transcript) {
