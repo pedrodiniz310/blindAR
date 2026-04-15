@@ -101,7 +101,8 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .msg-label { font-size:10px; color:var(--muted); margin-bottom:3px; font-weight:600; letter-spacing:1px; }
 .msg-filtered { font-size:10px; color:var(--yellow); margin-top:6px; padding:4px 8px; background:rgba(234,179,8,0.08); border-radius:4px; display:inline-block; }
 .msg-blocked { font-size:10px; color:var(--red); margin-top:6px; padding:4px 8px; background:rgba(239,68,68,0.08); border-radius:4px; display:inline-block; }
-.msg-blurred .msg-bubble.ai { filter:blur(8px); user-select:none; pointer-events:none; }
+.msg-bubble.ai { transition:filter 0.15s ease-out; }
+.msg-blurred .msg-bubble.ai { filter:blur(12px); user-select:none; pointer-events:none; }
 .msg-typing { font-size:12px; color:var(--muted); font-style:italic; padding:8px 16px; }
 
 /* WATERMARK */
@@ -509,8 +510,12 @@ let registeredRole = '';
 let lastMatchScore = 0;
 let maxSecurityLevel = 1; // maximum level the user can access (lower = more access)
 let isAdmin = false;
-const MATCH_THRESHOLD = 0.6; // euclidean distance < 0.6 = same person
-const REG_SAMPLES = 5; // number of face samples to average during registration
+const MATCH_THRESHOLD = 0.55; // euclidean distance < 0.55 = same person (tighter = more secure)
+const REG_SAMPLES = 8; // number of face samples to average during registration (more = robust to lighting/angle)
+const DETECTION_INTERVAL = 800; // ms between detection cycles (fast for observer responsiveness)
+const OBSERVER_CONFIRM_FRAMES = 2; // frames with observer before triggering (debounce)
+const NO_FACE_LOCK_FRAMES = 15; // frames without face before locking (15 * 0.8s = 12s)
+let observerFrameCount = 0; // consecutive frames with observer
 
 // Role → security level mapping (mirrors backend ROLE_CONFIG)
 const ROLE_CONFIG = {
@@ -998,7 +1003,7 @@ async function attemptUnlock() {
     unlockLabel.textContent = `Detectando rosto... (${attempts}/${maxAttempts})`;
 
     const detection = await faceapi
-      .detectSingleFace(unlockVideo, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+      .detectSingleFace(unlockVideo, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 }))
       .withFaceLandmarks()
       .withFaceDescriptor();
 
@@ -1545,7 +1550,7 @@ async function initCamera() {
   const status = document.getElementById('camStatus');
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:320, height:240 } });
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:{ ideal:640 }, height:{ ideal:480 }, frameRate:{ ideal:30 } } });
     video.srcObject = stream;
 
     status.textContent = 'Carregando modelos de reconhecimento...';
@@ -1722,10 +1727,14 @@ async function startRegistration() {
     }
 
     regLabel.textContent = `Capturando rosto... (${capturedDescriptors.length}/${REG_SAMPLES})`;
-    progress.textContent = 'Posicione seu rosto centralizado na câmera';
+    progress.textContent = capturedDescriptors.length < 3
+      ? 'Olhe diretamente para a câmera...'
+      : capturedDescriptors.length < 6
+        ? 'Agora vire levemente o rosto para os lados...'
+        : 'Incline levemente a cabeça para cima e para baixo...';
 
     const detection = await faceapi
-      .detectSingleFace(videoEl, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+      .detectSingleFace(videoEl, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 }))
       .withFaceLandmarks()
       .withFaceDescriptor();
 
@@ -1755,14 +1764,14 @@ async function startRegistration() {
         progress.textContent = `✓ Descritor facial robusto gerado (${REG_SAMPLES} amostras)! Registrando...`;
         setTimeout(() => { stopRegCamera(); completeRegistration(avg); }, 800);
       } else {
-        setTimeout(tryCapture, 300);
+        setTimeout(tryCapture, 450); // slightly longer gap between samples for varied angles
       }
     } else {
       regOverlay.width = videoEl.videoWidth;
       regOverlay.height = videoEl.videoHeight;
       const ctx = regOverlay.getContext('2d');
       ctx.clearRect(0, 0, regOverlay.width, regOverlay.height);
-      setTimeout(tryCapture, 500);
+      setTimeout(tryCapture, 400);
     }
   };
 
@@ -1792,7 +1801,7 @@ function completeRegistration(descriptor) {
     document.getElementById('recogStatus').textContent = 'Ativo';
     document.getElementById('recogStatus').style.color = '#22c55e';
     addLog('✅', `Cadastro facial concluído — ${registeredName} (descritor 128-dim, ${REG_SAMPLES} amostras)`, '#22c55e');
-    addLog('🔐', 'Reconhecimento contínuo ativado — verificação a cada 3s', '#22c55e');
+    addLog('🔐', 'Reconhecimento contínuo ativado — verificação a cada 0.8s (alta frequência)', '#22c55e');
   } else {
     status.textContent = `✓ ${registeredName} — Modo simulado`;
     status.className = 'cam-status ok';
@@ -1829,133 +1838,158 @@ function startContinuousRecognition() {
   const canvas = document.getElementById('overlay');
   const status = document.getElementById('camStatus');
   let noFaceFrames = 0;
+  let isDetecting = false; // prevent overlapping async calls
+
+  // Use SSD MobileNet for primary user (more accurate with varied lighting/angles)
+  // and TinyFaceDetector as fast secondary scan for observers
+  const ssdOptions = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 });
 
   detectionInterval = setInterval(async () => {
-    if (!video.videoWidth || isLocked && identityMismatch) return;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    if (!video.videoWidth || (isLocked && identityMismatch)) return;
+    if (isDetecting) return; // skip if previous detection still running
+    isDetecting = true;
 
-    const detections = await faceapi
-      .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.4 }))
-      .withFaceLandmarks()
-      .withFaceDescriptors();
+    try {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Use SSD MobileNet for all faces — more robust to lighting, distance, angles
+      const detections = await faceapi
+        .detectAllFaces(video, ssdOptions)
+        .withFaceLandmarks()
+        .withFaceDescriptors();
 
-    if (detections.length >= 1) {
-      noFaceFrames = 0;
-      faceDetected = true;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const primary = detections[0];
-      const distance = faceapi.euclideanDistance(registeredDescriptor, primary.descriptor);
-      const similarity = Math.max(0, 1 - distance);
-      lastMatchScore = similarity;
-      const isMatch = distance < MATCH_THRESHOLD;
+      if (detections.length >= 1) {
+        noFaceFrames = 0;
+        faceDetected = true;
 
-      // Draw primary face box
-      const box = primary.detection.box;
-      ctx.strokeStyle = isMatch ? LEVEL_CONFIG[currentLevel].color : '#ef4444';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(box.x, box.y, box.width, box.height);
+        // Find the best match to registered user among all detected faces
+        let bestMatch = null;
+        let bestDistance = Infinity;
+        let bestIdx = 0;
+        for (let i = 0; i < detections.length; i++) {
+          const d = faceapi.euclideanDistance(registeredDescriptor, detections[i].descriptor);
+          if (d < bestDistance) { bestDistance = d; bestMatch = detections[i]; bestIdx = i; }
+        }
 
-      // Draw similarity label
-      ctx.fillStyle = isMatch ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)';
-      ctx.fillRect(box.x, box.y - 18, 90, 18);
-      ctx.fillStyle = '#fff';
-      ctx.font = '11px Segoe UI';
-      ctx.fillText(`${(similarity*100).toFixed(0)}% match`, box.x + 4, box.y - 5);
+        const similarity = Math.max(0, 1 - bestDistance);
+        lastMatchScore = similarity;
+        const isMatch = bestDistance < MATCH_THRESHOLD;
 
-      // Identity badge
-      const badge = document.getElementById('identityBadge');
-      if (isMatch) {
-        badge.innerHTML = `<div class="id-badge match">🧬 Identidade confirmada: <span class="score">${(similarity*100).toFixed(0)}%</span> de similaridade</div>`;
+        // Draw primary face box
+        const box = bestMatch.detection.box;
+        ctx.strokeStyle = isMatch ? LEVEL_CONFIG[currentLevel].color : '#ef4444';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-        if (!isAuthenticated || (isLocked && !identityMismatch)) {
-          isAuthenticated = true;
-          unlockSession();
-          status.textContent = `✓ ${registeredName} — Identidade verificada`;
-          status.className = 'cam-status ok';
-          addLog('🔓', `Sessão desbloqueada — identidade confirmada (${(similarity*100).toFixed(0)}%)`, '#22c55e');
+        // Draw similarity label
+        ctx.fillStyle = isMatch ? 'rgba(34,197,94,0.8)' : 'rgba(239,68,68,0.8)';
+        ctx.fillRect(box.x, box.y - 18, 90, 18);
+        ctx.fillStyle = '#fff';
+        ctx.font = '11px Segoe UI';
+        ctx.fillText(`${(similarity*100).toFixed(0)}% match`, box.x + 4, box.y - 5);
+
+        // Identity badge
+        const badge = document.getElementById('identityBadge');
+        if (isMatch) {
+          badge.innerHTML = `<div class="id-badge match">🧬 Identidade confirmada: <span class="score">${(similarity*100).toFixed(0)}%</span> de similaridade</div>`;
+
+          if (!isAuthenticated || (isLocked && !identityMismatch)) {
+            isAuthenticated = true;
+            unlockSession();
+            status.textContent = `✓ ${registeredName} — Identidade verificada`;
+            status.className = 'cam-status ok';
+            addLog('🔓', `Sessão desbloqueada — identidade confirmada (${(similarity*100).toFixed(0)}%)`, '#22c55e');
+          }
+        } else {
+          // IDENTITY MISMATCH — different person!
+          badge.innerHTML = `<div class="id-badge mismatch">🚫 IDENTIDADE NÃO CONFERE: <span class="score">${(similarity*100).toFixed(0)}%</span> (mín: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%)</div>`;
+
+          if (!identityMismatch) {
+            identityMismatch = true;
+            document.getElementById('identityAlert').style.display = 'block';
+            lockSession('Rosto não corresponde ao usuário cadastrado — possível empréstimo de dispositivo');
+            document.getElementById('lockReason').textContent = backendConnected
+              ? `Similaridade: ${(similarity*100).toFixed(0)}% (mínimo: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%) — Alerta registrado no SOC`
+              : `Similaridade: ${(similarity*100).toFixed(0)}% (mínimo: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%) — Backend desconectado`;
+            alertCount++;
+            addLog('🚨', `IDENTIDADE NÃO CONFERE — similaridade ${(similarity*100).toFixed(0)}% (pessoa diferente detectada)`, '#ef4444');
+            apiLogEvent('identity_mismatch', `Similaridade ${(similarity*100).toFixed(0)}% - pessoa não autorizada`, 'critical', { similarity: similarity });
+          }
+        }
+
+        // ── Observer detection: any face that is NOT the registered user ──
+        const videoArea = video.videoWidth * video.videoHeight;
+        const validObservers = detections.filter((d, i) => {
+          if (i === bestIdx) return false; // skip the primary user
+          const b = d.detection.box;
+          const faceArea = b.width * b.height;
+          const faceRatio = faceArea / videoArea;
+          return faceRatio > 0.005 && faceRatio < 0.45 && b.width > 30 && b.height > 30;
+        });
+
+        if (validObservers.length > 0) {
+          observerFrameCount++;
+          // Trigger after OBSERVER_CONFIRM_FRAMES consecutive detections (debounce)
+          if (!observerDetected && observerFrameCount >= OBSERVER_CONFIRM_FRAMES) {
+            observerDetected = true;
+            levelBeforeObserver = currentLevel;
+            document.getElementById('observerAlert').style.display = 'block';
+            if (currentLevel < 4) setLevel(4);
+            // Blur ALL existing AI messages immediately
+            document.querySelectorAll('#chatMessages .chat-msg.ai').forEach(m => m.classList.add('msg-blurred'));
+            addLog('🚨', `Observador detectado (${validObservers.length + 1} rostos) — Nível elevado para 4`, '#f97316');
+            alertCount++;
+            apiLogEvent('observer_detected', `${validObservers.length + 1} rostos detectados`, 'warning', { face_count: validObservers.length + 1 });
+          }
+
+          // Draw observer boxes (even before confirmed, for visual feedback)
+          for (const obs of validObservers) {
+            const ob = obs.detection.box;
+            ctx.strokeStyle = '#f97316';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(ob.x, ob.y, ob.width, ob.height);
+            ctx.fillStyle = 'rgba(249,115,22,0.3)';
+            ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+            ctx.fillStyle = 'rgba(249,115,22,0.8)';
+            ctx.fillRect(ob.x, ob.y - 18, 80, 18);
+            ctx.fillStyle = '#fff';
+            ctx.font = '11px Segoe UI';
+            ctx.fillText('OBSERVADOR', ob.x + 4, ob.y - 5);
+          }
+        } else {
+          observerFrameCount = 0;
+          if (observerDetected) {
+            observerDetected = false;
+            document.getElementById('observerAlert').style.display = 'none';
+            document.querySelectorAll('#chatMessages .chat-msg.ai.msg-blurred').forEach(m => m.classList.remove('msg-blurred'));
+            if (levelBeforeObserver && levelBeforeObserver < 4) setLevel(levelBeforeObserver);
+            addLog('✅', 'Observador saiu — nível restaurado', '#22c55e');
+          }
         }
       } else {
-        // IDENTITY MISMATCH — different person!
-        badge.innerHTML = `<div class="id-badge mismatch">🚫 IDENTIDADE NÃO CONFERE: <span class="score">${(similarity*100).toFixed(0)}%</span> (mín: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%)</div>`;
-
-        if (!identityMismatch) {
-          identityMismatch = true;
-          document.getElementById('identityAlert').style.display = 'block';
-          lockSession('Rosto não corresponde ao usuário cadastrado — possível empréstimo de dispositivo');
-          document.getElementById('lockReason').textContent = backendConnected
-            ? `Similaridade: ${(similarity*100).toFixed(0)}% (mínimo: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%) — Alerta registrado no SOC`
-            : `Similaridade: ${(similarity*100).toFixed(0)}% (mínimo: ${((1-MATCH_THRESHOLD)*100).toFixed(0)}%) — Backend desconectado`;
-          alertCount++;
-          addLog('🚨', `IDENTIDADE NÃO CONFERE — similaridade ${(similarity*100).toFixed(0)}% (pessoa diferente detectada)`, '#ef4444');
-          apiLogEvent('identity_mismatch', `Similaridade ${(similarity*100).toFixed(0)}% - pessoa não autorizada`, 'critical', { similarity: similarity });
+        // No face detected
+        noFaceFrames++;
+        if (noFaceFrames >= 1 && isAuthenticated && !isLocked) {
+          faceDetected = false;
+          const elapsed = Math.round(noFaceFrames * DETECTION_INTERVAL / 1000);
+          status.textContent = `⚠ Rosto não detectado (${elapsed}s)`;
+          status.className = 'cam-status locked';
+          document.getElementById('identityBadge').innerHTML = '';
+          if (noFaceFrames >= NO_FACE_LOCK_FRAMES) {
+            lockSession(`Rosto ausente há ${Math.round(NO_FACE_LOCK_FRAMES * DETECTION_INTERVAL / 1000)}s — sessão travada por segurança`);
+          }
         }
       }
-
-      // Observer detection: more than 1 face (filter false positives)
-      const videoArea = video.videoWidth * video.videoHeight;
-      const validObservers = detections.slice(1).filter(d => {
-        const b = d.detection.box;
-        const faceArea = b.width * b.height;
-        const faceRatio = faceArea / videoArea;
-        // Ignore faces too small (<1% of frame) or too large (>40% = likely false positive/"giant")
-        return faceRatio > 0.01 && faceRatio < 0.40 && b.width > 40 && b.height > 40;
-      });
-
-      if (validObservers.length > 0) {
-        if (!observerDetected) {
-          observerDetected = true;
-          levelBeforeObserver = currentLevel;
-          document.getElementById('observerAlert').style.display = 'block';
-          if (currentLevel < 4) setLevel(4);
-          // Blur ALL existing AI messages immediately
-          document.querySelectorAll('#chatMessages .chat-msg.ai').forEach(m => m.classList.add('msg-blurred'));
-          addLog('🚨', `Observador detectado (${validObservers.length + 1} rostos) — Nível elevado para 4`, '#f97316');
-          alertCount++;
-          apiLogEvent('observer_detected', `${validObservers.length + 1} rostos detectados`, 'warning', { face_count: validObservers.length + 1 });
-        }
-
-        // Draw observer boxes
-        for (const obs of validObservers) {
-          const ob = obs.detection.box;
-          ctx.strokeStyle = '#f97316';
-          ctx.lineWidth = 2;
-          ctx.strokeRect(ob.x, ob.y, ob.width, ob.height);
-          ctx.fillStyle = 'rgba(249,115,22,0.3)';
-          ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
-          ctx.fillStyle = 'rgba(249,115,22,0.8)';
-          ctx.fillRect(ob.x, ob.y - 18, 80, 18);
-          ctx.fillStyle = '#fff';
-          ctx.font = '11px Segoe UI';
-          ctx.fillText('OBSERVADOR', ob.x + 4, ob.y - 5);
-        }
-      } else {
-        if (observerDetected) {
-          observerDetected = false;
-          document.getElementById('observerAlert').style.display = 'none';
-          // Unblur all AI messages when observer leaves
-          document.querySelectorAll('#chatMessages .chat-msg.ai.msg-blurred').forEach(m => m.classList.remove('msg-blurred'));
-          if (levelBeforeObserver && levelBeforeObserver < 4) setLevel(levelBeforeObserver);
-          addLog('✅', 'Observador saiu — nível restaurado', '#22c55e');
-        }
-      }
-    } else {
-      // No face detected
-      noFaceFrames++;
-      if (noFaceFrames >= 1 && isAuthenticated && !isLocked) {
-        faceDetected = false;
-        status.textContent = `⚠ Rosto não detectado (${noFaceFrames * 3}s)`;
-        status.className = 'cam-status locked';
-        document.getElementById('identityBadge').innerHTML = '';
-        if (noFaceFrames >= 10) {
-          lockSession('Rosto ausente há 30 segundos — sessão travada por segurança');
-        }
-      }
+    } catch(e) {
+      console.warn('Detection error:', e);
+    } finally {
+      isDetecting = false;
     }
-  }, 3000);
+  }, DETECTION_INTERVAL);
 }
 
 // ══════════════════════════════════════════════════════════════
