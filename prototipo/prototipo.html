@@ -683,6 +683,7 @@ const DETECTION_INTERVAL = 800; // ms between detection cycles (fast for observe
 const OBSERVER_CONFIRM_FRAMES = 2; // frames with observer before triggering (debounce)
 const NO_FACE_LOCK_FRAMES = 15; // frames without face before locking (15 * 0.8s = 12s)
 let observerFrameCount = 0; // consecutive frames with observer
+let noFaceFrames = 0; // consecutive frames without face (global for reset on unlock)
 
 // Role → security level mapping (mirrors backend ROLE_CONFIG)
 const ROLE_CONFIG = {
@@ -1018,6 +1019,7 @@ function toggleFullscreen() {
 // ══════════════════════════════════════════════════════════════
 let arActive = false;
 let arStream = null;
+let mainStreamPaused = false; // track if we paused the main camera for AR
 
 async function toggleARMode() {
   if (arActive) {
@@ -1032,6 +1034,16 @@ async function enterARMode() {
   const videoL = document.getElementById('arVideoLeft');
   const videoR = document.getElementById('arVideoRight');
 
+  // On mobile, pause the main camera to free the hardware
+  // (most mobile browsers only allow 1 active camera stream)
+  const mainVideo = document.getElementById('video');
+  if (mainVideo.srcObject) {
+    mainVideo.srcObject.getTracks().forEach(t => t.stop());
+    mainVideo.srcObject = null;
+    mainStreamPaused = true;
+    if (detectionInterval) { clearInterval(detectionInterval); detectionInterval = null; }
+  }
+
   try {
     // Request rear camera (environment) for passthrough
     arStream = await navigator.mediaDevices.getUserMedia({
@@ -1041,15 +1053,18 @@ async function enterARMode() {
 
     videoL.srcObject = arStream;
     videoR.srcObject = arStream;
+    await Promise.all([videoL.play().catch(()=>{}), videoR.play().catch(()=>{})]);
 
     arActive = true;
     overlay.classList.add('active');
     document.getElementById('arToggle').classList.add('active');
 
     // Go fullscreen on mobile for immersion
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    }
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch(e) { /* fullscreen not supported or denied */ }
     // Lock to landscape if supported
     if (screen.orientation && screen.orientation.lock) {
       screen.orientation.lock('landscape').catch(() => {});
@@ -1059,7 +1074,7 @@ async function enterARMode() {
     syncARHud();
     addLog('🥽', 'Modo AR Cardboard ativado — câmera passthrough + HUD estereoscópico', '#3b82f6');
   } catch (e) {
-    console.warn('AR camera failed:', e);
+    console.warn('AR rear camera failed:', e);
     // Fallback: try front camera
     try {
       arStream = await navigator.mediaDevices.getUserMedia({
@@ -1068,13 +1083,17 @@ async function enterARMode() {
       });
       videoL.srcObject = arStream;
       videoR.srcObject = arStream;
+      await Promise.all([videoL.play().catch(()=>{}), videoR.play().catch(()=>{})]);
       arActive = true;
       overlay.classList.add('active');
       document.getElementById('arToggle').classList.add('active');
       syncARHud();
       addLog('🥽', 'Modo AR ativado (câmera frontal — traseira indisponível)', '#f97316');
     } catch (e2) {
+      console.warn('AR fallback camera also failed:', e2);
       addLog('⚠️', 'Modo AR indisponível: nenhuma câmera acessível', '#ef4444');
+      // Restore main camera since AR failed
+      restoreMainCamera();
     }
   }
 }
@@ -1091,12 +1110,41 @@ function exitARMode() {
     arStream = null;
   }
 
+  // Exit fullscreen
+  if (document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  }
+
   // Unlock orientation
   if (screen.orientation && screen.orientation.unlock) {
     screen.orientation.unlock();
   }
 
+  // Restore main camera for face detection
+  restoreMainCamera();
+
   addLog('🖥️', 'Modo AR desativado — voltando ao modo desktop', '#3b82f6');
+}
+
+async function restoreMainCamera() {
+  if (!mainStreamPaused) return;
+  mainStreamPaused = false;
+  const mainVideo = document.getElementById('video');
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } }
+    });
+    mainVideo.srcObject = stream;
+    await mainVideo.play().catch(() => {});
+    // Restart face detection if user is registered
+    if (registeredDescriptor && faceApiLoaded && !detectionInterval) {
+      startContinuousRecognition();
+    }
+    addLog('📷', 'Câmera principal restaurada', '#3b82f6');
+  } catch(e) {
+    console.warn('Failed to restore main camera:', e);
+    addLog('⚠️', 'Erro ao restaurar câmera principal', '#f97316');
+  }
 }
 
 function syncARHud() {
@@ -1261,6 +1309,7 @@ function lockSession(reason) {
 function unlockSession() {
   isLocked = false;
   identityMismatch = false;
+  noFaceFrames = 0; // reset counter so detection doesn't re-lock immediately
   document.getElementById('sessionLocked').classList.remove('show');
   document.getElementById('identityAlert').style.display = 'none';
   // Cleanup unlock camera
@@ -2163,7 +2212,7 @@ function startContinuousRecognition() {
   const video = document.getElementById('video');
   const canvas = document.getElementById('overlay');
   const status = document.getElementById('camStatus');
-  let noFaceFrames = 0;
+  noFaceFrames = 0; // reset global counter
   let isDetecting = false; // prevent overlapping async calls
 
   // Use SSD MobileNet for primary user (more accurate with varied lighting/angles)
