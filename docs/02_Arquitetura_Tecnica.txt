@@ -336,7 +336,7 @@ Dashboard exibe:
 
 │ Classificação de dados    │ Microsoft Purview (DLP)                      │
 
-│ SIEM / Logs               │ Microsoft Sentinel                           │
+│ SIEM / Logs               │ Microsoft Sentinel                           
 
 │ MDM                        │ Microsoft Intune                             │
 
