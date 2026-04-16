@@ -32,6 +32,7 @@ load_dotenv()
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
 JWT_SECRET = os.getenv("JWT_SECRET", secrets.token_hex(32))
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
@@ -464,8 +465,24 @@ async def chat(req: ChatRequest):
             mode="restricted",
         )
 
-    # Levels 1-3: call Gemini or fallback
-    if GEMINI_API_KEY:
+    # Levels 1-3: call Groq (primary) → Gemini (fallback) → local
+    if GROQ_API_KEY:
+        try:
+            response_text = await call_groq(req.question, level, req.user_name, req.user_role)
+            mode = "groq"
+        except Exception:
+            # Fallback to Gemini
+            if GEMINI_API_KEY:
+                try:
+                    response_text = await call_gemini(req.question, level, req.user_name, req.user_role)
+                    mode = "gemini"
+                except Exception as e:
+                    response_text = f"⚠️ Erro na API: {e}. Usando resposta local."
+                    mode = "local_fallback"
+            else:
+                response_text = get_local_response(req.question, level)
+                mode = "local_fallback"
+    elif GEMINI_API_KEY:
         try:
             response_text = await call_gemini(req.question, level, req.user_name, req.user_role)
             mode = "gemini"
@@ -487,6 +504,33 @@ async def chat(req: ChatRequest):
     ))
 
     return ChatResponse(response=response_text, level=level, filtered=filtered, mode=mode)
+
+
+async def call_groq(question: str, level: int, user_name: str, user_role: str) -> str:
+    """Call the Groq API (Llama 3.3 70B) with the security-aware system prompt."""
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    body = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {"role": "system", "content": get_system_prompt(level, user_name, user_role)},
+            {"role": "user", "content": question},
+        ],
+        "temperature": 0.7,
+        "max_tokens": 500,
+    }
+    async with httpx.AsyncClient(timeout=30) as client:
+        res = await client.post(
+            url,
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+            json=body,
+        )
+    if res.status_code != 200:
+        raise RuntimeError(f"Groq HTTP {res.status_code}")
+    data = res.json()
+    text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+    if not text:
+        raise RuntimeError("Resposta vazia do Groq")
+    return text
 
 
 async def call_gemini(question: str, level: int, user_name: str, user_role: str) -> str:

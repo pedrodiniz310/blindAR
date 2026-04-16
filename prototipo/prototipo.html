@@ -740,7 +740,7 @@ function averageDescriptors(descriptors) {
 
 // API
 let apiKey = '';
-let aiMode = 'local'; // 'local' or 'api'
+let aiMode = 'local'; // 'local', 'api', or 'backend'
 let aiProvider = 'groq'; // 'groq' or 'gemini'
 
 // Backend — auto-detect: Render (production) or localhost (dev)
@@ -2134,8 +2134,13 @@ async function processChat(question, fromVoice = false) {
   msgs.scrollTop = msgs.scrollHeight;
 
   let response;
+  let usedMode = aiMode;
   try {
-    if (aiMode === 'api' && apiKey) {
+    if (backendConnected) {
+      // Primary: proxy through backend (Groq → Gemini → local on server)
+      response = await callBackendChat(question);
+      usedMode = 'backend';
+    } else if (aiMode === 'api' && apiKey) {
       if (aiProvider === 'groq') {
         response = await callGroq(question);
       } else {
@@ -2146,6 +2151,7 @@ async function processChat(question, fromVoice = false) {
     }
   } catch(e) {
     response = `⚠️ Erro ao consultar a IA: ${e.message}. Usando resposta local.<br><br>` + getLocalResponse(question);
+    usedMode = 'local';
   }
 
   // Remove typing indicator
@@ -2167,7 +2173,9 @@ async function processChat(question, fromVoice = false) {
   else if (currentLevel === 4) filterTag = '<div class="msg-blocked">🚫 Dados protegidos — observador/área pública (Nível 4)</div>';
   else filterTag = '<div class="msg-blocked">❌ Sessão bloqueada (Nível 5)</div>';
 
-  const modeTag = aiMode === 'api'
+  const modeTag = usedMode === 'backend'
+    ? '<div style="font-size:9px;color:var(--accent2);margin-top:6px;opacity:0.7;">⚡ Resposta via BlindAR Gateway (Groq AI)</div>'
+    : usedMode === 'api'
     ? `<div style="font-size:9px;color:var(--accent2);margin-top:6px;opacity:0.7;">⚡ Resposta via ${AI_PROVIDERS[aiProvider].name}</div>`
     : '<div style="font-size:9px;color:var(--muted);margin-top:6px;opacity:0.5;">💾 Resposta local (simulada)</div>';
 
@@ -2186,8 +2194,34 @@ async function processChat(question, fromVoice = false) {
   // Update stats
   queryCount++;
   hourlyCounts[new Date().getHours()]++;
-  addLog('📋', `Query: "${escapeHtml(question.substring(0,40))}..." — ${LEVEL_CONFIG[currentLevel].name} [${aiMode}]`, LEVEL_CONFIG[currentLevel].color);
-  apiLogEvent('ai_query', question.substring(0,100), 'info', { provider: aiProvider, mode: aiMode });
+  addLog('📋', `Query: "${escapeHtml(question.substring(0,40))}..." — ${LEVEL_CONFIG[currentLevel].name} [${usedMode}]`, LEVEL_CONFIG[currentLevel].color);
+  apiLogEvent('ai_query', question.substring(0,100), 'info', { provider: usedMode === 'backend' ? 'groq' : aiProvider, mode: usedMode });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  BACKEND CHAT PROXY (Groq → Gemini → Local no servidor)
+// ══════════════════════════════════════════════════════════════
+async function callBackendChat(question) {
+  const res = await fetch(backendUrl + '/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      question: question,
+      security_level: currentLevel,
+      user_name: registeredName || 'Desconhecido',
+      user_role: registeredRole || 'N/A'
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+
+  const data = await res.json();
+  return (data.response || '')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
 }
 
 // ══════════════════════════════════════════════════════════════
