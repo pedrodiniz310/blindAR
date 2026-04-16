@@ -159,7 +159,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
     </div>
 
     <div class="lobby-section" style="margin-top:24px">
-      <button class="lobby-btn vr" id="enterVrBtn" onclick="enterVR()" disabled>🥽 ENTRAR EM VR</button>
+      <button class="lobby-btn vr" id="enterVrBtn" onclick="enterVR()">🥽 ENTRAR EM VR</button>
       <button class="lobby-btn primary" id="enterFlatBtn" onclick="enterFlat()">💬 Modo Tela (sem VR)</button>
     </div>
 
@@ -227,21 +227,21 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
     <a-plane width="1.0" height="1.2" color="#131316" opacity="0.88" side="double"></a-plane>
     <a-text value="PERGUNTAS RÁPIDAS" position="0 0.48 0.01" align="center" color="#71717a" width="0.9" font="roboto"></a-text>
     
-    <a-entity id="vrQ0" class="clickable" position="0 0.28 0.01" onclick="vrQuickAsk(0)">
-      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable"></a-plane>
-      <a-text value="Pressão do poço P-47?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable"></a-text>
+    <a-entity id="vrQ0" class="clickable" position="0 0.28 0.01" data-question="0">
+      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable" data-question="0"></a-plane>
+      <a-text value="Pressão do poço P-47?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable" data-question="0"></a-text>
     </a-entity>
-    <a-entity id="vrQ1" class="clickable" position="0 0.06 0.01" onclick="vrQuickAsk(1)">
-      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable"></a-plane>
-      <a-text value="Dados de produção do mês?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable"></a-text>
+    <a-entity id="vrQ1" class="clickable" position="0 0.06 0.01" data-question="1">
+      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable" data-question="1"></a-plane>
+      <a-text value="Dados de produção do mês?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable" data-question="1"></a-text>
     </a-entity>
-    <a-entity id="vrQ2" class="clickable" position="0 -0.16 0.01" onclick="vrQuickAsk(2)">
-      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable"></a-plane>
-      <a-text value="Responsável da P-76?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable"></a-text>
+    <a-entity id="vrQ2" class="clickable" position="0 -0.16 0.01" data-question="2">
+      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable" data-question="2"></a-plane>
+      <a-text value="Responsável da P-76?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable" data-question="2"></a-text>
     </a-entity>
-    <a-entity id="vrQ3" class="clickable" position="0 -0.38 0.01" onclick="vrQuickAsk(3)">
-      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable"></a-plane>
-      <a-text value="Status dos equipamentos?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable"></a-text>
+    <a-entity id="vrQ3" class="clickable" position="0 -0.38 0.01" data-question="3">
+      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable" data-question="3"></a-plane>
+      <a-text value="Status dos equipamentos?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable" data-question="3"></a-text>
     </a-entity>
   </a-entity>
 
@@ -250,21 +250,21 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
     <a-plane width="0.8" height="1.2" color="#131316" opacity="0.88" side="double"></a-plane>
     <a-text value="NÍVEL DE SEGURANÇA" position="0 0.48 0.01" align="center" color="#71717a" width="0.75" font="roboto"></a-text>
     
-    <a-entity id="vrLvl1" class="clickable" position="0 0.28 0.01" onclick="vrSetLevel(1)">
-      <a-plane width="0.68" height="0.16" color="#22c55e" opacity="0.2" class="clickable"></a-plane>
-      <a-text value="1 - Sala Segura" align="center" color="#22c55e" width="0.65" font="roboto" class="clickable"></a-text>
+    <a-entity id="vrLvl1" class="clickable" position="0 0.28 0.01" data-level="1">
+      <a-plane width="0.68" height="0.16" color="#22c55e" opacity="0.2" class="clickable" data-level="1"></a-plane>
+      <a-text value="1 - Sala Segura" align="center" color="#22c55e" width="0.65" font="roboto" class="clickable" data-level="1"></a-text>
     </a-entity>
-    <a-entity id="vrLvl2" class="clickable" position="0 0.08 0.01" onclick="vrSetLevel(2)">
-      <a-plane width="0.68" height="0.16" color="#3b82f6" opacity="0.15" class="clickable"></a-plane>
-      <a-text value="2 - Área Trabalho" align="center" color="#3b82f6" width="0.65" font="roboto" class="clickable"></a-text>
+    <a-entity id="vrLvl2" class="clickable" position="0 0.08 0.01" data-level="2">
+      <a-plane width="0.68" height="0.16" color="#3b82f6" opacity="0.15" class="clickable" data-level="2"></a-plane>
+      <a-text value="2 - Área Trabalho" align="center" color="#3b82f6" width="0.65" font="roboto" class="clickable" data-level="2"></a-text>
     </a-entity>
-    <a-entity id="vrLvl3" class="clickable" position="0 -0.12 0.01" onclick="vrSetLevel(3)">
-      <a-plane width="0.68" height="0.16" color="#eab308" opacity="0.15" class="clickable"></a-plane>
-      <a-text value="3 - Campo" align="center" color="#eab308" width="0.65" font="roboto" class="clickable"></a-text>
+    <a-entity id="vrLvl3" class="clickable" position="0 -0.12 0.01" data-level="3">
+      <a-plane width="0.68" height="0.16" color="#eab308" opacity="0.15" class="clickable" data-level="3"></a-plane>
+      <a-text value="3 - Campo" align="center" color="#eab308" width="0.65" font="roboto" class="clickable" data-level="3"></a-text>
     </a-entity>
-    <a-entity id="vrLvl4" class="clickable" position="0 -0.32 0.01" onclick="vrSetLevel(4)">
-      <a-plane width="0.68" height="0.16" color="#f97316" opacity="0.15" class="clickable"></a-plane>
-      <a-text value="4 - Área Pública" align="center" color="#f97316" width="0.65" font="roboto" class="clickable"></a-text>
+    <a-entity id="vrLvl4" class="clickable" position="0 -0.32 0.01" data-level="4">
+      <a-plane width="0.68" height="0.16" color="#f97316" opacity="0.15" class="clickable" data-level="4"></a-plane>
+      <a-text value="4 - Área Pública" align="center" color="#f97316" width="0.65" font="roboto" class="clickable" data-level="4"></a-text>
     </a-entity>
   </a-entity>
 
@@ -279,10 +279,9 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
     <a-text value="🎤 Ouvindo..." align="center" color="#fff" width="0.55" font="roboto"></a-text>
   </a-entity>
 
-  <!-- Left hand -->
-  <a-entity id="leftHand" hand-controls="hand:left; handModelStyle:lowPoly" visible="false"></a-entity>
-  <!-- Right hand -->
-  <a-entity id="rightHand" hand-controls="hand:right; handModelStyle:lowPoly" visible="false"></a-entity>
+  <!-- Quest 2 Controllers -->
+  <a-entity id="leftController" laser-controls="hand:left" raycaster="objects:.clickable; far:10" line="color:#4488ff; opacity:0.5"></a-entity>
+  <a-entity id="rightController" laser-controls="hand:right" raycaster="objects:.clickable; far:10" line="color:#4488ff; opacity:0.5"></a-entity>
 
 </a-scene>
 
@@ -391,7 +390,6 @@ async function connectBackend() {
     backendUrl = url;
     backendConnected = true;
     status.innerHTML = '<span style="color:var(--green)">✓ Backend conectado</span>';
-    document.getElementById('enterVrBtn').disabled = false;
     warmUpTTS();
   } catch(e) {
     if (url.includes('localhost') || url.includes('127.0.0.1')) {
@@ -403,7 +401,6 @@ async function connectBackend() {
         backendConnected = true;
         document.getElementById('backendUrlInput').value = RENDER_URL;
         status.innerHTML = '<span style="color:var(--green)">✓ Backend conectado via nuvem</span>';
-        document.getElementById('enterVrBtn').disabled = false;
         warmUpTTS();
         return;
       } catch(e2) {}
@@ -1052,6 +1049,48 @@ window.addEventListener('beforeunload', () => {
     }));
   }
 });
+
+// ── A-Frame Click Event Listeners (replaces onclick attributes) ──
+function setupVRClickHandlers() {
+  // Quick question buttons
+  ['vrQ0','vrQ1','vrQ2','vrQ3'].forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('click', () => {
+        showToast('Perguntando: ' + QUICK_QUESTIONS[idx].substring(0, 40) + '...', 'info', 2000);
+        processChat(QUICK_QUESTIONS[idx], false);
+      });
+    }
+  });
+
+  // Level buttons
+  ['vrLvl1','vrLvl2','vrLvl3','vrLvl4'].forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('click', () => {
+        setLevel(idx + 1);
+      });
+    }
+  });
+
+  // Also listen on controller triggers for raycaster hits
+  ['leftController','rightController'].forEach(cId => {
+    const controller = document.getElementById(cId);
+    if (controller) {
+      controller.addEventListener('triggerdown', () => {
+        // Raycaster intersection is handled by A-Frame cursor system
+      });
+    }
+  });
+}
+
+// Setup when scene is ready
+const vrScene = document.getElementById('vrScene');
+if (vrScene) {
+  vrScene.addEventListener('loaded', () => {
+    setupVRClickHandlers();
+  });
+}
 </script>
 </body>
 </html>

@@ -12,7 +12,7 @@ Grand Prix SENAI de Inovação 2026 — Desafio Petrobras · Cibersegurança e �
 
 <br>
 
-[▶ Ver Solução Completa](https://pedrodiniz310.github.io/blindAR/) · [▶ Testar Protótipo](https://pedrodiniz310.github.io/blindAR/prototipo/prototipo.html)
+[▶ Ver Solução Completa](https://pedrodiniz310.github.io/blindAR/) · [▶ Testar Protótipo](https://pedrodiniz310.github.io/blindAR/prototipo/prototipo.html) · [🥽 Versão Quest 2](https://pedrodiniz310.github.io/blindAR/prototipo/quest.html)
 
 </div>
 
@@ -57,7 +57,8 @@ O **BlindAR** é um middleware de segurança que se posiciona entre o dispositiv
 blindAR/
 ├── index.html                      # Landing page da solução (GitHub Pages)
 ├── prototipo/
-│   └── prototipo.html              # Protótipo interativo (webcam + IA)
+│   ├── prototipo.html              # Protótipo interativo (webcam + IA)
+│   └── quest.html                  # Versão Meta Quest 2 (WebXR + A-Frame)
 ├── backend/
 │   ├── main.py                     # API FastAPI (proxy Supabase)
 │   ├── requirements.txt            # Dependências Python
