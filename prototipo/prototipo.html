@@ -1398,10 +1398,21 @@ function startWakeWordListening() {
   recognition.onresult = (event) => {
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const transcript = event.results[i][0].transcript.toLowerCase().trim();
+      // Debug: show what Speech API hears (remove after testing)
+      if (event.results[i].isFinal) {
+        addLog('👂', `Ouviu: "${event.results[i][0].transcript.trim()}"`, '#64748b');
+      }
       // Check all alternatives for wake word
       for (let j = 0; j < event.results[i].length; j++) {
-        const alt = event.results[i][j].transcript.toLowerCase().trim();
-        if (alt.includes(WAKE_WORD) || alt.includes('blind ar') || alt.includes('blaind ar') || alt.includes('blainder')) {
+        const alt = event.results[i][j].transcript.toLowerCase().trim()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // strip accents
+        const wakeVariants = [
+          'blindar', 'blind ar', 'blaind ar', 'blainder', 'blintar',
+          'blaindar', 'blindare', 'blind are', 'blaindare', 'blinda',
+          'blin dar', 'blyndar', 'blynda', 'blainda', 'plinar',
+          'blindá', 'blinda r', 'blindah', 'blind a', 'blindão',
+        ];
+        if (wakeVariants.some(w => alt.includes(w))) {
           // Wake word detected!
           try { recognition.abort(); } catch(e){}
           recognition = null;
