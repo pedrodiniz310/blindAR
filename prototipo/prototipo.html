@@ -1093,6 +1093,7 @@ async function toggleARMode() {
 }
 
 async function enterARMode() {
+  warmUpTTS(); // pre-warm backend TTS on AR entry
   const overlay = document.getElementById('arOverlay');
   const videoL = document.getElementById('arVideoLeft');
   const videoR = document.getElementById('arVideoRight');
@@ -1377,6 +1378,7 @@ function startVoice() {
   voiceEnabled = true;
   document.getElementById('voiceToggle').classList.add('listening');
   addLog('🎙️', 'Assistente de voz ativado — diga "BlindAR" para comandar', '#3b82f6');
+  warmUpTTS(); // pre-warm backend while user prepares question
 
   // Request microphone permission first (required on mobile)
   navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
@@ -1581,6 +1583,24 @@ async function voiceProcessCommand(command) {
 }
 
 let _ttsAudio = null; // current ElevenLabs audio element
+let _ttsWarmedUp = false;
+
+function warmUpTTS() {
+  if (_ttsWarmedUp) return;
+  _ttsWarmedUp = true;
+  // Fire-and-forget: wake up Render + pre-load ElevenLabs connection
+  fetch(`${backendUrl}/api/tts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: '.' }),
+  }).then(() => {
+    addLog('✅', 'Backend TTS pré-aquecido — voz neural pronta', '#22c55e');
+  }).catch(() => {
+    _ttsWarmedUp = false; // allow retry
+    addLog('⏳', 'Backend ainda acordando... voz neural carregará na 1ª fala', '#f59e0b');
+  });
+  addLog('🔥', 'Pré-aquecendo voz neural (ElevenLabs/Edge)...', '#a78bfa');
+}
 
 function speakResponse(text) {
   if (!ttsEnabled) return;
@@ -1603,35 +1623,56 @@ function speakResponse(text) {
   voiceState = 'speaking';
   updateVoiceUI();
 
-  // Try ElevenLabs via backend first, fallback to browser TTS
-  _speakElevenLabs(clean).catch(() => _speakBrowserTTS(clean));
+  // Try neural TTS via backend (ElevenLabs → Edge TTS), fallback to browser
+  _speakNeural(clean).catch(err => {
+    addLog('⚠️', `Backend TTS falhou: ${err.message} — usando voz do navegador`, '#f59e0b');
+    _speakBrowserTTS(clean);
+  });
 }
 
-async function _speakElevenLabs(clean) {
-  const truncated = clean.substring(0, 500); // ElevenLabs limit
-  const resp = await fetch(`${backendUrl}/api/tts`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: truncated }),
-  });
+async function _speakNeural(clean, attempt = 1) {
+  const truncated = clean.substring(0, 500);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), attempt === 1 ? 15000 : 25000);
 
-  if (!resp.ok) throw new Error('ElevenLabs unavailable');
+  try {
+    const resp = await fetch(`${backendUrl}/api/tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: truncated }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
 
-  const blob = await resp.blob();
-  const url = URL.createObjectURL(blob);
-  _ttsAudio = new Audio(url);
-  _ttsAudio.onended = () => {
-    URL.revokeObjectURL(url);
-    _ttsAudio = null;
-    _onSpeechDone();
-  };
-  _ttsAudio.onerror = () => {
-    URL.revokeObjectURL(url);
-    _ttsAudio = null;
-    _onSpeechDone();
-  };
-  _ttsAudio.play();
-  addLog('🔊', 'TTS ElevenLabs — voz neural', '#a78bfa');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    const engine = resp.headers.get('X-TTS-Engine') || 'neural';
+    const blob = await resp.blob();
+    if (blob.size < 100) throw new Error('Audio vazio');
+
+    const url = URL.createObjectURL(blob);
+    _ttsAudio = new Audio(url);
+    _ttsAudio.onended = () => {
+      URL.revokeObjectURL(url);
+      _ttsAudio = null;
+      _onSpeechDone();
+    };
+    _ttsAudio.onerror = () => {
+      URL.revokeObjectURL(url);
+      _ttsAudio = null;
+      _onSpeechDone();
+    };
+    await _ttsAudio.play();
+    addLog('🔊', `TTS ${engine === 'elevenlabs' ? 'ElevenLabs (Eric)' : 'Edge (Antonio)'} — voz neural`, '#a78bfa');
+  } catch (err) {
+    clearTimeout(timeout);
+    // Retry once (handles Render cold-start ~30s)
+    if (attempt === 1 && (err.name === 'AbortError' || err.message.includes('fetch'))) {
+      addLog('🔄', 'Backend acordando (cold-start)... tentando novamente', '#f59e0b');
+      return _speakNeural(clean, 2);
+    }
+    throw err;
+  }
 }
 
 function _speakBrowserTTS(clean) {
@@ -1639,20 +1680,28 @@ function _speakBrowserTTS(clean) {
 
   const utterance = new SpeechSynthesisUtterance(clean);
   utterance.lang = 'pt-BR';
-  utterance.rate = 1.1;
-  utterance.pitch = 1.0;
+  utterance.rate = 1.05;
+  utterance.pitch = 0.9;
   utterance.volume = 1.0;
 
+  // Prefer male voices, then any pt-BR voice
   const voices = synth.getVoices();
-  const ptVoice = voices.find(v => v.lang.startsWith('pt') && v.name.includes('Google')) ||
-                  voices.find(v => v.lang.startsWith('pt-BR')) ||
-                  voices.find(v => v.lang.startsWith('pt'));
-  if (ptVoice) utterance.voice = ptVoice;
+  const maleKeywords = ['antonio', 'daniel', 'male', 'masculin', 'ricardo', 'marcos'];
+  const ptVoice =
+    voices.find(v => v.lang.startsWith('pt') && maleKeywords.some(k => v.name.toLowerCase().includes(k))) ||
+    voices.find(v => v.lang.startsWith('pt') && v.name.includes('Google')) ||
+    voices.find(v => v.lang.startsWith('pt-BR')) ||
+    voices.find(v => v.lang.startsWith('pt'));
+  if (ptVoice) {
+    utterance.voice = ptVoice;
+    addLog('🔊', `TTS navegador — ${ptVoice.name}`, '#94a3b8');
+  } else {
+    addLog('🔊', 'TTS navegador — voz padrão', '#94a3b8');
+  }
 
   utterance.onend = () => _onSpeechDone();
   utterance.onerror = () => _onSpeechDone();
   synth.speak(utterance);
-  addLog('🔊', 'TTS fallback — voz do navegador', '#94a3b8');
 }
 
 function _onSpeechDone() {
