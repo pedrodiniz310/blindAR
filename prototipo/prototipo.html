@@ -495,6 +495,7 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
       <option value="Técnico de Manutenção">Técnico de Manutenção (Nível 3)</option>
       <option value="Operador de Campo">Operador de Campo (Nível 3)</option>
       <option value="Visitante">Visitante (Nível 4)</option>
+      <option value="Teste AR">🧪 Teste AR — sem facial (Nível 1)</option>
     </select>
     <div class="reg-cam-container" id="regCamContainer">
       <video id="regVideo" autoplay muted playsinline></video>
@@ -729,6 +730,7 @@ const ROLE_CONFIG = {
   'Técnico de Manutenção':      { max_level: 3, is_admin: false },
   'Operador de Campo':          { max_level: 3, is_admin: false },
   'Visitante':                  { max_level: 4, is_admin: false },
+  'Teste AR':                   { max_level: 1, is_admin: false, skipFace: true },
 };
 
 function averageDescriptors(descriptors) {
@@ -1332,7 +1334,8 @@ function _triggerRemovalAlert(type, value) {
 
   // Exit AR and lock session
   exitARMode();
-  if (isAuthenticated && !isLocked) {
+  const isTestRole = (ROLE_CONFIG[registeredRole] || {}).skipFace;
+  if (isAuthenticated && !isLocked && !isTestRole) {
     lockSession(`Dispositivo removido do óculos AR — ${reason}`);
   }
 }
@@ -1359,6 +1362,7 @@ let recognition = null;
 let synth = window.speechSynthesis;
 let ttsEnabled = true;
 let voiceAutoRestart = false; // restart wake word listening after TTS ends
+let _wakeRestartTimer = null; // single restart timer to prevent stacking
 
 function toggleVoice() {
   if (voiceEnabled) {
@@ -1409,6 +1413,13 @@ function stopVoice() {
 
 function startWakeWordListening() {
   if (!voiceEnabled) return;
+
+  // Kill any pending restart timer to prevent stacking
+  if (_wakeRestartTimer) { clearTimeout(_wakeRestartTimer); _wakeRestartTimer = null; }
+
+  // Abort previous instance before creating a new one
+  if (recognition) { try { recognition.abort(); } catch(e){} recognition = null; }
+
   voiceState = 'wake';
   updateVoiceUI();
 
@@ -1419,25 +1430,22 @@ function startWakeWordListening() {
   recognition.interimResults = true;
   recognition.maxAlternatives = 3;
 
+  let wakeHandled = false; // prevent double-fire from onerror+onend
+
   recognition.onresult = (event) => {
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript.toLowerCase().trim();
-      // Debug: show what Speech API hears (remove after testing)
-      if (event.results[i].isFinal) {
-        addLog('👂', `Ouviu: "${event.results[i][0].transcript.trim()}"`, '#64748b');
-      }
       // Check all alternatives for wake word
       for (let j = 0; j < event.results[i].length; j++) {
         const alt = event.results[i][j].transcript.toLowerCase().trim()
           .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // strip accents
         const wakeVariants = [
           'blindar', 'blind ar', 'blaind ar', 'blainder', 'blintar',
-          'blaindar', 'blindare', 'blind are', 'blaindare', 'blinda',
-          'blin dar', 'blyndar', 'blynda', 'blainda', 'plinar',
-          'blindá', 'blinda r', 'blindah', 'blind a', 'blindão',
+          'blaindar', 'blindare', 'blind are', 'blaindare',
+          'blin dar', 'blyndar', 'blainda',
+          'blindá', 'blindah', 'blindão',
         ];
         if (wakeVariants.some(w => alt.includes(w))) {
-          // Wake word detected!
+          wakeHandled = true;
           try { recognition.abort(); } catch(e){}
           recognition = null;
           onWakeWordDetected();
@@ -1448,32 +1456,31 @@ function startWakeWordListening() {
   };
 
   recognition.onerror = (e) => {
-    if (e.error === 'no-speech' || e.error === 'aborted') {
-      // Restart silently
-      if (voiceEnabled && voiceState === 'wake') {
-        setTimeout(() => startWakeWordListening(), 300);
-      }
-      return;
-    }
     if (e.error === 'not-allowed') {
       addLog('⚠️', 'Microfone bloqueado pelo navegador — permita o acesso', '#ef4444');
       voiceEnabled = false;
       voiceState = 'off';
       document.getElementById('voiceToggle').classList.remove('listening', 'processing', 'speaking');
       updateVoiceUI();
+      wakeHandled = true; // don't restart
       return;
     }
-    console.warn('Speech recognition error:', e.error);
-    addLog('⚠️', `Erro no reconhecimento de voz: ${e.error}`, '#f97316');
-    if (voiceEnabled && voiceState === 'wake') {
-      setTimeout(() => startWakeWordListening(), 1000);
+    // For all other errors (no-speech, aborted, network, etc.)
+    // Let onend handle the restart — do NOT restart here
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      console.warn('Speech recognition error:', e.error);
     }
   };
 
   recognition.onend = () => {
-    // Auto-restart for continuous wake word listening
+    if (wakeHandled) return; // wake word was detected or fatal error
+    // Single restart point — prevents stacking
     if (voiceEnabled && voiceState === 'wake') {
-      setTimeout(() => startWakeWordListening(), 300);
+      if (_wakeRestartTimer) clearTimeout(_wakeRestartTimer);
+      _wakeRestartTimer = setTimeout(() => {
+        _wakeRestartTimer = null;
+        startWakeWordListening();
+      }, 500);
     }
   };
 
@@ -1481,7 +1488,11 @@ function startWakeWordListening() {
     recognition.start();
   } catch(e) {
     console.warn('Recognition start failed:', e);
-    setTimeout(() => startWakeWordListening(), 1000);
+    if (_wakeRestartTimer) clearTimeout(_wakeRestartTimer);
+    _wakeRestartTimer = setTimeout(() => {
+      _wakeRestartTimer = null;
+      startWakeWordListening();
+    }, 1000);
   }
 }
 
@@ -1540,22 +1551,24 @@ function onWakeWordDetected() {
     }, 1500);
   };
 
+  let cmdHandled = false; // prevent double-fire from onerror+onend
+
   recognition.onerror = (e) => {
     if (e.error === 'no-speech') {
       addLog('🔇', 'Nenhuma fala detectada — voltando a ouvir wake word', '#71717a');
+      cmdHandled = true;
       voiceState = 'wake';
       updateVoiceUI();
       if (voiceEnabled) startWakeWordListening();
       return;
     }
+    // Let onend handle restart for other errors
     console.warn('Command recognition error:', e.error);
-    voiceState = 'wake';
-    updateVoiceUI();
-    if (voiceEnabled) startWakeWordListening();
   };
 
   recognition.onend = () => {
     if (silenceTimeout) clearTimeout(silenceTimeout);
+    if (cmdHandled) return;
     const command = finalTranscript.trim();
     if (command) {
       voiceProcessCommand(command);
@@ -2778,8 +2791,10 @@ async function startRegistration() {
   const regVideo = document.getElementById('regVideo');
   btn.disabled = true;
 
-  if (!faceApiLoaded) {
-    progress.textContent = 'Modo simulado — cadastro sem biometria facial.';
+  if (!faceApiLoaded || roleCfg.skipFace) {
+    progress.textContent = roleCfg.skipFace
+      ? '🧪 Modo Teste AR — sem biometria facial.'
+      : 'Modo simulado — cadastro sem biometria facial.';
     setTimeout(() => completeRegistration(null), 1000);
     return;
   }
@@ -3079,7 +3094,8 @@ function startContinuousRecognition() {
       } else {
         // No face detected
         noFaceFrames++;
-        if (noFaceFrames >= 1 && isAuthenticated && !isLocked) {
+        const isTestRole = (ROLE_CONFIG[registeredRole] || {}).skipFace;
+        if (noFaceFrames >= 1 && isAuthenticated && !isLocked && !isTestRole) {
           faceDetected = false;
           const elapsed = Math.round(noFaceFrames * DETECTION_INTERVAL / 1000);
           status.textContent = `⚠ Rosto não detectado (${elapsed}s)`;

@@ -78,6 +78,7 @@ ROLE_CONFIG = {
     "Técnico de Manutenção":      {"max_level": 3, "is_admin": False},
     "Operador de Campo":          {"max_level": 3, "is_admin": False},
     "Visitante":                  {"max_level": 4, "is_admin": False},
+    "Teste AR":                   {"max_level": 1, "is_admin": False},
 }
 
 # ──────────────────────────────────────────────────────────────

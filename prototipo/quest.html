@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" type="image/png" href="../images/logo-favicon.png">
+<title>BlindAR — Meta Quest 2</title>
+
+<!-- A-Frame for WebXR -->
+<script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+<style>
+:root {
+  --bg: #09090b;
+  --surface: #131316;
+  --surface2: #1a1a1f;
+  --border: #27272a;
+  --text: #e4e4e7;
+  --muted: #71717a;
+  --accent: #2563eb;
+  --accent2: #3b82f6;
+  --green: #22c55e;
+  --yellow: #eab308;
+  --orange: #f97316;
+  --red: #ef4444;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden; height:100vh; }
+
+/* ── LOBBY (2D pre-VR interface) ── */
+.lobby { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; padding:24px; text-align:center; }
+.lobby.hidden { display:none; }
+.lobby-logo { height:60px; margin-bottom:16px; }
+.lobby h1 { font-size:28px; font-weight:800; margin-bottom:6px; }
+.lobby .subtitle { color:var(--muted); font-size:14px; margin-bottom:28px; }
+.lobby-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:28px 32px; max-width:480px; width:100%; }
+.lobby-card h2 { font-size:18px; font-weight:700; margin-bottom:16px; }
+
+.lobby-input { width:100%; padding:12px 16px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:14px; outline:none; margin-bottom:10px; text-align:center; }
+.lobby-input:focus { border-color:var(--accent); }
+.lobby-select { width:100%; padding:12px 16px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:14px; outline:none; margin-bottom:16px; text-align:center; -webkit-appearance:none; }
+
+.lobby-btn { width:100%; padding:14px; border-radius:10px; border:none; font-size:16px; font-weight:700; cursor:pointer; transition:all .2s; margin-bottom:10px; }
+.lobby-btn.primary { background:var(--accent); color:#fff; }
+.lobby-btn.primary:hover { background:var(--accent2); }
+.lobby-btn.primary:disabled { opacity:.5; cursor:not-allowed; }
+.lobby-btn.vr { background:linear-gradient(135deg, #7c3aed, #2563eb); color:#fff; font-size:18px; padding:18px; letter-spacing:1px; }
+.lobby-btn.vr:hover { filter:brightness(1.15); }
+.lobby-btn.vr:disabled { opacity:.4; cursor:not-allowed; }
+
+.lobby-status { font-size:12px; color:var(--muted); margin-top:10px; min-height:20px; }
+.lobby-section { margin-top:20px; }
+.lobby-section h3 { font-size:13px; font-weight:600; color:var(--muted); margin-bottom:8px; text-transform:uppercase; letter-spacing:1px; }
+
+.backend-row { display:flex; gap:8px; }
+.backend-row input { flex:1; }
+.backend-row button { padding:12px 20px; border-radius:8px; border:none; background:var(--surface2); color:var(--text); border:1px solid var(--border); cursor:pointer; font-size:13px; white-space:nowrap; }
+.backend-row button:hover { border-color:var(--accent); }
+
+.lobby-level-row { display:flex; gap:6px; justify-content:center; margin-top:10px; }
+.lobby-level-btn { padding:8px 14px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-size:12px; cursor:pointer; transition:all .15s; }
+.lobby-level-btn:hover { border-color:var(--accent); color:var(--text); }
+.lobby-level-btn.active { border-color:var(--accent); color:#fff; }
+
+.lobby-info { font-size:11px; color:var(--muted); margin-top:16px; line-height:1.6; }
+.lobby-info code { background:var(--surface2); padding:2px 6px; border-radius:4px; font-size:11px; }
+
+/* VR overlay (when in immersive) */
+.vr-active .lobby { display:none; }
+
+/* Non-VR fallback: flat mode */
+.flat-mode { display:none; height:100vh; flex-direction:column; }
+.flat-mode.active { display:flex; }
+.flat-mode .flat-header { display:flex; align-items:center; height:48px; padding:0 16px; background:var(--surface); border-bottom:1px solid var(--border); gap:12px; }
+.flat-mode .flat-header .logo { height:24px; }
+.flat-mode .flat-level { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; }
+.flat-mode .flat-user { font-size:12px; color:var(--muted); margin-left:auto; }
+.flat-mode .flat-back { padding:6px 14px; border-radius:6px; border:1px solid var(--border); background:var(--surface2); color:var(--text); cursor:pointer; font-size:12px; margin-left:8px; }
+
+.flat-chat { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.flat-messages { flex:1; overflow-y:auto; padding:20px; }
+.flat-msg { max-width:80%; margin-bottom:14px; animation:fadeIn .3s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+.flat-msg.user { margin-left:auto; }
+.flat-msg.ai { margin-right:auto; }
+.flat-bubble { padding:12px 16px; border-radius:12px; font-size:14px; line-height:1.6; }
+.flat-bubble.user { background:var(--accent); color:#fff; border-bottom-right-radius:4px; }
+.flat-bubble.ai { background:var(--surface); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.flat-label { font-size:10px; color:var(--muted); margin-bottom:3px; font-weight:600; letter-spacing:1px; }
+.flat-input-area { padding:12px 20px; border-top:1px solid var(--border); background:var(--surface); }
+.flat-input-row { display:flex; gap:8px; }
+.flat-input { flex:1; padding:12px 16px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--text); font-size:14px; outline:none; }
+.flat-input:focus { border-color:var(--accent); }
+.flat-send { padding:12px 20px; border-radius:8px; border:none; background:var(--accent); color:#fff; font-size:14px; font-weight:600; cursor:pointer; }
+.flat-send:disabled { opacity:.4; cursor:not-allowed; }
+.flat-quick { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.flat-quick button { padding:6px 14px; border-radius:20px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-size:12px; cursor:pointer; }
+.flat-quick button:hover { border-color:var(--accent); color:var(--text); }
+
+.flat-voice-btn { padding:10px 16px; border-radius:8px; border:1px solid var(--border); background:var(--surface2); color:var(--muted); font-size:13px; cursor:pointer; }
+.flat-voice-btn.listening { background:rgba(239,68,68,0.2); border-color:var(--red); color:var(--red); animation:pulse 1.2s infinite; }
+.flat-voice-btn.speaking { background:rgba(34,197,94,0.2); border-color:var(--green); color:var(--green); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+/* Typing indicator */
+.typing { font-size:13px; color:var(--muted); font-style:italic; padding:8px 16px; }
+
+/* Toast */
+.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); padding:10px 24px; border-radius:8px; font-size:13px; font-weight:600; z-index:9999; display:none; animation:fadeIn .3s; }
+.toast.show { display:block; }
+.toast.info { background:var(--accent); color:#fff; }
+.toast.warn { background:var(--orange); color:#fff; }
+.toast.error { background:var(--red); color:#fff; }
+</style>
+</head>
+<body>
+
+<!-- ════════════ LOBBY ════════════ -->
+<div class="lobby" id="lobby">
+  <img src="../images/logo-blindar.png" alt="BlindAR" class="lobby-logo" onerror="this.style.display='none'">
+  <h1>BlindAR — Meta Quest 2</h1>
+  <p class="subtitle">Assistente IA com Segurança Adaptativa para Petrobras</p>
+
+  <div class="lobby-card">
+    <h2>🔐 Identificação</h2>
+    <input type="text" id="userName" class="lobby-input" placeholder="Seu nome completo" autocomplete="off">
+    <select id="userRole" class="lobby-select">
+      <option value="">Selecione seu cargo...</option>
+      <option value="Administrador de Segurança">Administrador de Segurança (Nível 1)</option>
+      <option value="Engenheiro de Produção">Engenheiro de Produção (Nível 1)</option>
+      <option value="Analista de Produção">Analista de Produção (Nível 2)</option>
+      <option value="Técnico de Automação">Técnico de Automação (Nível 2)</option>
+      <option value="Engenheiro de Campo">Engenheiro de Campo (Nível 3)</option>
+      <option value="Técnico de Manutenção">Técnico de Manutenção (Nível 3)</option>
+      <option value="Operador de Campo">Operador de Campo (Nível 3)</option>
+      <option value="Visitante">Visitante (Nível 4)</option>
+    </select>
+
+    <div class="lobby-section">
+      <h3>Nível de Segurança</h3>
+      <div class="lobby-level-row" id="levelRow">
+        <button class="lobby-level-btn active" data-level="1" style="border-color:#22c55e;color:#22c55e">1</button>
+        <button class="lobby-level-btn" data-level="2" style="">2</button>
+        <button class="lobby-level-btn" data-level="3" style="">3</button>
+        <button class="lobby-level-btn" data-level="4" style="">4</button>
+        <button class="lobby-level-btn" data-level="5" style="">5</button>
+      </div>
+    </div>
+
+    <div class="lobby-section">
+      <h3>Backend</h3>
+      <div class="backend-row">
+        <input type="text" id="backendUrlInput" class="lobby-input" style="margin-bottom:0" value="https://blindar-api.onrender.com">
+        <button onclick="connectBackend()">Conectar</button>
+      </div>
+      <div id="backendStatus" class="lobby-status"></div>
+    </div>
+
+    <div class="lobby-section" style="margin-top:24px">
+      <button class="lobby-btn vr" id="enterVrBtn" onclick="enterVR()" disabled>🥽 ENTRAR EM VR</button>
+      <button class="lobby-btn primary" id="enterFlatBtn" onclick="enterFlat()">💬 Modo Tela (sem VR)</button>
+    </div>
+
+    <div class="lobby-info">
+      <strong>Meta Quest 2:</strong> Clique em "Entrar em VR" para modo imersivo com painéis 3D.<br>
+      <strong>Qualquer navegador:</strong> Use "Modo Tela" para chat normal com IA + voz.
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ A-FRAME VR SCENE ════════════ -->
+<a-scene id="vrScene"
+  vr-mode-ui="enabled: false"
+  renderer="colorManagement: true; antialias: true"
+  loading-screen="enabled: false"
+  style="display:none"
+  webxr="requiredFeatures: local-floor; optionalFeatures: bounded-floor, hand-tracking">
+
+  <!-- Sky -->
+  <a-sky color="#0a0a0f"></a-sky>
+  <a-entity light="type:ambient; color:#334155; intensity:0.4"></a-entity>
+  <a-entity light="type:directional; color:#94a3b8; intensity:0.6" position="1 3 2"></a-entity>
+
+  <!-- Camera rig at eye height -->
+  <a-entity id="rig" position="0 0 0">
+    <a-entity id="camera" camera wasd-controls look-controls="pointerLockEnabled:false" position="0 1.6 0">
+      <a-entity id="cursor" cursor="fuse:false; rayOrigin:mouse" raycaster="objects:.clickable; far:10" 
+                position="0 0 -0.5" geometry="primitive:ring; radiusInner:0.003; radiusOuter:0.005" 
+                material="color:#fff; shader:flat" animation__click="property:scale; startEvents:click; from:1.4 1.4 1; to:1 1 1; dur:200">
+      </a-entity>
+    </a-entity>
+  </a-entity>
+
+  <!-- ── MAIN HUD PANEL (follows user gaze, front) ── -->
+  <a-entity id="hudPanel" position="0 1.6 -2">
+
+    <!-- Top bar: logo + level -->
+    <a-entity position="0 0.85 0">
+      <a-plane width="2.2" height="0.12" color="#131316" opacity="0.92" side="double"></a-plane>
+      <a-text id="vrTopBar" value="BlindAR  |  NÍVEL 1  |  Conectado" 
+              position="0 0 0.01" align="center" color="#e4e4e7" width="2" font="roboto"></a-text>
+    </a-entity>
+
+    <!-- Chat panel background -->
+    <a-plane id="chatBg" width="2.2" height="1.5" color="#09090b" opacity="0.88" side="double" position="0 0 0"></a-plane>
+    <a-plane width="2.18" height="1.48" color="#131316" opacity="0.5" side="double" position="0 0 0.001"></a-plane>
+
+    <!-- Chat messages area -->
+    <a-entity id="vrMessages" position="-0.95 0.55 0.02">
+      <a-text id="vrChatText" value="Diga 'BlindAR' ou use o gatilho para perguntar..." 
+              color="#71717a" width="1.8" baseline="top" wrap-count="55" font="roboto" line-height="60"></a-text>
+    </a-entity>
+
+    <!-- Bottom bar: status -->
+    <a-entity position="0 -0.85 0">
+      <a-plane width="2.2" height="0.1" color="#131316" opacity="0.92" side="double"></a-plane>
+      <a-text id="vrStatusBar" value="🎤 Diga 'BlindAR' para ativar | 👋 Aponte e clique para interagir" 
+              position="0 0 0.01" align="center" color="#71717a" width="1.8" font="roboto"></a-text>
+    </a-entity>
+
+  </a-entity>
+
+  <!-- ── QUICK QUESTIONS (left panel) ── -->
+  <a-entity id="quickPanel" position="-1.8 1.6 -1.5" rotation="0 30 0">
+    <a-plane width="1.0" height="1.2" color="#131316" opacity="0.88" side="double"></a-plane>
+    <a-text value="PERGUNTAS RÁPIDAS" position="0 0.48 0.01" align="center" color="#71717a" width="0.9" font="roboto"></a-text>
+    
+    <a-entity id="vrQ0" class="clickable" position="0 0.28 0.01" onclick="vrQuickAsk(0)">
+      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable"></a-plane>
+      <a-text value="Pressão do poço P-47?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable"></a-text>
+    </a-entity>
+    <a-entity id="vrQ1" class="clickable" position="0 0.06 0.01" onclick="vrQuickAsk(1)">
+      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable"></a-plane>
+      <a-text value="Dados de produção do mês?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable"></a-text>
+    </a-entity>
+    <a-entity id="vrQ2" class="clickable" position="0 -0.16 0.01" onclick="vrQuickAsk(2)">
+      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable"></a-plane>
+      <a-text value="Responsável da P-76?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable"></a-text>
+    </a-entity>
+    <a-entity id="vrQ3" class="clickable" position="0 -0.38 0.01" onclick="vrQuickAsk(3)">
+      <a-plane width="0.88" height="0.18" color="#1a1a1f" opacity="0.9" class="clickable"></a-plane>
+      <a-text value="Status dos equipamentos?" align="center" color="#a1a1aa" width="0.82" font="roboto" class="clickable"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <!-- ── SECURITY LEVEL PANEL (right) ── -->
+  <a-entity id="levelPanel" position="1.8 1.6 -1.5" rotation="0 -30 0">
+    <a-plane width="0.8" height="1.2" color="#131316" opacity="0.88" side="double"></a-plane>
+    <a-text value="NÍVEL DE SEGURANÇA" position="0 0.48 0.01" align="center" color="#71717a" width="0.75" font="roboto"></a-text>
+    
+    <a-entity id="vrLvl1" class="clickable" position="0 0.28 0.01" onclick="vrSetLevel(1)">
+      <a-plane width="0.68" height="0.16" color="#22c55e" opacity="0.2" class="clickable"></a-plane>
+      <a-text value="1 - Sala Segura" align="center" color="#22c55e" width="0.65" font="roboto" class="clickable"></a-text>
+    </a-entity>
+    <a-entity id="vrLvl2" class="clickable" position="0 0.08 0.01" onclick="vrSetLevel(2)">
+      <a-plane width="0.68" height="0.16" color="#3b82f6" opacity="0.15" class="clickable"></a-plane>
+      <a-text value="2 - Área Trabalho" align="center" color="#3b82f6" width="0.65" font="roboto" class="clickable"></a-text>
+    </a-entity>
+    <a-entity id="vrLvl3" class="clickable" position="0 -0.12 0.01" onclick="vrSetLevel(3)">
+      <a-plane width="0.68" height="0.16" color="#eab308" opacity="0.15" class="clickable"></a-plane>
+      <a-text value="3 - Campo" align="center" color="#eab308" width="0.65" font="roboto" class="clickable"></a-text>
+    </a-entity>
+    <a-entity id="vrLvl4" class="clickable" position="0 -0.32 0.01" onclick="vrSetLevel(4)">
+      <a-plane width="0.68" height="0.16" color="#f97316" opacity="0.15" class="clickable"></a-plane>
+      <a-text value="4 - Área Pública" align="center" color="#f97316" width="0.65" font="roboto" class="clickable"></a-text>
+    </a-entity>
+  </a-entity>
+
+  <!-- ── USER INFO (small, bottom-left of HUD) ── -->
+  <a-entity id="userInfoPanel" position="-0.6 0.6 -2">
+    <a-text id="vrUserInfo" value="" color="#71717a" width="1.2" align="left" font="roboto"></a-text>
+  </a-entity>
+
+  <!-- ── VOICE INDICATOR (floating above HUD) ── -->
+  <a-entity id="vrVoiceIndicator" position="0 2.6 -2" visible="false">
+    <a-plane width="0.6" height="0.12" color="#ef4444" opacity="0.85" side="double"></a-plane>
+    <a-text value="🎤 Ouvindo..." align="center" color="#fff" width="0.55" font="roboto"></a-text>
+  </a-entity>
+
+  <!-- Left hand -->
+  <a-entity id="leftHand" hand-controls="hand:left; handModelStyle:lowPoly" visible="false"></a-entity>
+  <!-- Right hand -->
+  <a-entity id="rightHand" hand-controls="hand:right; handModelStyle:lowPoly" visible="false"></a-entity>
+
+</a-scene>
+
+<!-- ════════════ FLAT MODE (non-VR) ════════════ -->
+<div class="flat-mode" id="flatMode">
+  <div class="flat-header">
+    <img src="../images/logo-blindar.png" alt="BlindAR" class="logo" onerror="this.style.display='none'">
+    <span style="font-weight:700;font-size:14px">BlindAR Quest</span>
+    <span id="flatLevel" class="flat-level" style="background:rgba(34,197,94,0.15);color:#22c55e">NÍVEL 1</span>
+    <span id="flatUser" class="flat-user"></span>
+    <button class="flat-voice-btn" id="flatVoiceBtn" onclick="toggleVoice()">🎤 Voz</button>
+    <button class="flat-back" onclick="backToLobby()">← Lobby</button>
+  </div>
+  <div class="flat-chat">
+    <div class="flat-messages" id="flatMessages">
+      <div class="flat-msg ai">
+        <div class="flat-label">BLINDAR IA</div>
+        <div class="flat-bubble ai">Olá! Sou o assistente BlindAR. Pergunte-me sobre dados de produção, segurança ou equipamentos da Petrobras. 🛢️</div>
+      </div>
+    </div>
+    <div class="flat-input-area">
+      <div class="flat-input-row">
+        <input type="text" id="flatInput" class="flat-input" placeholder="Pergunte algo..." autocomplete="off">
+        <button class="flat-send" id="flatSend" onclick="sendFlatMessage()">Enviar</button>
+      </div>
+      <div class="flat-quick">
+        <button onclick="flatQuickAsk(0)">Pressão P-47</button>
+        <button onclick="flatQuickAsk(1)">Produção do mês</button>
+        <button onclick="flatQuickAsk(2)">Responsável P-76</button>
+        <button onclick="flatQuickAsk(3)">Status equipamentos</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ TOAST ════════════ -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════
+//  BlindAR — Meta Quest 2 Edition
+//  Backend + WebXR + Voice
+// ═══════════════════════════════════════════
+
+// ── Config ──
+const RENDER_URL = 'https://blindar-api.onrender.com';
+let backendUrl = RENDER_URL;
+let backendConnected = false;
+let backendUserId = null;
+
+let registeredName = '';
+let registeredRole = '';
+let currentLevel = 1;
+let maxSecurityLevel = 1;
+let isAdmin = false;
+let isSending = false;
+let isInVR = false;
+
+const ROLE_CONFIG = {
+  'Administrador de Segurança': { max_level: 1, is_admin: true },
+  'Engenheiro de Produção':     { max_level: 1, is_admin: false },
+  'Analista de Produção':       { max_level: 2, is_admin: false },
+  'Técnico de Automação':       { max_level: 2, is_admin: false },
+  'Engenheiro de Campo':        { max_level: 3, is_admin: false },
+  'Técnico de Manutenção':      { max_level: 3, is_admin: false },
+  'Operador de Campo':          { max_level: 3, is_admin: false },
+  'Visitante':                  { max_level: 4, is_admin: false },
+};
+
+const LEVEL_CONFIG = {
+  1: { name:'NÍVEL 1', color:'#22c55e', bg:'rgba(34,197,94,0.15)', label:'Sala segura — Acesso total' },
+  2: { name:'NÍVEL 2', color:'#3b82f6', bg:'rgba(59,130,246,0.15)', label:'Área de trabalho — Dados anonimizados' },
+  3: { name:'NÍVEL 3', color:'#eab308', bg:'rgba(234,179,8,0.15)', label:'Campo — Apenas indicadores gerais' },
+  4: { name:'NÍVEL 4', color:'#f97316', bg:'rgba(249,115,22,0.15)', label:'Área pública — Dados bloqueados' },
+  5: { name:'NÍVEL 5', color:'#ef4444', bg:'rgba(239,68,68,0.15)', label:'Dispositivo comprometido' }
+};
+
+const QUICK_QUESTIONS = [
+  'Qual a pressão atual do poço P-47?',
+  'Mostre os dados de produção do mês',
+  'Quem é o responsável pela plataforma P-76?',
+  'Qual o status dos equipamentos da plataforma?'
+];
+
+// Chat history (for display)
+let chatHistory = [];
+
+// ── Toast ──
+function showToast(msg, type = 'info', duration = 3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', duration);
+}
+
+// ── Backend ──
+async function connectBackend() {
+  const url = document.getElementById('backendUrlInput').value.trim().replace(/\/+$/, '');
+  const status = document.getElementById('backendStatus');
+  if (!url) { status.innerHTML = '<span style="color:var(--yellow)">Preencha a URL</span>'; return; }
+  status.innerHTML = '<span style="color:var(--yellow)">⏳ Conectando...</span>';
+
+  try {
+    const res = await fetch(url + '/health');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    backendUrl = url;
+    backendConnected = true;
+    status.innerHTML = '<span style="color:var(--green)">✓ Backend conectado</span>';
+    document.getElementById('enterVrBtn').disabled = false;
+    warmUpTTS();
+  } catch(e) {
+    if (url.includes('localhost') || url.includes('127.0.0.1')) {
+      status.innerHTML = '<span style="color:var(--yellow)">⏳ Local indisponível — tentando nuvem...</span>';
+      try {
+        const res2 = await fetch(RENDER_URL + '/health');
+        if (!res2.ok) throw new Error('HTTP ' + res2.status);
+        backendUrl = RENDER_URL;
+        backendConnected = true;
+        document.getElementById('backendUrlInput').value = RENDER_URL;
+        status.innerHTML = '<span style="color:var(--green)">✓ Backend conectado via nuvem</span>';
+        document.getElementById('enterVrBtn').disabled = false;
+        warmUpTTS();
+        return;
+      } catch(e2) {}
+    }
+    backendConnected = false;
+    status.innerHTML = '<span style="color:var(--red)">✗ ' + (e.message || 'Erro') + '</span>';
+  }
+}
+
+// ── Register user ──
+async function registerUser() {
+  registeredName = document.getElementById('userName').value.trim();
+  registeredRole = document.getElementById('userRole').value;
+  
+  if (!registeredName || !registeredRole) {
+    showToast('Preencha nome e cargo', 'warn');
+    return false;
+  }
+
+  const roleConf = ROLE_CONFIG[registeredRole];
+  maxSecurityLevel = roleConf.max_level;
+  isAdmin = roleConf.is_admin;
+
+  if (currentLevel < maxSecurityLevel) {
+    currentLevel = maxSecurityLevel;
+  }
+
+  if (backendConnected) {
+    try {
+      const res = await fetch(backendUrl + '/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: registeredName,
+          role: registeredRole,
+          face_descriptor: new Array(128).fill(0)
+        })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      backendUserId = data.id;
+      if (data.max_security_level) maxSecurityLevel = data.max_security_level;
+      if (data.is_admin !== undefined) isAdmin = data.is_admin;
+    } catch(e) {
+      console.warn('Registration failed:', e);
+    }
+  }
+  return true;
+}
+
+// ── Chat (backend) ──
+async function callBackendChat(question) {
+  const res = await fetch(backendUrl + '/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      question: question,
+      security_level: currentLevel,
+      user_name: registeredName || 'Desconhecido',
+      user_role: registeredRole || 'N/A'
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || 'HTTP ' + res.status);
+  }
+  const data = await res.json();
+  return (data.response || '')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+// Local fallback
+function getLocalResponse(q) {
+  const ql = q.toLowerCase();
+  if (ql.includes('pressão') || ql.includes('p-47') || ql.includes('poço'))
+    return 'A pressão atual do poço P-47 é de <strong>342 bar</strong>. Dentro dos parâmetros normais de operação.';
+  if (ql.includes('produção') || ql.includes('mês'))
+    return 'Produção do mês: <strong>152.000 barris/dia</strong>. Meta: 155.000 bbl/d. Eficiência operacional: 98.1%.';
+  if (ql.includes('responsável') || ql.includes('p-76'))
+    return 'Responsável pela P-76: <strong>Eng. Carlos Mendes</strong> (Gerente de Plataforma).';
+  if (ql.includes('status') || ql.includes('equipamento'))
+    return 'Status: <strong>94% operacionais</strong>. 3 em manutenção preventiva programada.';
+  return 'Entendi sua pergunta. Em modo offline, minhas respostas são limitadas. Conecte ao backend para respostas completas via IA.';
+}
+
+// Process chat
+async function processChat(question, fromVoice = false) {
+  if (isSending) return;
+  isSending = true;
+  
+  chatHistory.push({ role: 'user', text: question });
+  renderChat();
+
+  let response;
+  try {
+    if (backendConnected) {
+      response = await callBackendChat(question);
+    } else {
+      response = getLocalResponse(question);
+    }
+  } catch(e) {
+    response = '⚠️ Erro: ' + e.message + '<br>' + getLocalResponse(question);
+  }
+
+  chatHistory.push({ role: 'ai', text: response });
+  renderChat();
+  isSending = false;
+
+  // Log event
+  if (backendConnected && backendUserId) {
+    fetch(backendUrl + '/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: backendUserId,
+        event_type: 'ai_query',
+        details: question.substring(0, 200),
+        severity: 'info'
+      })
+    }).catch(() => {});
+  }
+
+  // TTS for voice commands
+  if (fromVoice) speakResponse(response);
+}
+
+// ── Render chat ──
+function renderChat() {
+  renderFlatChat();
+  if (isInVR) renderVRChat();
+}
+
+function renderFlatChat() {
+  const container = document.getElementById('flatMessages');
+  if (!container) return;
+  
+  // Keep the welcome message + add new
+  let html = `<div class="flat-msg ai"><div class="flat-label">BLINDAR IA</div><div class="flat-bubble ai">Olá! Sou o assistente BlindAR. Pergunte sobre dados de produção, segurança ou equipamentos. 🛢️</div></div>`;
+  
+  for (const msg of chatHistory) {
+    if (msg.role === 'user') {
+      html += `<div class="flat-msg user"><div class="flat-label">VOCÊ</div><div class="flat-bubble user">${escapeHtml(msg.text)}</div></div>`;
+    } else {
+      html += `<div class="flat-msg ai"><div class="flat-label">BLINDAR IA</div><div class="flat-bubble ai">${msg.text}</div></div>`;
+    }
+  }
+  container.innerHTML = html;
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderVRChat() {
+  const el = document.getElementById('vrChatText');
+  if (!el) return;
+
+  // Show last 6 messages in VR
+  const recent = chatHistory.slice(-6);
+  let text = '';
+  for (const msg of recent) {
+    const clean = msg.text.replace(/<[^>]+>/g, '').replace(/&[a-z]+;/gi, ' ');
+    if (msg.role === 'user') {
+      text += '► Você: ' + clean.substring(0, 120) + '\n\n';
+    } else {
+      text += '◆ BlindAR: ' + clean.substring(0, 300) + '\n\n';
+    }
+  }
+  el.setAttribute('value', text || "Diga 'BlindAR' ou use as perguntas rápidas...");
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ── TTS ──
+let _ttsAudio = null;
+let _ttsWarmedUp = false;
+let synth = window.speechSynthesis;
+let ttsEnabled = true;
+
+function warmUpTTS() {
+  if (_ttsWarmedUp || !backendConnected) return;
+  _ttsWarmedUp = true;
+  fetch(backendUrl + '/api/tts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: '.' })
+  }).catch(() => { _ttsWarmedUp = false; });
+}
+
+function speakResponse(text) {
+  if (!ttsEnabled) return;
+  const clean = text
+    .replace(/<br\s*\/?>/gi, '. ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&[a-z]+;/gi, ' ')
+    .replace(/[*_#`]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!clean) return;
+
+  if (_ttsAudio) { _ttsAudio.pause(); _ttsAudio = null; }
+  if (synth && synth.speaking) synth.cancel();
+
+  voiceState = 'speaking';
+  updateVoiceUI();
+
+  _speakNeural(clean).catch(() => {
+    _speakBrowserTTS(clean);
+  });
+}
+
+async function _speakNeural(text, attempt = 1) {
+  const truncated = text.substring(0, 500);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), attempt === 1 ? 15000 : 25000);
+  try {
+    const resp = await fetch(backendUrl + '/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: truncated }),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const blob = await resp.blob();
+    if (blob.size < 100) throw new Error('Audio vazio');
+    const url = URL.createObjectURL(blob);
+    _ttsAudio = new Audio(url);
+    _ttsAudio.onended = () => { URL.revokeObjectURL(url); _ttsAudio = null; onSpeechDone(); };
+    _ttsAudio.onerror = () => { URL.revokeObjectURL(url); _ttsAudio = null; onSpeechDone(); };
+    await _ttsAudio.play();
+  } catch(err) {
+    clearTimeout(timeout);
+    if (attempt === 1 && (err.name === 'AbortError' || err.message.includes('fetch'))) {
+      return _speakNeural(text, 2);
+    }
+    throw err;
+  }
+}
+
+function _speakBrowserTTS(text) {
+  if (!synth) { onSpeechDone(); return; }
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.lang = 'pt-BR';
+  utt.rate = 1.05;
+  utt.pitch = 0.9;
+  const voices = synth.getVoices();
+  const ptVoice = voices.find(v => v.lang.startsWith('pt-BR')) || voices.find(v => v.lang.startsWith('pt'));
+  if (ptVoice) utt.voice = ptVoice;
+  utt.onend = () => onSpeechDone();
+  utt.onerror = () => onSpeechDone();
+  synth.speak(utt);
+}
+
+function onSpeechDone() {
+  voiceState = voiceEnabled ? 'wake' : 'off';
+  updateVoiceUI();
+  if (voiceEnabled) startWakeWordListening();
+}
+
+// ── Voice Recognition ──
+let voiceEnabled = false;
+let voiceState = 'off'; // off | wake | listening | processing | speaking
+let recognition = null;
+
+function toggleVoice() {
+  if (voiceEnabled) {
+    stopVoice();
+  } else {
+    startVoice();
+  }
+}
+
+function startVoice() {
+  const hasSpeech = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+  if (!hasSpeech) {
+    showToast('Voz não suportada neste navegador', 'warn');
+    return;
+  }
+  voiceEnabled = true;
+  warmUpTTS();
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+    stream.getTracks().forEach(t => t.stop());
+    startWakeWordListening();
+    showToast('🎤 Voz ativada — diga "BlindAR"', 'info');
+  }).catch(() => {
+    showToast('Permissão do microfone negada', 'error');
+    voiceEnabled = false;
+  });
+}
+
+function stopVoice() {
+  voiceEnabled = false;
+  voiceState = 'off';
+  if (recognition) { try { recognition.abort(); } catch(e){} recognition = null; }
+  updateVoiceUI();
+}
+
+function startWakeWordListening() {
+  if (!voiceEnabled) return;
+  voiceState = 'wake';
+  updateVoiceUI();
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'pt-BR';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 3;
+
+  const wakeVariants = [
+    'blindar','blind ar','blaind ar','blainder','blintar','blaindar',
+    'blindare','blind are','blaindare','blinda','blin dar','blyndar',
+    'blynda','blainda','blindá','blinda r','blindah','blind a'
+  ];
+
+  recognition.onresult = (event) => {
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      for (let j = 0; j < event.results[i].length; j++) {
+        const alt = event.results[i][j].transcript.toLowerCase().trim()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (wakeVariants.some(w => alt.includes(w))) {
+          try { recognition.abort(); } catch(e){}
+          recognition = null;
+          onWakeWordDetected();
+          return;
+        }
+      }
+    }
+  };
+  recognition.onerror = () => {
+    if (voiceEnabled) setTimeout(startWakeWordListening, 500);
+  };
+  recognition.onend = () => {
+    if (voiceEnabled && voiceState === 'wake') setTimeout(startWakeWordListening, 300);
+  };
+  recognition.start();
+}
+
+function onWakeWordDetected() {
+  voiceState = 'listening';
+  updateVoiceUI();
+
+  // Beep
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = 880; gain.gain.value = 0.15;
+    osc.start(); osc.stop(ctx.currentTime + 0.15);
+  } catch(e){}
+
+  showToast('🎤 Ouvindo seu comando...', 'info', 2000);
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.lang = 'pt-BR';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  let finalTranscript = '';
+  let silenceTimer = null;
+
+  recognition.onresult = (event) => {
+    let interim = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript;
+      } else {
+        interim += event.results[i][0].transcript;
+      }
+    }
+    // Reset silence timer on new results
+    if (silenceTimer) clearTimeout(silenceTimer);
+    silenceTimer = setTimeout(() => {
+      if (finalTranscript.trim()) {
+        try { recognition.stop(); } catch(e){}
+      }
+    }, 2000);
+  };
+
+  recognition.onend = () => {
+    if (silenceTimer) clearTimeout(silenceTimer);
+    const cmd = finalTranscript.trim();
+    if (cmd.length > 2) {
+      voiceProcessCommand(cmd);
+    } else {
+      voiceState = 'wake';
+      updateVoiceUI();
+      if (voiceEnabled) startWakeWordListening();
+    }
+  };
+
+  recognition.onerror = () => {
+    voiceState = 'wake';
+    updateVoiceUI();
+    if (voiceEnabled) startWakeWordListening();
+  };
+
+  recognition.start();
+}
+
+async function voiceProcessCommand(command) {
+  voiceState = 'processing';
+  updateVoiceUI();
+  await processChat(command, true);
+}
+
+function updateVoiceUI() {
+  // Flat mode button
+  const btn = document.getElementById('flatVoiceBtn');
+  if (btn) {
+    btn.className = 'flat-voice-btn';
+    if (voiceState === 'wake') { btn.textContent = '🎤 Aguardando "BlindAR"...'; btn.classList.add('listening'); }
+    else if (voiceState === 'listening') { btn.textContent = '🎤 Ouvindo...'; btn.classList.add('listening'); }
+    else if (voiceState === 'processing') { btn.textContent = '⏳ Processando...'; }
+    else if (voiceState === 'speaking') { btn.textContent = '🔊 Falando...'; btn.classList.add('speaking'); }
+    else { btn.textContent = '🎤 Voz'; }
+  }
+
+  // VR voice indicator
+  const vrInd = document.getElementById('vrVoiceIndicator');
+  if (vrInd) {
+    if (voiceState === 'listening' || voiceState === 'processing') {
+      vrInd.setAttribute('visible', 'true');
+      const txt = vrInd.querySelector('a-text');
+      if (txt) txt.setAttribute('value', voiceState === 'listening' ? '🎤 Ouvindo...' : '⏳ Processando...');
+    } else if (voiceState === 'speaking') {
+      vrInd.setAttribute('visible', 'true');
+      const txt = vrInd.querySelector('a-text');
+      if (txt) txt.setAttribute('value', '🔊 Falando...');
+    } else {
+      vrInd.setAttribute('visible', 'false');
+    }
+  }
+}
+
+// ── Level ──
+function setLevel(level) {
+  if (level < maxSecurityLevel) {
+    showToast('Acesso negado: seu cargo permite no máximo Nível ' + maxSecurityLevel, 'warn');
+    return;
+  }
+  currentLevel = level;
+  const cfg = LEVEL_CONFIG[level];
+
+  // Flat UI
+  const flatLvl = document.getElementById('flatLevel');
+  if (flatLvl) {
+    flatLvl.style.background = cfg.bg;
+    flatLvl.style.color = cfg.color;
+    flatLvl.textContent = cfg.name;
+  }
+
+  // VR UI
+  const vrTop = document.getElementById('vrTopBar');
+  if (vrTop) {
+    vrTop.setAttribute('value', 'BlindAR  |  ' + cfg.name + '  |  ' + (backendConnected ? 'Conectado' : 'Offline'));
+    vrTop.setAttribute('color', cfg.color);
+  }
+
+  // Lobby buttons
+  document.querySelectorAll('.lobby-level-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.level) === level);
+  });
+
+  // Log event
+  if (backendConnected && backendUserId) {
+    fetch(backendUrl + '/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: backendUserId,
+        event_type: 'level_change',
+        details: 'Nível alterado para ' + level,
+        severity: level >= 4 ? 'warning' : 'info'
+      })
+    }).catch(() => {});
+  }
+}
+
+// ── Lobby Level Buttons ──
+document.querySelectorAll('.lobby-level-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const lvl = parseInt(btn.dataset.level);
+    setLevel(lvl);
+  });
+});
+
+// ── Enter VR ──
+async function enterVR() {
+  const ok = await registerUser();
+  if (!ok) return;
+
+  const scene = document.getElementById('vrScene');
+  scene.style.display = '';
+
+  // Show user info
+  const vrUser = document.getElementById('vrUserInfo');
+  if (vrUser) vrUser.setAttribute('value', registeredName + ' | ' + registeredRole);
+
+  // Update top bar
+  const cfg = LEVEL_CONFIG[currentLevel];
+  const vrTop = document.getElementById('vrTopBar');
+  if (vrTop) {
+    vrTop.setAttribute('value', 'BlindAR  |  ' + cfg.name + '  |  ' + (backendConnected ? 'Conectado' : 'Offline'));
+    vrTop.setAttribute('color', cfg.color);
+  }
+
+  document.getElementById('lobby').classList.add('hidden');
+
+  // Wait for scene to load, then enter VR
+  scene.addEventListener('loaded', async () => {
+    isInVR = true;
+    // Attempt to enter immersive VR
+    try {
+      if (navigator.xr) {
+        const supported = await navigator.xr.isSessionSupported('immersive-vr');
+        if (supported) {
+          scene.enterVR();
+        } else {
+          showToast('WebXR VR não disponível — usando modo 3D na tela', 'warn', 4000);
+        }
+      }
+    } catch(e) {
+      console.warn('Could not enter VR:', e);
+    }
+    // Start voice
+    startVoice();
+  }, { once: true });
+
+  // If already loaded
+  if (scene.hasLoaded) {
+    isInVR = true;
+    try {
+      if (navigator.xr) {
+        const supported = await navigator.xr.isSessionSupported('immersive-vr');
+        if (supported) scene.enterVR();
+      }
+    } catch(e) {}
+    startVoice();
+  }
+}
+
+// ── Enter Flat Mode ──
+async function enterFlat() {
+  const ok = await registerUser();
+  if (!ok) return;
+
+  document.getElementById('lobby').classList.add('hidden');
+  document.getElementById('flatMode').classList.add('active');
+  
+  const flatUser = document.getElementById('flatUser');
+  if (flatUser) flatUser.textContent = registeredName + ' — ' + registeredRole;
+
+  const cfg = LEVEL_CONFIG[currentLevel];
+  const flatLvl = document.getElementById('flatLevel');
+  if (flatLvl) {
+    flatLvl.style.background = cfg.bg;
+    flatLvl.style.color = cfg.color;
+    flatLvl.textContent = cfg.name;
+  }
+
+  // Focus input
+  document.getElementById('flatInput').focus();
+}
+
+function backToLobby() {
+  document.getElementById('flatMode').classList.remove('active');
+  document.getElementById('lobby').classList.remove('hidden');
+  const scene = document.getElementById('vrScene');
+  scene.style.display = 'none';
+  isInVR = false;
+  stopVoice();
+}
+
+// ── Flat Mode Handlers ──
+function sendFlatMessage() {
+  const input = document.getElementById('flatInput');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  processChat(q);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && document.activeElement === document.getElementById('flatInput')) {
+    sendFlatMessage();
+  }
+});
+
+function flatQuickAsk(idx) {
+  processChat(QUICK_QUESTIONS[idx]);
+}
+
+// ── VR Quick Ask ──
+window.vrQuickAsk = function(idx) {
+  processChat(QUICK_QUESTIONS[idx], false);
+};
+
+window.vrSetLevel = function(level) {
+  setLevel(level);
+};
+
+// ── Auto-connect on load ──
+window.addEventListener('DOMContentLoaded', () => {
+  connectBackend();
+
+  // Try restore session
+  try {
+    const raw = localStorage.getItem('blindar-quest-session');
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s.name) document.getElementById('userName').value = s.name;
+      if (s.role) document.getElementById('userRole').value = s.role;
+      if (s.backendUrl) document.getElementById('backendUrlInput').value = s.backendUrl;
+    }
+  } catch(e) {}
+
+  // Check WebXR support
+  if (navigator.xr) {
+    navigator.xr.isSessionSupported('immersive-vr').then(supported => {
+      if (supported) {
+        document.getElementById('enterVrBtn').textContent = '🥽 ENTRAR EM VR (Quest 2 detectado)';
+      } else {
+        document.getElementById('enterVrBtn').textContent = '🖥️ Modo 3D (VR não detectado)';
+      }
+    });
+  } else {
+    document.getElementById('enterVrBtn').textContent = '🖥️ Modo 3D (WebXR indisponível)';
+  }
+});
+
+// Save session on beforeunload
+window.addEventListener('beforeunload', () => {
+  const name = document.getElementById('userName').value.trim();
+  const role = document.getElementById('userRole').value;
+  if (name) {
+    localStorage.setItem('blindar-quest-session', JSON.stringify({
+      name, role, backendUrl,
+      userId: backendUserId
+    }));
+  }
+});
+</script>
+</body>
+</html>
