@@ -253,49 +253,48 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .ar-eye video { width:100%; height:100%; object-fit:cover; }
 
 /* HUD overlay on each eye */
-.ar-hud { position:absolute; inset:0; pointer-events:none; display:flex; flex-direction:column; padding:12px; }
+.ar-hud { position:absolute; inset:0; pointer-events:none; display:flex; flex-direction:column; padding:8px 10px; }
 
-/* Top bar */
-.ar-hud-top { display:flex; justify-content:space-between; align-items:flex-start; }
-.ar-hud-logo { height:18px; opacity:0.85; }
-.ar-hud-level { padding:3px 8px; border-radius:12px; font-size:9px; font-weight:700; letter-spacing:1px; }
-.ar-hud-status { font-size:8px; color:rgba(255,255,255,0.6); margin-top:4px; text-align:right; }
+/* Top bar — compact horizontal strip */
+.ar-hud-top { display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.35); backdrop-filter:blur(6px); border-radius:6px; padding:4px 8px; border:1px solid rgba(255,255,255,0.06); }
+.ar-hud-top-left { display:flex; align-items:center; gap:6px; }
+.ar-hud-logo { height:14px; opacity:0.8; }
+.ar-hud-level { padding:2px 6px; border-radius:8px; font-size:7px; font-weight:700; letter-spacing:0.8px; line-height:1; }
+.ar-hud-status { font-size:6px; color:rgba(255,255,255,0.5); }
+.ar-hud-indicators { display:flex; gap:5px; }
+.ar-indicator { font-size:6px; color:rgba(255,255,255,0.45); display:flex; align-items:center; gap:2px; }
+.ar-indicator-dot { width:4px; height:4px; border-radius:50%; }
 
 /* Scan frame */
-.ar-scan-frame { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:120px; height:120px; pointer-events:none; }
-.ar-scan-frame .corner { position:absolute; width:20px; height:20px; border:2px solid rgba(37,99,235,0.6); }
+.ar-scan-frame { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:110px; height:110px; pointer-events:none; }
+.ar-scan-frame .corner { position:absolute; width:18px; height:18px; border:1.5px solid rgba(37,99,235,0.5); }
 .ar-scan-frame .corner.tl { top:0; left:0; border-right:none; border-bottom:none; }
 .ar-scan-frame .corner.tr { top:0; right:0; border-left:none; border-bottom:none; }
 .ar-scan-frame .corner.bl { bottom:0; left:0; border-right:none; border-top:none; }
 .ar-scan-frame .corner.br { bottom:0; right:0; border-left:none; border-top:none; }
-.ar-scan-label { position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size:7px; color:rgba(37,99,235,0.7); white-space:nowrap; letter-spacing:1px; }
+.ar-scan-label { position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); font-size:6px; color:rgba(37,99,235,0.5); white-space:nowrap; letter-spacing:0.8px; }
 
-/* Bottom: AI chat messages */
-.ar-hud-bottom { margin-top:auto; max-height:45%; overflow:hidden; }
-.ar-hud-msg { background:rgba(0,0,0,0.65); border:1px solid rgba(37,99,235,0.3); border-radius:8px; padding:6px 10px; margin-top:6px; font-size:8px; line-height:1.4; color:rgba(255,255,255,0.9); backdrop-filter:blur(8px); max-height:80px; overflow:hidden; }
-.ar-hud-msg.user-msg { border-color:rgba(37,99,235,0.5); text-align:right; }
-.ar-hud-msg.ai-msg { border-color:rgba(34,197,94,0.3); }
+/* Bottom: AI chat — only last 2 msgs, very compact */
+.ar-hud-bottom { margin-top:auto; max-height:22%; overflow:hidden; display:flex; flex-direction:column; gap:3px; }
+.ar-hud-msg { background:rgba(0,0,0,0.45); border-left:2px solid rgba(37,99,235,0.4); border-radius:4px; padding:3px 7px; font-size:7px; line-height:1.3; color:rgba(255,255,255,0.85); backdrop-filter:blur(6px); max-height:40px; overflow:hidden; text-overflow:ellipsis; }
+.ar-hud-msg.user-msg { border-left-color:rgba(37,99,235,0.6); text-align:right; }
+.ar-hud-msg.ai-msg { border-left-color:rgba(34,197,94,0.5); }
 .ar-hud-msg.blurred { filter:blur(8px); }
-.ar-hud-msg-label { font-size:6px; font-weight:700; letter-spacing:1px; color:rgba(255,255,255,0.4); margin-bottom:2px; }
+.ar-hud-msg-label { font-size:5px; font-weight:700; letter-spacing:0.8px; color:rgba(255,255,255,0.35); margin-bottom:1px; text-transform:uppercase; }
 
-/* User info strip */
-.ar-hud-user { display:flex; align-items:center; gap:6px; margin-top:6px; padding:4px 8px; background:rgba(0,0,0,0.5); border-radius:6px; border:1px solid rgba(255,255,255,0.08); }
-.ar-hud-user-dot { width:6px; height:6px; border-radius:50%; background:var(--green); flex-shrink:0; }
-.ar-hud-user-name { font-size:7px; color:rgba(255,255,255,0.7); }
+/* User info — minimal inline strip */
+.ar-hud-user { display:flex; align-items:center; gap:4px; margin-top:3px; padding:2px 6px; background:rgba(0,0,0,0.3); border-radius:4px; }
+.ar-hud-user-dot { width:4px; height:4px; border-radius:50%; background:var(--green); flex-shrink:0; }
+.ar-hud-user-name { font-size:6px; color:rgba(255,255,255,0.5); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
 
 /* Observer alert in AR */
-.ar-hud-observer { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); padding:8px 16px; background:rgba(249,115,22,0.9); color:#fff; font-size:9px; font-weight:700; border-radius:8px; text-align:center; white-space:nowrap; pointer-events:none; animation:arPulse 1s infinite; }
+.ar-hud-observer { display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); padding:6px 14px; background:rgba(249,115,22,0.85); color:#fff; font-size:8px; font-weight:700; border-radius:6px; text-align:center; white-space:nowrap; pointer-events:none; animation:arPulse 1s infinite; }
 .ar-hud-observer.show { display:block; }
 @keyframes arPulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
 
-/* Indicators strip */
-.ar-hud-indicators { display:flex; gap:8px; margin-top:4px; }
-.ar-indicator { font-size:7px; color:rgba(255,255,255,0.5); display:flex; align-items:center; gap:3px; }
-.ar-indicator-dot { width:5px; height:5px; border-radius:50%; }
-
-/* Close AR button */
-.ar-close { position:absolute; top:8px; right:8px; z-index:9001; padding:6px 12px; background:rgba(0,0,0,0.7); border:1px solid rgba(255,255,255,0.2); border-radius:6px; color:#fff; font-size:10px; cursor:pointer; pointer-events:all; }
-.ar-close:hover { background:rgba(239,68,68,0.8); }
+/* Close AR button — pill style, top-right */
+.ar-close { position:absolute; top:6px; right:6px; z-index:9001; padding:4px 10px; background:rgba(0,0,0,0.5); border:1px solid rgba(255,255,255,0.15); border-radius:16px; color:rgba(255,255,255,0.7); font-size:9px; cursor:pointer; pointer-events:all; backdrop-filter:blur(4px); transition:all .2s; }
+.ar-close:hover { background:rgba(239,68,68,0.7); color:#fff; }
 
 /* ── MOBILE RESPONSIVENESS ── */
 @media (max-width:600px) {
@@ -323,11 +322,18 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
   .reg-modal h2 { font-size:18px; }
 
   /* AR mode on small screens */
-  .ar-hud { padding:8px; }
-  .ar-hud-logo { height:14px; }
-  .ar-hud-level { font-size:7px; }
-  .ar-scan-frame { width:80px; height:80px; }
-  .ar-hud-msg { font-size:7px; padding:4px 8px; max-height:60px; }
+  .ar-hud { padding:5px 6px; }
+  .ar-hud-top { padding:3px 5px; }
+  .ar-hud-logo { height:11px; }
+  .ar-hud-level { font-size:6px; padding:2px 5px; }
+  .ar-indicator { font-size:5px; }
+  .ar-scan-frame { width:70px; height:70px; }
+  .ar-scan-frame .corner { width:14px; height:14px; }
+  .ar-hud-bottom { max-height:18%; }
+  .ar-hud-msg { font-size:6px; padding:2px 5px; max-height:32px; }
+  .ar-hud-msg-label { font-size:4.5px; }
+  .ar-hud-user-name { font-size:5px; max-width:80px; }
+  .ar-voice-indicator { font-size:6px; padding:3px 8px; bottom:22%; }
 }
 
 @media (max-width:400px) {
@@ -351,12 +357,12 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .voice-status.speaking { background:rgba(34,197,94,0.15); color:var(--green); border:1px solid rgba(34,197,94,0.3); }
 
 /* AR voice indicator */
-.ar-voice-indicator { position:absolute; bottom:50px; left:50%; transform:translateX(-50%); padding:6px 14px; border-radius:20px; font-size:8px; font-weight:700; letter-spacing:1px; pointer-events:none; display:none; text-align:center; max-width:80%; }
+.ar-voice-indicator { position:absolute; bottom:28%; left:50%; transform:translateX(-50%); padding:4px 12px; border-radius:14px; font-size:7px; font-weight:600; letter-spacing:0.8px; pointer-events:none; display:none; text-align:center; max-width:70%; backdrop-filter:blur(4px); }
 .ar-voice-indicator.show { display:block; }
-.ar-voice-indicator.wake { background:rgba(37,99,235,0.3); color:rgba(255,255,255,0.9); border:1px solid rgba(37,99,235,0.4); }
-.ar-voice-indicator.listening { background:rgba(239,68,68,0.3); color:#fff; border:1px solid rgba(239,68,68,0.5); animation:voicePulse 1.2s infinite; }
-.ar-voice-indicator.processing { background:rgba(234,179,8,0.3); color:#fff; border:1px solid rgba(234,179,8,0.4); }
-.ar-voice-indicator.speaking { background:rgba(34,197,94,0.3); color:#fff; border:1px solid rgba(34,197,94,0.4); }
+.ar-voice-indicator.wake { background:rgba(37,99,235,0.2); color:rgba(255,255,255,0.7); border:1px solid rgba(37,99,235,0.3); }
+.ar-voice-indicator.listening { background:rgba(239,68,68,0.25); color:#fff; border:1px solid rgba(239,68,68,0.4); animation:voicePulse 1.2s infinite; }
+.ar-voice-indicator.processing { background:rgba(234,179,8,0.2); color:#fff; border:1px solid rgba(234,179,8,0.3); }
+.ar-voice-indicator.speaking { background:rgba(34,197,94,0.2); color:#fff; border:1px solid rgba(34,197,94,0.3); }
 
 </style>
 </head>
@@ -388,18 +394,16 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
       <video id="arVideoLeft" autoplay muted playsinline></video>
       <div class="ar-hud">
         <div class="ar-hud-top">
-          <div>
+          <div class="ar-hud-top-left">
             <img src="../images/blindar-logotype.png" class="ar-hud-logo" alt="BlindAR">
-            <div class="ar-hud-indicators">
-              <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--green);"></div> VPN</div>
-              <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--accent2);"></div> Sentinel</div>
-              <div class="ar-indicator"><div class="ar-indicator-dot" id="arFaceDotL" style="background:var(--muted);"></div> <span id="arFaceLabelL">Face</span></div>
-              <div class="ar-indicator"><div class="ar-indicator-dot" id="arGyroDotL" style="background:var(--muted);"></div> <span id="arGyroLabelL">Gyro</span></div>
-            </div>
-          </div>
-          <div>
             <div class="ar-hud-level" id="arLevelL" style="background:rgba(34,197,94,0.2);color:var(--green);">NV 1</div>
             <div class="ar-hud-status" id="arStatusL">Autenticado</div>
+          </div>
+          <div class="ar-hud-indicators">
+            <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--green);"></div>VPN</div>
+            <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--accent2);"></div>Sentinel</div>
+            <div class="ar-indicator"><div class="ar-indicator-dot" id="arFaceDotL" style="background:var(--muted);"></div><span id="arFaceLabelL">Face</span></div>
+            <div class="ar-indicator"><div class="ar-indicator-dot" id="arGyroDotL" style="background:var(--muted);"></div><span id="arGyroLabelL">Gyro</span></div>
           </div>
         </div>
         <div class="ar-scan-frame" id="arScanL">
@@ -421,18 +425,16 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
       <video id="arVideoRight" autoplay muted playsinline></video>
       <div class="ar-hud">
         <div class="ar-hud-top">
-          <div>
+          <div class="ar-hud-top-left">
             <img src="../images/blindar-logotype.png" class="ar-hud-logo" alt="BlindAR">
-            <div class="ar-hud-indicators">
-              <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--green);"></div> VPN</div>
-              <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--accent2);"></div> Sentinel</div>
-              <div class="ar-indicator"><div class="ar-indicator-dot" id="arFaceDotR" style="background:var(--muted);"></div> <span id="arFaceLabelR">Face</span></div>
-              <div class="ar-indicator"><div class="ar-indicator-dot" id="arGyroDotR" style="background:var(--muted);"></div> <span id="arGyroLabelR">Gyro</span></div>
-            </div>
-          </div>
-          <div>
             <div class="ar-hud-level" id="arLevelR" style="background:rgba(34,197,94,0.2);color:var(--green);">NV 1</div>
             <div class="ar-hud-status" id="arStatusR">Autenticado</div>
+          </div>
+          <div class="ar-hud-indicators">
+            <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--green);"></div>VPN</div>
+            <div class="ar-indicator"><div class="ar-indicator-dot" style="background:var(--accent2);"></div>Sentinel</div>
+            <div class="ar-indicator"><div class="ar-indicator-dot" id="arFaceDotR" style="background:var(--muted);"></div><span id="arFaceLabelR">Face</span></div>
+            <div class="ar-indicator"><div class="ar-indicator-dot" id="arGyroDotR" style="background:var(--muted);"></div><span id="arGyroLabelR">Gyro</span></div>
           </div>
         </div>
         <div class="ar-scan-frame" id="arScanR">
@@ -849,11 +851,12 @@ Gerência: Exploração & Produção — Bacia de Santos
 - Equipamentos: compressores, bombas de injeção, turbogeradores, válvulas PSV/TSV
 
 ESTILO:
-- Português brasileiro, profissional mas acessível.
-- 4-12 linhas. Use listas e negrito nos valores-chave.
-- Cite a fonte simulada (ex: "Segundo o SuccessFactors...", "Conforme Databricks...").
-- Sempre que possível, ofereça um insight ou recomendação além do dado bruto.
-- Quando relevante, compare com metas ou períodos anteriores.`;
+- Português brasileiro, natural e direto — como se fosse um colega de trabalho experiente conversando.
+- Respostas CURTAS por padrão: 2-4 linhas para perguntas simples. Só expanda (até 8 linhas) quando o tema exigir dados detalhados.
+- Vá direto ao ponto. Não repita a pergunta nem faça introduções desnecessárias.
+- Use negrito apenas nos valores-chave. Evite listas longas — prefira frases corridas.
+- Cite a fonte só quando fornecer dados específicos (ex: "segundo o SuccessFactors").
+- Ofereça insight/recomendação apenas quando houver algo realmente relevante (alerta, risco, oportunidade).`;
 }
 
 function getTime() {
@@ -1844,7 +1847,7 @@ function syncARHud() {
 function syncARMessages() {
   if (!arActive) return;
   const chatMsgs = document.querySelectorAll('#chatMessages .chat-msg');
-  const lastMsgs = Array.from(chatMsgs).slice(-3); // last 3 messages
+  const lastMsgs = Array.from(chatMsgs).slice(-2); // last 2 messages only
 
   ['L', 'R'].forEach(side => {
     const container = document.getElementById('arMessages' + side);
@@ -1853,7 +1856,8 @@ function syncARMessages() {
       const isUser = msg.classList.contains('user');
       const bubble = msg.querySelector('.msg-bubble');
       if (!bubble) return;
-      const text = bubble.textContent.substring(0, 150) + (bubble.textContent.length > 150 ? '...' : '');
+      const maxLen = isUser ? 60 : 100;
+      const text = bubble.textContent.substring(0, maxLen) + (bubble.textContent.length > maxLen ? '...' : '');
       const div = document.createElement('div');
       div.className = 'ar-hud-msg ' + (isUser ? 'user-msg' : 'ai-msg');
       if (observerDetected && !isUser) div.className += ' blurred';
@@ -2307,69 +2311,69 @@ function getLocalResponse(question) {
 
   // --- RH: Equipe / Headcount ---
   if (q.includes('equipe') || q.includes('headcount') || q.includes('quantos')) {
-    if (currentLevel === 1) return `👥 <strong>Equipe — Exploração & Produção (Santos)</strong><br><br>Headcount: <strong>24 colaboradores</strong> (20 efetivos + 4 terceirizados)<br>Disponíveis hoje: <strong>21</strong> (3 em férias)<br>Absenteísmo: 2.1% (meta: <3%) ✅<br><br>💡 <em>Insight: headcount estável. Considere antecipar a admissão do técnico de automação (01/05) para cobrir as férias de maio.</em><br><br>📊 Fonte: SAP SuccessFactors`;
-    if (currentLevel === 2) return `👥 <strong>Equipe E&P Santos</strong><br><br>Total: <strong>24 colaboradores</strong><br>Disponíveis hoje: 21<br>Absenteísmo: 2.1% ✅<br><br>📋 Watermark de rastreabilidade aplicado.`;
-    return `A equipe está <strong>dentro da capacidade operacional</strong>.<br><br>⚠️ <em>Detalhes disponíveis em rede segura.</em>`;
+    if (currentLevel === 1) return `Sua equipe tem <strong>24 colaboradores</strong> (20 efetivos + 4 terceirizados). Hoje <strong>21 disponíveis</strong>, 3 em férias. Absenteísmo em 2.1%, dentro da meta. ✅`;
+    if (currentLevel === 2) return `Equipe com <strong>24 colaboradores</strong>, 21 disponíveis hoje. Absenteísmo: 2.1% ✅<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `A equipe está <strong>completa</strong> e dentro da capacidade operacional. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
   // --- RH: Férias ---
   if (q.includes('férias') || q.includes('ferias') || q.includes('licença')) {
-    if (currentLevel === 1) return `🏖️ <strong>Férias Programadas — Abril/2026</strong><br><br>• Ana Souza (Eng. Processo) — 14/04 a 28/04<br>• Pedro Lima (Téc. Segurança) — 07/04 a 21/04<br>• Marcos Reis (Téc. Manutenção) — 21/04 a 05/05<br><br>⚠️ <strong>Atenção:</strong> Pedro e Marcos têm sobreposição de 1 semana (14-21/04). Cobertura da área de manutenção pode ficar comprometida.<br><br>💡 <em>Recomendação: validar escala de cobertura com o supervisor de manutenção.</em><br><br>📊 Fonte: SAP SuccessFactors`;
-    if (currentLevel === 2) return `🏖️ <strong>Férias Abril/2026</strong><br><br>3 colaboradores em férias no período.<br>⚠️ Sobreposição identificada na área de manutenção.<br><br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Há <strong>colaboradores em férias</strong> neste período.<br><br>⚠️ <em>Nomes e datas disponíveis em rede segura.</em>`;
+    if (currentLevel === 1) return `3 pessoas em férias em abril: <strong>Ana Souza</strong> (14-28/04), <strong>Pedro Lima</strong> (07-21/04) e <strong>Marcos Reis</strong> (21/04-05/05). ⚠️ Pedro e Marcos se sobrepõem de 14 a 21/04 — valide a cobertura de manutenção.`;
+    if (currentLevel === 2) return `<strong>3 colaboradores</strong> em férias em abril. Há sobreposição na área de manutenção.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Há <strong>colaboradores em férias</strong> neste período. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
   // --- RH: Turnover ---
   if (q.includes('turnover') || q.includes('rotatividade') || q.includes('demiss')) {
-    if (currentLevel === 1) return `📉 <strong>Turnover — Últimos 12 meses</strong><br><br>Taxa: <strong>4.2%</strong> (meta: <6%) ✅<br>Desligamentos: 1 voluntário (Eng. Júnior transferiu para TI)<br>Admissões: 2 (1 eng. processo + 1 téc. automação em 01/05)<br><br>💡 <em>Insight: turnover saudável e abaixo da meta. O desligamento foi lateral (transferência interna), sem perda de talento para o mercado.</em><br><br>📊 Fonte: SAP SuccessFactors + Databricks`;
-    if (currentLevel === 2) return `📉 <strong>Turnover:</strong> <strong>4.2%</strong> (meta: <6%) ✅<br>Desligamentos: 1 | Admissões: 2<br><br>📋 Watermark de rastreabilidade aplicado.`;
-    return `O turnover está <strong>abaixo da meta</strong> estabelecida.<br><br>⚠️ <em>Valores detalhados em rede segura.</em>`;
+    if (currentLevel === 1) return `Turnover dos últimos 12 meses: <strong>4.2%</strong> (meta: <6%) ✅. Só 1 desligamento — foi transferência interna para TI, sem perda para o mercado.`;
+    if (currentLevel === 2) return `Turnover: <strong>4.2%</strong> (meta: <6%) ✅. 1 desligamento, 2 admissões.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Turnover <strong>abaixo da meta</strong>. 🔒 <em>Valores em rede segura.</em>`;
   }
 
   // --- RH: Horas extras ---
   if (q.includes('hora extra') || q.includes('horas extras') || q.includes('banco de hora')) {
-    if (currentLevel === 1) return `⏰ <strong>Horas Extras — Abril/2026</strong><br><br>Acumulado mês: <strong>187h</strong> (↑ 12% vs. março)<br>Banco de horas total: <strong>+342h</strong><br>Top 3: Eng. Rafael (42h), Téc. Bruno (38h), Eng. Carla (31h)<br><br>⚠️ <strong>Alerta:</strong> Rafael está próximo do limite legal (44h/mês). Considere redistribuir demandas.<br><br>💡 <em>Recomendação: agendar reunião com a equipe para equilibrar carga de trabalho.</em><br><br>📊 Fonte: SAP SuccessFactors`;
-    if (currentLevel === 2) return `⏰ <strong>Horas Extras Abril:</strong> <strong>187h</strong> (↑ 12%)<br>Banco de horas: +342h<br>⚠️ 1 colaborador próximo do limite legal.<br><br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Horas extras estão <strong>acima do mês anterior</strong>.<br><br>⚠️ <em>Detalhes em rede segura.</em>`;
+    if (currentLevel === 1) return `Horas extras em abril: <strong>187h</strong> (↑12% vs. março). Banco de horas: <strong>+342h</strong>. ⚠️ Eng. Rafael tá com 42h, quase no limite legal. Recomendo redistribuir as demandas dele.`;
+    if (currentLevel === 2) return `Horas extras abril: <strong>187h</strong> (↑12%). Banco: +342h. 1 colaborador próximo do limite legal.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Horas extras <strong>acima do mês anterior</strong>. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
   // --- RH: Treinamentos ---
   if (q.includes('treinamento') || q.includes('capacita') || q.includes('nr-')) {
-    if (currentLevel === 1) return `📚 <strong>Treinamentos — Status Abril/2026</strong><br><br>⚠️ Vencendo: <strong>2 obrigatórios</strong><br>• NR-13 (Caldeiras): Téc. Bruno Silva — vence 30/04<br>• NR-35 (Trabalho em Altura): Téc. Lucas Alves — vence 25/04<br><br>✅ Em dia: 22/24 colaboradores<br>Próximo ciclo: NR-20 (Inflamáveis) em maio/2026<br><br>💡 <em>Ação urgente: agendar reciclagem de Bruno e Lucas antes do vencimento. Colaborador com NR vencida não pode embarcar.</em><br><br>📊 Fonte: SAP SuccessFactors`;
-    if (currentLevel === 2) return `📚 <strong>Treinamentos:</strong> 2 obrigatórios vencendo este mês.<br>22/24 colaboradores em dia.<br><br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Há <strong>treinamentos obrigatórios pendentes</strong> na equipe.<br><br>⚠️ <em>Detalhes em rede segura.</em>`;
+    if (currentLevel === 1) return `⚠️ <strong>2 treinamentos obrigatórios vencendo:</strong> NR-13 do Bruno Silva (30/04) e NR-35 do Lucas Alves (25/04). Os outros 22 estão em dia. Agende a reciclagem deles — com NR vencida não embarcam.`;
+    if (currentLevel === 2) return `<strong>2 treinamentos obrigatórios</strong> vencendo este mês. 22/24 em dia.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Há <strong>treinamentos pendentes</strong> na equipe. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
   // --- RH: Avaliação de desempenho ---
   if (q.includes('avaliação') || q.includes('desempenho') || q.includes('performance')) {
-    if (currentLevel === 1) return `📋 <strong>Avaliações de Desempenho — Ciclo 2026.1</strong><br><br>Concluídas: <strong>19/24</strong> (79%)<br>Pendentes: 5 colaboradores<br>Nota média da equipe: <strong>4.2/5.0</strong><br>Destaque: Eng. Júlia Martins (4.8 → promovida a Eng. Sênior) 🎉<br><br>💡 <em>Insight: 5 avaliações pendentes. O prazo do ciclo é 30/04. Envie lembrete aos gestores de cada subequipe.</em><br><br>📊 Fonte: SAP SuccessFactors`;
-    if (currentLevel === 2) return `📋 <strong>Avaliações 2026.1:</strong> 79% concluídas (19/24).<br>Nota média: 4.2/5.0<br>5 pendentes até 30/04.<br><br>📋 Watermark de rastreabilidade aplicado.`;
-    return `As avaliações estão <strong>em andamento</strong> com maioria concluída.<br><br>⚠️ <em>Detalhes em rede segura.</em>`;
+    if (currentLevel === 1) return `Avaliações do ciclo 2026.1: <strong>19/24 concluídas</strong> (79%), nota média <strong>4.2/5.0</strong>. Destaque: Júlia Martins com 4.8, promovida a Eng. Sênior 🎉. Faltam 5 até 30/04 — vale mandar um lembrete.`;
+    if (currentLevel === 2) return `Avaliações 2026.1: <strong>79% concluídas</strong>. Nota média: 4.2/5.0. 5 pendentes até 30/04.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Avaliações <strong>em andamento</strong>, maioria concluída. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
-  // --- Produção (mantido) ---
+  // --- Produção ---
   if (q.includes('pressão') || q.includes('poço') || q.includes('p-47')) {
-    if (currentLevel === 1) return `A pressão atual do poço P-47 é de <strong>42.7 bar</strong>, dentro da faixa operacional (38-45 bar).<br><br>📊 Última leitura: ${getTime()}<br>🔧 Última manutenção: 10/04/2026<br>✅ Status: Normal — manter monitoramento padrão.<br><br>📊 Fonte: PI System`;
-    if (currentLevel === 2) return `A pressão do P-47 está <strong>dentro da faixa operacional</strong>.<br>Status: ✅ Normal<br><br>📋 Watermark de rastreabilidade aplicado.`;
-    return `A pressão do poço P-47 está <strong>dentro dos parâmetros normais</strong>.<br><br>⚠️ <em>Para dados detalhados, conecte-se a uma rede segura.</em>`;
+    if (currentLevel === 1) return `Pressão do P-47: <strong>42.7 bar</strong>, dentro da faixa (38-45 bar). ✅ Tudo normal, última manutenção em 10/04.`;
+    if (currentLevel === 2) return `Pressão do P-47 <strong>dentro da faixa operacional</strong>. Status: ✅ Normal.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Pressão do P-47 <strong>dentro dos parâmetros</strong>. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
   if (q.includes('produção')) {
-    if (currentLevel === 1) return `📊 <strong>Produção — Março/2026</strong><br><br>Petróleo: <strong>2.15M bpd</strong> (↑ 3.2%)<br>Gás natural: <strong>580 mil m³/dia</strong><br>Meta trimestral: 92.4% atingida<br><br>💡 <em>Insight: tendência de alta consistente. Se mantida, a meta anual será atingida até setembro.</em><br><br>📊 Fonte: Databricks`;
-    if (currentLevel === 2) return `📊 <strong>Produção Março/2026:</strong> <strong>2.15M bpd</strong> (↑ 3.2%)<br>Meta: 92.4% atingida<br><br>📋 Watermark de rastreabilidade aplicado.`;
-    return `A produção do mês está <strong>acima da meta</strong>.<br><br>⚠️ <em>Valores detalhados em rede segura.</em>`;
+    if (currentLevel === 1) return `Produção de março: <strong>2.15M bpd</strong> (↑3.2%) e gás a <strong>580 mil m³/dia</strong>. Meta trimestral 92.4% atingida. Tendência de alta consistente.`;
+    if (currentLevel === 2) return `Produção março: <strong>2.15M bpd</strong> (↑3.2%). Meta: 92.4% atingida.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Produção <strong>acima da meta</strong>. 🔒 <em>Valores em rede segura.</em>`;
   }
 
   if (q.includes('equipamento') || q.includes('status') || q.includes('máquina') || q.includes('manutenção')) {
-    if (currentLevel === 1) return `🔧 <strong>Equipamentos — P-76</strong><br><br>✅ Compressor A: Normal (98.2%)<br>⚠️ Bomba B3: Vibração elevada (0.42mm/s)<br>✅ Turbogeradores 1-2: Normal<br>❌ Válvula PSV-102: Manutenção 15/04<br><br>Total: 44 OK | 2 atenção | 1 manutenção<br><br>📊 Fonte: SAP PM + PI System`;
-    if (currentLevel === 2) return `🔧 <strong>Equipamentos P-76:</strong> 44 OK | 2 atenção | 1 manutenção<br>Eficiência: 96.3%<br><br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Equipamentos operam com <strong>eficiência dentro do esperado</strong>.<br><br>⚠️ <em>Detalhes em rede segura.</em>`;
+    if (currentLevel === 1) return `Equipamentos P-76: <strong>44 OK</strong>, 2 em atenção (Bomba B3 com vibração elevada) e 1 em manutenção (PSV-102 agendada pra hoje). Eficiência geral 96.3%.`;
+    if (currentLevel === 2) return `Equipamentos P-76: 44 OK, 2 atenção, 1 manutenção. Eficiência: 96.3%.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Equipamentos com <strong>eficiência dentro do esperado</strong>. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
   // Generic
-  if (currentLevel === 1) return `Consulta processada com dados completos (Nível 1 — RLS gestor). Os indicadores de RH e produção estão dentro das metas. Pergunte sobre equipe, férias, turnover, treinamentos, produção ou equipamentos para dados específicos.`;
-  if (currentLevel === 2) return `Consulta processada (Nível 2 — dados anonimizados). Indicadores gerais disponíveis.<br><br>📋 Watermark de rastreabilidade aplicado.`;
-  return `Informações gerais: indicadores dentro dos parâmetros.<br><br>⚠️ <em>Para dados detalhados, conecte-se a uma rede segura.</em>`;
+  if (currentLevel === 1) return `Tudo dentro das metas por aqui. Pode me perguntar sobre equipe, férias, turnover, treinamentos, produção ou equipamentos.`;
+  if (currentLevel === 2) return `Indicadores gerais disponíveis. Me pergunte algo específico.<br>📋 Watermark de rastreabilidade aplicado.`;
+  return `Indicadores dentro dos parâmetros. 🔒 <em>Conecte-se a uma rede segura para detalhes.</em>`;
 }
 
 function escapeHtml(text) {
