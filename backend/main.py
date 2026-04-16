@@ -17,7 +17,7 @@ from typing import Optional
 import httpx
 import numpy as np
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi import FastAPI, HTTPException, Header, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
@@ -787,8 +787,53 @@ async def text_to_speech(req: TTSRequest):
 
 
 # ──────────────────────────────────────────────────────────────
-#  Entry Point
+#  Speech-to-Text (Groq Whisper)
 # ──────────────────────────────────────────────────────────────
+@app.post("/api/stt")
+async def speech_to_text(audio: UploadFile = File(...)):
+    """Transcribe audio using Groq Whisper API."""
+    if not GROQ_API_KEY:
+        raise HTTPException(503, "STT not configured (no GROQ_API_KEY)")
+
+    audio_data = await audio.read()
+    if len(audio_data) < 100:
+        raise HTTPException(400, "Audio file too small")
+    if len(audio_data) > 25 * 1024 * 1024:  # 25MB limit
+        raise HTTPException(413, "Audio file too large (max 25MB)")
+
+    # Determine filename extension from content type
+    ext_map = {
+        "audio/webm": "audio.webm",
+        "audio/ogg": "audio.ogg",
+        "audio/wav": "audio.wav",
+        "audio/mp3": "audio.mp3",
+        "audio/mpeg": "audio.mp3",
+        "audio/mp4": "audio.mp4",
+        "audio/x-m4a": "audio.m4a",
+    }
+    filename = ext_map.get(audio.content_type, "audio.webm")
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(
+                "https://api.groq.com/openai/v1/audio/transcriptions",
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
+                files={"file": (filename, audio_data, audio.content_type or "audio/webm")},
+                data={"model": "whisper-large-v3", "language": "pt"},
+            )
+            if resp.status_code != 200:
+                raise HTTPException(502, f"Groq Whisper error: {resp.status_code} {resp.text[:200]}")
+            result = resp.json()
+            text = result.get("text", "").strip()
+            if not text:
+                raise HTTPException(422, "No speech detected")
+            return {"text": text}
+    except httpx.TimeoutException:
+        raise HTTPException(504, "STT request timed out")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(502, f"STT failed: {e}")
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

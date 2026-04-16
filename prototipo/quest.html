@@ -210,9 +210,15 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
     </a-entity>
 
     <!-- DIGITAR button (opens keyboard overlay) -->
-    <a-entity id="vrTypeBtn" class="clickable" position="0 -0.72 0.01">
-      <a-plane width="0.8" height="0.14" color="#2563eb" opacity="0.9" class="clickable" side="double"></a-plane>
-      <a-text value="DIGITAR PERGUNTA" align="center" color="#ffffff" width="0.75" font="roboto" class="clickable"></a-text>
+    <a-entity id="vrTypeBtn" class="clickable" position="-0.25 -0.72 0.01">
+      <a-plane width="0.7" height="0.14" color="#2563eb" opacity="0.9" class="clickable" side="double"></a-plane>
+      <a-text value="DIGITAR PERGUNTA" align="center" color="#ffffff" width="0.65" font="roboto" class="clickable"></a-text>
+    </a-entity>
+
+    <!-- FALAR button (records audio via MediaRecorder → Groq Whisper) -->
+    <a-entity id="vrVoiceBtn" class="clickable" position="0.55 -0.72 0.01">
+      <a-plane width="0.4" height="0.14" color="#22c55e" opacity="0.9" class="clickable" side="double"></a-plane>
+      <a-text id="vrVoiceBtnText" value="FALAR" align="center" color="#ffffff" width="0.36" font="roboto" class="clickable"></a-text>
     </a-entity>
 
     <!-- Bottom status -->
@@ -601,6 +607,11 @@ function toggleVoice() {
   if (voiceEnabled) { stopVoice(); return; }
   const hasSpeech = ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
   if (!hasSpeech) {
+    // Fallback: use MediaRecorder + backend STT (works on Quest 2!)
+    if (typeof MediaRecorder !== 'undefined' && backendConnected) {
+      startRecordingVoice();
+      return;
+    }
     showToast('Voz nao suportada neste navegador. Use as perguntas rapidas ou digite.', 'warn', 4000);
     return;
   }
@@ -666,6 +677,139 @@ function updateVoiceUI() {
   else if (voiceState === 'listening') { btn.textContent = '🎤 Ouvindo...'; btn.classList.add('listening'); }
   else if (voiceState === 'speaking') { btn.textContent = '🔊 Falando...'; btn.classList.add('speaking'); }
   else btn.textContent = '🎤 Voz';
+}
+
+// ── MediaRecorder Voice (works on Quest 2 — sends audio to backend /api/stt) ──
+let _mediaRecorder = null;
+let _audioChunks = [];
+let _isRecording = false;
+let _recordTimeout = null;
+
+async function startRecordingVoice() {
+  if (_isRecording) { stopRecordingVoice(); return; }
+  if (!backendConnected) { showToast('Conecte ao backend para usar voz', 'warn'); return; }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    // Find supported mime type
+    const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+    let mimeType = '';
+    for (const mt of mimeTypes) {
+      if (MediaRecorder.isTypeSupported(mt)) { mimeType = mt; break; }
+    }
+
+    _audioChunks = [];
+    _mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : {});
+
+    _mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) _audioChunks.push(e.data);
+    };
+
+    _mediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      if (_recordTimeout) { clearTimeout(_recordTimeout); _recordTimeout = null; }
+
+      if (_audioChunks.length === 0) {
+        showToast('Nenhum audio capturado', 'warn');
+        _isRecording = false;
+        updateRecordingUI();
+        return;
+      }
+
+      const blob = new Blob(_audioChunks, { type: _mediaRecorder.mimeType || 'audio/webm' });
+      _audioChunks = [];
+      _isRecording = false;
+      updateRecordingUI();
+
+      // Show processing state
+      showToast('Transcrevendo...', 'info', 5000);
+      updateVRVoiceBtn('...');
+
+      try {
+        const formData = new FormData();
+        formData.append('audio', blob, 'voice.webm');
+
+        const resp = await fetch(backendUrl + '/api/stt', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.detail || 'Erro ' + resp.status);
+        }
+
+        const data = await resp.json();
+        const text = (data.text || '').trim();
+
+        if (text) {
+          showToast('Voce disse: "' + text.substring(0, 60) + '"', 'info', 3000);
+          processChat(text, true);
+        } else {
+          showToast('Nenhuma fala detectada. Tente novamente.', 'warn');
+        }
+      } catch(e) {
+        console.error('STT error:', e);
+        showToast('Erro ao transcrever: ' + e.message, 'error', 4000);
+      }
+      updateVRVoiceBtn('FALAR');
+    };
+
+    _mediaRecorder.start();
+    _isRecording = true;
+    updateRecordingUI();
+    updateVRVoiceBtn('PARAR');
+
+    // Beep to indicate recording started
+    try { const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=880;g.gain.value=0.15;o.start();o.stop(c.currentTime+0.12); } catch(e){}
+
+    showToast('🎤 Gravando... clique PARAR ou aguarde 10s', 'info', 3000);
+
+    // Auto-stop after 10 seconds
+    _recordTimeout = setTimeout(() => { if (_isRecording) stopRecordingVoice(); }, 10000);
+
+  } catch(e) {
+    console.error('Mic error:', e);
+    showToast('Erro ao acessar microfone: ' + e.message, 'error');
+    _isRecording = false;
+    updateRecordingUI();
+  }
+}
+
+function stopRecordingVoice() {
+  if (_mediaRecorder && _mediaRecorder.state === 'recording') {
+    _mediaRecorder.stop();
+  }
+  _isRecording = false;
+  if (_recordTimeout) { clearTimeout(_recordTimeout); _recordTimeout = null; }
+}
+
+function updateRecordingUI() {
+  // Update flat mode button
+  const btn = document.getElementById('flatVoiceBtn');
+  if (btn) {
+    if (_isRecording) {
+      btn.textContent = '⏹ Parar';
+      btn.className = 'flat-voice-btn listening';
+    } else if (voiceState !== 'off') {
+      updateVoiceUI();
+    } else {
+      btn.textContent = '🎤 Voz';
+      btn.className = 'flat-voice-btn';
+    }
+  }
+}
+
+function updateVRVoiceBtn(text) {
+  const el = document.getElementById('vrVoiceBtnText');
+  if (el) el.setAttribute('value', text);
+  const plane = document.querySelector('#vrVoiceBtn a-plane');
+  if (plane) {
+    if (text === 'PARAR') plane.setAttribute('color', '#ef4444');
+    else if (text === '...') plane.setAttribute('color', '#eab308');
+    else plane.setAttribute('color', '#22c55e');
+  }
 }
 
 // ── Level ──
@@ -738,20 +882,18 @@ async function enterVR() {
       return;
     }
 
-    // Try AR first (passthrough), then VR
+    // Listen for VR/AR enter/exit to track state
+    scene.addEventListener('enter-vr', () => { isInVR = true; });
+    scene.addEventListener('exit-vr', () => { isInVR = false; });
+
+    // Try AR first (passthrough), then VR — using A-Frame's native methods
     navigator.xr.isSessionSupported('immersive-ar').then(arOk => {
       if (arOk) {
-        // Use A-Frame's XR system to request AR
-        scene.xrSession = null;
-        navigator.xr.requestSession('immersive-ar', {
-          requiredFeatures: ['local-floor'],
-          optionalFeatures: ['bounded-floor', 'hand-tracking']
-        }).then(session => {
-          scene.renderer.xr.setSession(session);
-          session.addEventListener('end', () => { isInVR = false; });
+        // Use A-Frame's enterAR() — properly integrates camera, controllers, world tracking
+        scene.enterAR().then(() => {
           showToast('AR ativo — passthrough ligado!', 'info', 3000);
         }).catch(e => {
-          console.warn('AR failed, trying VR:', e);
+          console.warn('enterAR failed, trying VR:', e);
           tryVR();
         });
       } else {
@@ -857,6 +999,20 @@ function setupVRClicks() {
     typeBtn.addEventListener('mouseleave', () => {
       const p = typeBtn.querySelector('a-plane');
       if (p) p.setAttribute('color', '#2563eb');
+    });
+  }
+
+  // Voice button (MediaRecorder → backend STT)
+  const voiceBtn = document.getElementById('vrVoiceBtn');
+  if (voiceBtn) {
+    voiceBtn.addEventListener('click', () => startRecordingVoice());
+    voiceBtn.addEventListener('mouseenter', () => {
+      const p = voiceBtn.querySelector('a-plane');
+      if (p && !_isRecording) p.setAttribute('opacity', '1');
+    });
+    voiceBtn.addEventListener('mouseleave', () => {
+      const p = voiceBtn.querySelector('a-plane');
+      if (p && !_isRecording) p.setAttribute('opacity', '0.9');
     });
   }
 }
