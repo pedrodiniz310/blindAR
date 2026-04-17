@@ -461,16 +461,28 @@ async function callBackendChat(question) {
 }
 
 function getLocalResponse(q) {
-  const ql = q.toLowerCase();
-  if (ql.includes('pressão') || ql.includes('pressao') || ql.includes('p-47') || ql.includes('poço'))
-    return 'Pressao atual do poco P-47: <strong>342 bar</strong>. Dentro dos parametros normais.';
-  if (ql.includes('produção') || ql.includes('producao') || ql.includes('mês') || ql.includes('mes'))
-    return 'Producao do mes: <strong>152.000 barris/dia</strong>. Meta: 155.000 bbl/d. Eficiencia: 98.1%.';
-  if (ql.includes('responsável') || ql.includes('responsavel') || ql.includes('p-76'))
-    return 'Responsavel P-76: <strong>Eng. Carlos Mendes</strong> (Gerente de Plataforma).';
-  if (ql.includes('status') || ql.includes('equipamento'))
-    return 'Status: <strong>94% operacionais</strong>. 3 em manutencao preventiva.';
-  return 'Em modo offline, respostas limitadas. Conecte ao backend para IA completa.';
+  const ql = q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  // Prompt injection detection
+  const injectionPatterns = [/ignor\w*\s*regras/i, /esquec\w*\s*instrucoes/i, /finja\s+que/i, /aja\s+como/i, /modo\s+(debug|teste|admin)/i, /jailbreak/i, /ignore\s+previous/i, /act\s+as/i, /pretend/i, /DAN\b/];
+  if (injectionPatterns.some(p => p.test(q))) return '⚠️ <strong>Tentativa de exfiltração detectada e bloqueada.</strong> Incidente registrado no SOC.';
+
+  if (ql.includes('pressao') || ql.includes('poco') || ql.includes('p-47') || ql.includes('bar'))
+    return 'Pressao P-47: <strong>42.7 bar</strong> — faixa operacional (38-45 bar) ✅. Temperatura: 72°C. Proxima preventiva: 15/05.';
+  if (ql.includes('producao') || ql.includes('petroleo') || ql.includes('bpd'))
+    return 'Producao marco/2026: <strong>2.15M bpd</strong> (↑3.2%). Gas: 580 mil m³/dia. Meta trimestral 92.4% atingida. ✅';
+  if (ql.includes('responsavel') || ql.includes('quem') || ql.includes('p-76') || ql.includes('gerente'))
+    return 'Responsavel P-76: <strong>Eng. Carlos Mendes</strong> (ID: 15832). Turno A (06-18h). Substituto: Eng. Mariana Costa.';
+  if (ql.includes('equipe') || ql.includes('colabor') || ql.includes('time'))
+    return 'Equipe: <strong>24 colaboradores</strong> (20 efetivos + 4 terceirizados). 21 disponiveis hoje, 3 em ferias. Absenteismo: 2.1% ✅';
+  if (ql.includes('equipamento') || ql.includes('status') || ql.includes('manutencao'))
+    return 'P-76: <strong>44 operacionais</strong>, 2 em atencao, 1 em manutencao. Eficiencia: 96.3% (meta: ≥95%) ✅';
+  if (ql.includes('treinamento') || ql.includes('nr-') || ql.includes('vencendo'))
+    return '⚠️ <strong>2 NRs vencendo:</strong> NR-13 Bruno Silva (30/04), NR-35 Lucas Alves (25/04). 22/24 em dia. Agende reciclagem com urgencia.';
+  if (ql.includes('ferias') || ql.includes('ausente'))
+    return '3 em ferias em abril: Ana Souza (14-28/04), Pedro Lima (07-21/04), Marcos Reis (21/04-05/05). ⚠️ Sobreposicao na manutencao.';
+  if (ql.match(/^(oi|ola|bom dia|boa tarde|boa noite)/))
+    return 'Ola! Sou o BlindAR, seu assistente de Business Partner. Posso ajudar com dados de equipe, producao, equipamentos e indicadores. 🛢️';
+  return 'Posso ajudar com: <strong>equipe</strong>, <strong>producao</strong>, <strong>equipamentos</strong>, <strong>treinamentos</strong>, <strong>ferias</strong>. O que precisa?';
 }
 
 async function processChat(question, fromVoice=false) {

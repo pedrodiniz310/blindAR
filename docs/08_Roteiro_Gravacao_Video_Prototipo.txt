@@ -1,0 +1,393 @@
+================================================================================
+
+  ROTEIRO DE GRAVAÇÃO — VÍDEO DO PROTÓTIPO BlindAR
+
+  Grand Prix SENAI de Inovação 2026 — Desafio Petrobras (Cibersegurança)
+
+  Equipe FIREWALL: Pedro D. / Thauane P. / Yury K. / Gabriela P.
+
+================================================================================
+
+
+
+  Duração total: 2:10 a 2:20
+  Formato: Gravação de tela (Full HD 1920×1080) + narração em voz
+  Ferramenta sugerida: OBS Studio ou gravador nativo do Windows (Win+G)
+  Navegador: Chrome ou Edge (tela cheia / F11)
+
+
+
+================================================================================
+  PREPARAÇÃO ANTES DE GRAVAR
+================================================================================
+
+  1. Fechar todas as abas e notificações do Windows
+  2. Abrir prototipo/prototipo.html no Chrome/Edge
+  3. Permitir acesso à webcam quando solicitado
+  4. Colocar o navegador em tela cheia (F11)
+  5. Verificar que a webcam está funcionando (seu rosto aparece)
+  6. Se for usar IA real: inserir a API Key (Groq ou Gemini) na sidebar
+  7. Se não tiver API Key: o protótipo funciona com respostas simuladas
+  8. Garantir que o nível está em "Rede Interna" (Nível 1 - verde)
+  9. Fazer o cadastro facial (nome: Pedro Diniz, cargo: Técnico)
+  10. Ter uma segunda pessoa por perto para a cena do observador
+  11. Exportar o diagrama BlindAR_Arquitetura.drawio como imagem PNG:
+      → Abrir em https://app.diagrams.net → File → Export as → PNG (300 DPI)
+      → Salvar como BlindAR_Arquitetura.png
+      → Deixar a imagem aberta em uma aba separada do navegador
+  12. Testar a narração em voz alta uma vez antes de gravar
+  13. Iniciar gravação de tela e conferir que o áudio está captando
+
+
+================================================================================
+  CENA 1 — AUTENTICAÇÃO FACIAL
+  Tempo: 0:00 – 0:25 (25 segundos)
+================================================================================
+
+
+  O QUE FAZER:
+  ─────────────
+  [0:00] Tela mostra o protótipo aberto, webcam ativa.
+         Seu rosto aparece na câmera com a caixa de detecção verde.
+         A interface mostra "Identidade verificada".
+
+  [0:10] Tape a câmera com a mão (ou um papel).
+         → A tela muda para "SESSÃO TRAVADA" (overlay vermelho).
+         → Aguarde 2-3 segundos mostrando o bloqueio.
+
+  [0:16] Destape a câmera.
+         → A sessão desbloqueia automaticamente.
+         → A caixa verde volta ao redor do rosto.
+
+  [0:20] Pausa breve mostrando o status: nome, cargo, nível 1.
+
+
+  O QUE FALAR:
+  ─────────────
+  "O BlindAR começa com autenticação facial contínua. A câmera do
+  óculos reconhece o colaborador e calcula automaticamente o nível
+  de segurança baseado no contexto — localização, rede e ambiente."
+
+  [Ao tapar a câmera:]
+  "Se o rosto sai do campo de visão, a sessão trava instantaneamente."
+
+  [Ao destapar:]
+  "E ao retornar, desbloqueia automaticamente. Sem senha. Sem fricção."
+
+
+  DICA DE GRAVAÇÃO:
+  ─────────────────
+  - Mova a mão devagar ao tapar/destapar para a câmera captar bem.
+  - Espere o overlay vermelho aparecer antes de continuar falando.
+  - Fale com ritmo calmo — são 25 segundos, não precisa correr.
+
+
+================================================================================
+  CENA 2 — ARQUITETURA DO SISTEMA
+  Tempo: 0:25 – 0:45 (20 segundos)
+================================================================================
+
+
+  O QUE FAZER:
+  ─────────────
+  [0:25] Mude para a aba do navegador com a imagem da arquitetura
+         (BlindAR_Arquitetura.png exportada do draw.io).
+         A imagem deve estar em tela cheia ou zoom adequado.
+
+  [0:28] Aponte com o mouse para o bloco "Óculos de RA" (esquerda).
+         → Câmera, sensores IMU, reconhecimento facial, HUD.
+
+  [0:32] Mova o mouse para o bloco "Servidor BlindAR" (centro).
+         → API REST (FastAPI), controle de sessões, filtro por nível.
+
+  [0:35] Aponte para "Banco de Dados" (direita) e "IA Generativa".
+         → Supabase (PostgreSQL), Groq/Gemini.
+
+  [0:38] Passe o mouse pela faixa vermelha "Segurança Integrada" (base).
+         → HTTPS/TLS, autenticação biométrica, 5 níveis, detecção de
+           observadores, filtro IA defense-in-depth, LGPD.
+
+  [0:43] Volte para a aba do protótipo (prototipo.html).
+
+
+  O QUE FALAR:
+  ─────────────
+  "Antes de demonstrar, vamos entender a arquitetura. O óculos de
+  realidade aumentada se comunica via HTTPS com o servidor BlindAR,
+  que processa autenticação biométrica, filtra dados por nível de
+  segurança e registra cada evento no banco de dados."
+
+  [Ao apontar para IA e segurança:]
+  "A IA generativa responde de forma contextual, e toda a comunicação
+  passa por seis camadas de segurança — de criptografia ponta a ponta
+  até conformidade com a LGPD."
+
+
+  DICA DE GRAVAÇÃO:
+  ─────────────────
+  - Mova o mouse devagar de bloco em bloco, da esquerda para a direita.
+  - Não precisa ler cada item do diagrama — a narração resume.
+  - A transição de volta ao protótipo deve ser rápida (Alt+Tab ou aba).
+  - Se preferir, use o draw.io aberto direto (ao invés de PNG) para
+    dar zoom em cada bloco — fica mais dinâmico.
+
+
+================================================================================
+  CENA 3 — CONSULTA À IA NO NÍVEL 1 (SEGURO)
+  Tempo: 0:45 – 1:10 (25 segundos)
+================================================================================
+
+
+  O QUE FAZER:
+  ─────────────
+  [0:45] Confirme visualmente que o nível está em 1 (verde) na sidebar.
+
+  [0:47] Clique no botão de pergunta rápida: "Pressão do P-47"
+         (ou digite: "Qual a pressão atual do poço P-47?")
+
+  [0:51] Aguarde a resposta da IA aparecer na tela.
+         → Resposta completa: valor exato (42.7 bar), nome do
+           responsável, recomendação técnica.
+
+  [0:58] Aponte com o mouse para o watermark no rodapé da mensagem
+         (mostra: nome + data/hora + nível de segurança).
+
+
+  O QUE FALAR:
+  ─────────────
+  "No nível 1 — rede interna segura — o assistente de IA responde
+  com dados completos. Valores exatos, nomes de responsáveis,
+  recomendações técnicas."
+
+  [Ao apontar para o watermark:]
+  "Cada resposta carrega um watermark dinâmico com identidade,
+  data e nível. Rastreabilidade total."
+
+
+  DICA DE GRAVAÇÃO:
+  ─────────────────
+  - Espere a resposta da IA carregar completamente antes de falar.
+  - Passe o mouse sobre o watermark devagar para destacar.
+  - Se a resposta da IA demorar, preencha com a narração.
+
+
+================================================================================
+  CENA 4 — MUDANÇA DE CONTEXTO + OBSERVADOR
+  Tempo: 1:10 – 1:40 (30 segundos)
+================================================================================
+
+
+  PARTE A — TROCA PARA NÍVEL 3 (1:10 – 1:25)
+  ─────────────────────────────────────────────
+
+  O QUE FAZER:
+  [1:10] Clique no botão "Rede de Terceiro" na sidebar.
+         → O nível muda para 3 (amarelo).
+         → O badge de nível na interface atualiza.
+
+  [1:13] Clique na MESMA pergunta: "Pressão do P-47"
+         → Agora a resposta é genérica: "parâmetros normais",
+           sem valores exatos, sem nomes.
+
+  [1:20] Pause para o espectador comparar as duas respostas.
+
+
+  O QUE FALAR:
+  "Agora simulamos que o técnico saiu para campo e se conectou a uma
+  rede de terceiro. O nível muda para 3 — amarelo. A mesma pergunta
+  agora retorna apenas informações genéricas. Valores exatos e nomes
+  foram filtrados automaticamente."
+
+
+  PARTE B — OBSERVADOR DETECTADO (1:25 – 1:40)
+  ──────────────────────────────────────────────
+
+  O QUE FAZER:
+  [1:25] Uma segunda pessoa entra no quadro da webcam.
+         → O sistema detecta o segundo rosto.
+         → Alerta: "Observador detectado"
+         → Nível sobe automaticamente para 4 (laranja).
+         → Dados na tela ficam borrados/censurados (████).
+
+  [1:33] A segunda pessoa sai do quadro da webcam.
+         → O sistema volta ao nível anterior.
+         → Dados voltam a ficar visíveis.
+
+
+  O QUE FALAR:
+  "E se alguém se aproxima por trás? A câmera detecta outro rosto
+  automaticamente. O nível sobe para 4 e todos os dados sensíveis
+  ficam borrados em tempo real."
+
+  [Quando a pessoa sai:]
+  "Quando o observador sai, os dados voltam ao normal."
+
+
+  DICA DE GRAVAÇÃO:
+  ─────────────────
+  - A segunda pessoa deve entrar DEVAGAR no campo da câmera.
+  - Se não tiver segunda pessoa, use uma foto de rosto no celular
+    e aproxime da webcam (a face-api.js detecta fotos também).
+  - Espere o alerta de observador aparecer antes de narrar.
+  - Essa é a cena mais impactante — dê tempo para o efeito visual.
+
+
+================================================================================
+  CENA 5 — DASHBOARD DE GOVERNANÇA
+  Tempo: 1:40 – 2:10 (30 segundos)
+================================================================================
+
+
+  O QUE FAZER:
+  ─────────────
+  [1:40] Clique na aba "Dashboard" no topo da interface.
+         → A tela muda para o painel de governança.
+
+  [1:43] Mostre os cards de métricas no topo:
+         → Dispositivos ativos, Alertas, Consultas, Usuários.
+
+  [1:48] Role até o log de eventos.
+         → Mostre os registros das ações que você acabou de fazer:
+           - Autenticação facial
+           - Consultas à IA (com nível aplicado)
+           - Mudança de rede
+           - Detecção de observador
+
+  [1:57] Mostre os gráficos:
+         → Gráfico de distribuição de consultas por nível
+         → Gráfico de acessos por hora
+
+  [2:05] Aponte para os alertas de segurança (se houver).
+
+
+  O QUE FALAR:
+  ─────────────
+  "E aqui está a visão do time de segurança. O dashboard de governança
+  registra em tempo real cada autenticação, cada consulta à IA, cada
+  mudança de nível e cada detecção de observador."
+
+  [Ao mostrar o log:]
+  "Todas as ações que acabamos de demonstrar estão registradas aqui —
+  com timestamp, usuário e nível de segurança aplicado."
+
+  [Ao mostrar gráficos:]
+  "Gráficos de distribuição e timeline dão visibilidade total.
+  Tudo auditável. Tudo em conformidade com a LGPD."
+
+
+  DICA DE GRAVAÇÃO:
+  ─────────────────
+  - Passe o mouse sobre cada card/gráfico ao mencioná-los.
+  - Role o log de eventos devagar para o espectador ler.
+  - Se os gráficos não aparecerem, role a página para baixo.
+
+
+================================================================================
+  ENCERRAMENTO
+  Tempo: 2:10 – 2:15 (5 segundos)
+================================================================================
+
+
+  O QUE FAZER:
+  ─────────────
+  [2:10] Tela final com logo/nome do projeto.
+         (Pode ser um slide preparado ou a tela inicial do protótipo)
+
+  [2:15] Fim da gravação.
+
+
+  O QUE FALAR:
+  ─────────────
+  "BlindAR. Acesso seguro a IA via dispositivos vestíveis.
+  Sem fricção. Com visibilidade total."
+
+
+================================================================================
+  RESUMO DE TEMPOS
+================================================================================
+
+  ┌─────────────────────────────────┬────────────────┬──────────┐
+  │ CENA                            │ TEMPO          │ DURAÇÃO  │
+  ├─────────────────────────────────┼────────────────┼──────────┤
+  │ 1. Autenticação facial          │ 0:00 – 0:25   │ 25s      │
+  │ 2. Arquitetura do sistema       │ 0:25 – 0:45   │ 20s      │
+  │ 3. Consulta IA (Nível 1)       │ 0:45 – 1:10   │ 25s      │
+  │ 4. Mudança contexto+observador  │ 1:10 – 1:40   │ 30s      │
+  │ 5. Dashboard de governança      │ 1:40 – 2:10   │ 30s      │
+  │ 6. Encerramento                 │ 2:10 – 2:15   │  5s      │
+  ├─────────────────────────────────┼────────────────┼──────────┤
+  │ TOTAL                           │                │ 2:15     │
+  └─────────────────────────────────┴────────────────┴──────────┘
+
+
+================================================================================
+  NARRAÇÃO COMPLETA (para ler de uma vez / teleprompter)
+================================================================================
+
+  [CENA 1 — AUTENTICAÇÃO]
+  "O BlindAR começa com autenticação facial contínua. A câmera do
+  óculos reconhece o colaborador e calcula automaticamente o nível
+  de segurança baseado no contexto — localização, rede e ambiente.
+  Se o rosto sai do campo de visão, a sessão trava instantaneamente.
+  E ao retornar, desbloqueia automaticamente. Sem senha. Sem fricção."
+
+  [CENA 2 — ARQUITETURA]
+  "Antes de demonstrar, vamos entender a arquitetura. O óculos de
+  realidade aumentada se comunica via HTTPS com o servidor BlindAR,
+  que processa autenticação biométrica, filtra dados por nível de
+  segurança e registra cada evento no banco de dados. A IA generativa
+  responde de forma contextual, e toda a comunicação passa por seis
+  camadas de segurança — de criptografia ponta a ponta até
+  conformidade com a LGPD."
+
+  [CENA 3 — CONSULTA IA]
+  "No nível 1 — rede interna segura — o assistente de IA responde com
+  dados completos. Valores exatos, nomes de responsáveis, recomendações
+  técnicas. Cada resposta carrega um watermark dinâmico com identidade,
+  data e nível. Rastreabilidade total."
+
+  [CENA 4 — MUDANÇA DE CONTEXTO]
+  "Agora simulamos que o técnico saiu para campo e se conectou a uma
+  rede de terceiro. O nível muda para 3 — amarelo. A mesma pergunta
+  agora retorna apenas informações genéricas. Valores exatos e nomes
+  foram filtrados automaticamente. E se alguém se aproxima por trás?
+  A câmera detecta outro rosto automaticamente. O nível sobe para 4
+  e todos os dados sensíveis ficam borrados em tempo real. Quando o
+  observador sai, os dados voltam ao normal."
+
+  [CENA 5 — DASHBOARD]
+  "E aqui está a visão do time de segurança. O dashboard de governança
+  registra em tempo real cada autenticação, cada consulta à IA, cada
+  mudança de nível e cada detecção de observador. Todas as ações que
+  acabamos de demonstrar estão registradas aqui — com timestamp,
+  usuário e nível de segurança aplicado. Gráficos de distribuição e
+  timeline dão visibilidade total. Tudo auditável. Tudo em conformidade
+  com a LGPD."
+
+  [ENCERRAMENTO]
+  "BlindAR. Acesso seguro a IA via dispositivos vestíveis.
+  Sem fricção. Com visibilidade total."
+
+
+================================================================================
+  CHECKLIST FINAL PÓS-GRAVAÇÃO
+================================================================================
+
+  [ ] Vídeo tem entre 2:10 e 2:20 de duração
+  [ ] Áudio da narração está claro e sem ruído
+  [ ] Diagrama de arquitetura apareceu nítido na tela
+  [ ] Todas as 4 funcionalidades foram demonstradas
+  [ ] Autenticação facial funcionou (caixa verde no rosto)
+  [ ] Sessão travou ao tapar a câmera
+  [ ] Resposta da IA apareceu no nível 1 (completa)
+  [ ] Nível mudou para 3 ao clicar "Rede de Terceiro"
+  [ ] Resposta ficou genérica no nível 3
+  [ ] Observador foi detectado (segundo rosto)
+  [ ] Dados ficaram borrados no nível 4
+  [ ] Dashboard mostrou log de eventos
+  [ ] Gráficos apareceram corretamente
+  [ ] Watermark visível nas respostas
+  [ ] Resolução do vídeo: 1920×1080 (Full HD)
+  [ ] Formato de exportação: MP4 (H.264)
+
+================================================================================

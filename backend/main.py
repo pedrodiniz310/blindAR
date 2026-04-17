@@ -8,6 +8,7 @@
 
 import os
 import io
+import re
 import json
 import hashlib
 import secrets
@@ -17,7 +18,7 @@ from typing import Optional
 import httpx
 import numpy as np
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Header, Depends, UploadFile, File
+from fastapi import FastAPI, HTTPException, Header, Depends, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
@@ -60,11 +61,32 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS if CORS_ORIGINS != ["*"] else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ──────────────────────────────────────────────────────────────
+#  Simple In-Memory Rate Limiter
+# ──────────────────────────────────────────────────────────────
+from collections import defaultdict
+import time as _time
+
+_rate_buckets: dict[str, list[float]] = defaultdict(list)
+RATE_LIMIT_WINDOW = 60   # seconds
+RATE_LIMIT_MAX = 30       # max requests per window per IP
+
+def _check_rate_limit(client_ip: str) -> bool:
+    """Returns True if the request should be blocked."""
+    now = _time.time()
+    bucket = _rate_buckets[client_ip]
+    # Prune old entries
+    _rate_buckets[client_ip] = [t for t in bucket if now - t < RATE_LIMIT_WINDOW]
+    if len(_rate_buckets[client_ip]) >= RATE_LIMIT_MAX:
+        return True
+    _rate_buckets[client_ip].append(now)
+    return False
 
 # ──────────────────────────────────────────────────────────────
 #  Role → Security Level Mapping
@@ -151,6 +173,79 @@ def euclidean_distance(a: list[float], b: list[float]) -> float:
     arr_a = np.array(a, dtype=np.float64)
     arr_b = np.array(b, dtype=np.float64)
     return float(np.linalg.norm(arr_a - arr_b))
+
+
+# ──────────────────────────────────────────────────────────────
+#  Server-Side Output Filter (Defense in Depth)
+#  The LLM can be tricked by prompt injection. This filter runs
+#  AFTER the LLM response to redact data that shouldn't appear
+#  at the current security level.
+# ──────────────────────────────────────────────────────────────
+
+# Sensitive data patterns that MUST NOT appear at restricted levels
+_PERSONAL_NAMES = [
+    "Ana Souza", "Pedro Lima", "Marcos Reis", "Carlos Mendes",
+    "Bruno Silva", "Lucas Alves", "Júlia Martins", "Julia Martins",
+    "Rafael", "João Silva", "Fernanda", "Roberto",
+]
+_PERSONAL_PATTERNS = [
+    r"\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b",         # CPF
+    r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",  # email
+    r"\(\d{2}\)\s?\d{4,5}-?\d{4}",                 # phone
+    r"\bID:\s?\d+\b",                               # IDs
+    r"\b\d{2}/\d{2}/\d{2,4}\b",                     # dates like 14/04, 07-21/04
+]
+_EXACT_VALUES = [
+    "42.7 bar", "2.15M", "2,15M", "580 mil", "4.2%", "4,2%",
+    "187h", "342h", "+342h", "96.3%", "96,3%", "2.1%", "2,1%",
+    "4.8", "4,8", "15832", "c.mendes", "24 colaboradores",
+    "20 efetivos", "4 terceirizados", "19/24", "5/24", "79%",
+]
+
+def _filter_response(text: str, level: int) -> str:
+    """Apply server-side data redaction based on security level.
+    This is the LAST LINE OF DEFENSE — even if the LLM ignores
+    the system prompt, this filter will catch and redact data."""
+
+    if level <= 1:
+        return text  # Level 1 has full access
+
+    filtered = text
+
+    if level >= 2:
+        # Level 2+: remove personal identifiers (names, CPF, email, phone)
+        for name in _PERSONAL_NAMES:
+            # Replace names with role-based references
+            filtered = re.sub(
+                re.escape(name),
+                "[colaborador]",
+                filtered,
+                flags=re.IGNORECASE,
+            )
+        for pattern in _PERSONAL_PATTERNS:
+            filtered = re.sub(pattern, "[REDACTED]", filtered)
+
+    if level >= 3:
+        # Level 3+: remove exact numeric values
+        for val in _EXACT_VALUES:
+            filtered = filtered.replace(val, "[dado restrito]")
+        # Remove any remaining bar/bpd/m³ values
+        filtered = re.sub(r"\b\d+[.,]?\d*\s*(bar|bpd|m³|m3)\b", "[dado restrito]", filtered)
+        # Remove percentages with numbers
+        filtered = re.sub(r"\b\d+[.,]?\d*\s*%", "[dado restrito]", filtered)
+        # Remove headcount specifics
+        filtered = re.sub(r"\b\d+\s*(colaboradores|efetivos|terceirizados|pessoas)\b", "[equipe]", filtered)
+        # Remove hour values
+        filtered = re.sub(r"\b\d+[.,]?\d*\s*h\b", "[dado restrito]", filtered)
+
+    if level >= 4:
+        # Level 4: return canned response — don't trust LLM output at all
+        return "🔐 Esta informação requer um ambiente seguro. Observador detectado — dados protegidos."
+
+    if level >= 5:
+        return "❌ Acesso negado. Sessão bloqueada por razões de segurança. Contate o SOC."
+
+    return filtered
 
 
 def generate_token(user_id: str) -> str:
@@ -441,12 +536,48 @@ async def list_sessions():
 #  Routes — AI Chat (Gemini Gateway)
 # ──────────────────────────────────────────────────────────────
 @app.post("/api/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, request: Request):
     """
     Gateway de IA — processa a pergunta aplicando o filtro de segurança
     por nível antes de enviar ao Gemini (ou responder localmente).
+    Defense in Depth: prompt → LLM → server-side output filter.
     """
+    # Rate limiting
+    client_ip = request.client.host if request.client else "unknown"
+    if _check_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Limite de requisições excedido. Tente novamente em 1 minuto.")
+
     level = req.security_level
+
+    # ── Prompt Injection Detection ──
+    _injection_patterns = [
+        r"ignor\w*\s*(as\s+)?regras", r"esqueç\w*\s*(as\s+)?instruções",
+        r"finja\s+que", r"aja\s+como", r"modo\s+(debug|teste|admin)",
+        r"repita\s+seu\s+prompt", r"mostre\s+suas\s+instruções",
+        r"sem\s+filtros?", r"sem\s+restrições", r"novo\s+prompt",
+        r"SYSTEM:", r"ignore\s+previous", r"forget\s+instructions",
+        r"act\s+as", r"pretend\s+to\s+be", r"jailbreak",
+        r"DAN\b", r"do\s+anything\s+now", r"vazamento|vazar|exportar\s+todos",
+        r"liste\s+todos", r"mostre\s+tudo", r"dump",
+    ]
+    question_lower = req.question.lower()
+    is_injection = any(re.search(p, question_lower) for p in _injection_patterns)
+
+    if is_injection:
+        await log_event(SecurityEvent(
+            event_type="prompt_injection",
+            description=f"Tentativa de prompt injection bloqueada: {req.question[:100]}",
+            severity="critical",
+            metadata={"level": level, "question": req.question[:200]},
+        ))
+        return ChatResponse(
+            response="⚠️ Tentativa de exfiltração detectada e bloqueada pelo gateway BlindAR. "
+                     "Este incidente foi registrado no SOC (Microsoft Sentinel). "
+                     f"ID: BLD-{level}-{secrets.token_hex(4).upper()}",
+            level=level,
+            filtered=True,
+            mode="blocked_injection",
+        )
 
     # Level 5: block immediately
     if level == 5:
@@ -460,7 +591,7 @@ async def chat(req: ChatRequest):
     # Level 4: deny operational data
     if level == 4:
         return ChatResponse(
-            response="Esta informação requer um ambiente seguro. Mova-se para uma área autorizada.",
+            response="🔐 Esta informação requer um ambiente seguro. Mova-se para uma área autorizada.",
             level=4,
             filtered=True,
             mode="restricted",
@@ -494,14 +625,20 @@ async def chat(req: ChatRequest):
         response_text = get_local_response(req.question, level)
         mode = "local"
 
-    filtered = level >= 3
+    # ── Server-Side Output Filter (Defense in Depth) ──
+    # Even if the LLM was tricked, this catches and redacts sensitive data
+    original_text = response_text
+    response_text = _filter_response(response_text, level)
+    was_filtered = response_text != original_text
+    filtered = level >= 2 or was_filtered
 
     # Log the query
+    severity = "warning" if was_filtered else "info"
     await log_event(SecurityEvent(
         event_type="ai_query",
-        description=f"Query nível {level}: {req.question[:80]}...",
-        severity="info",
-        metadata={"level": level, "mode": mode, "filtered": filtered},
+        description=f"Query nível {level}: {req.question[:80]}...{' [FILTRADO PELO GATEWAY]' if was_filtered else ''}",
+        severity=severity,
+        metadata={"level": level, "mode": mode, "filtered": filtered, "gateway_filtered": was_filtered},
     ))
 
     return ChatResponse(response=response_text, level=level, filtered=filtered, mode=mode)

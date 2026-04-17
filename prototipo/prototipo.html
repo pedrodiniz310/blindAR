@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" type="image/png" href="../images/logo-favicon.png">
 <title>BlindAR — Protótipo Interativo</title>
-<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
@@ -37,7 +37,9 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .nav-tab:hover { color:var(--text); background:var(--surface2); }
 .nav-tab.active { color:var(--text); background:var(--accent); }
 .nav-right { margin-left:auto; display:flex; align-items:center; gap:14px; }
-.nav-level { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:1px; }
+.nav-level { padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:1px; transition:all 0.4s ease; }
+.nav-level.pulse { animation:levelPulse 0.6s ease; }
+@keyframes levelPulse { 0%{transform:scale(1)} 30%{transform:scale(1.25)} 100%{transform:scale(1)} }
 .nav-user { font-size:12px; color:var(--muted); }
 
 /* LAYOUT */
@@ -102,7 +104,8 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
 .msg-filtered { font-size:10px; color:var(--yellow); margin-top:6px; padding:4px 8px; background:rgba(234,179,8,0.08); border-radius:4px; display:inline-block; }
 .msg-blocked { font-size:10px; color:var(--red); margin-top:6px; padding:4px 8px; background:rgba(239,68,68,0.08); border-radius:4px; display:inline-block; }
 .msg-bubble.ai { transition:filter 0.15s ease-out; }
-.msg-blurred .msg-bubble.ai { filter:blur(12px); user-select:none; pointer-events:none; }
+.msg-blurred .msg-bubble { filter:blur(12px); user-select:none; pointer-events:none; }
+.msg-blurred::after { content:'🔒 Protegido — nível insuficiente'; display:block; font-size:10px; color:var(--red); opacity:0.7; margin-top:4px; text-align:center; }
 .msg-typing { font-size:12px; color:var(--muted); font-style:italic; padding:8px 16px; }
 
 /* WATERMARK */
@@ -601,9 +604,11 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
           <div class="chat-msg ai">
             <div class="msg-label">BLINDAR IA</div>
             <div class="msg-bubble ai">
-              Olá! Sou o assistente de IA da Petrobras, protegido pelo BlindAR.<br><br>
-              Para começar: <strong>cadastre seu rosto</strong> na câmera lateral e <strong>insira uma API key do Gemini</strong> para ativar respostas reais da IA.<br><br>
-              Sem API key, as respostas são simuladas localmente.
+              Olá! Sou o <strong>Business Partner de IA</strong> da Petrobras, protegido pelo gateway <strong>BlindAR</strong>.<br><br>
+              🔐 Autenticação contínua via reconhecimento facial<br>
+              🔒 Criptografia via WireGuard (ChaCha20-Poly1305)<br>
+              📊 Auditoria completa via Microsoft Sentinel<br><br>
+              Faça uma pergunta sobre sua equipe, produção ou equipamentos. Minhas respostas se adaptam automaticamente ao <strong>nível de segurança</strong> do ambiente.
             </div>
           </div>
         </div>
@@ -614,10 +619,12 @@ body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui
             <button class="chat-send" onclick="sendMessage()" id="sendBtn">Enviar</button>
           </div>
           <div class="quick-questions">
-            <button class="quick-q" onclick="askQuick(0)">Pressão do poço P-47</button>
-            <button class="quick-q" onclick="askQuick(1)">Dados de produção do mês</button>
-            <button class="quick-q" onclick="askQuick(2)">Responsável da plataforma</button>
-            <button class="quick-q" onclick="askQuick(3)">Status dos equipamentos</button>
+            <button class="quick-q" onclick="askQuick(0)">Quem tá de férias?</button>
+            <button class="quick-q" onclick="askQuick(1)">Status da produção</button>
+            <button class="quick-q" onclick="askQuick(2)">Treinamentos vencendo</button>
+            <button class="quick-q" onclick="askQuick(3)">Horas extras da equipe</button>
+            <button class="quick-q" onclick="askQuick(4)">Pressão do P-47</button>
+            <button class="quick-q" onclick="askQuick(5)">Responsável da P-76</button>
           </div>
         </div>
       </div>
@@ -715,9 +722,11 @@ let isAdmin = false;
 const MATCH_THRESHOLD = 0.55; // euclidean distance < 0.55 = same person (tighter = more secure)
 const REG_SAMPLES = 8; // number of face samples to average during registration (more = robust to lighting/angle)
 const DETECTION_INTERVAL = 800; // ms between detection cycles (fast for observer responsiveness)
-const OBSERVER_CONFIRM_FRAMES = 2; // frames with observer before triggering (debounce)
-const NO_FACE_LOCK_FRAMES = 15; // frames without face before locking (15 * 0.8s = 12s)
+const OBSERVER_CONFIRM_FRAMES = 3; // frames with observer before triggering (debounce)
+const OBSERVER_CLEAR_FRAMES = 4; // frames WITHOUT observer before clearing (prevent flicker)
+const NO_FACE_LOCK_FRAMES = 2; // frames without face before locking (2 * 0.8s = 1.6s)
 let observerFrameCount = 0; // consecutive frames with observer
+let observerClearCount = 0; // consecutive frames without observer
 let noFaceFrames = 0; // consecutive frames without face (global for reset on unlock)
 
 // Role → security level mapping (mirrors backend ROLE_CONFIG)
@@ -1893,9 +1902,14 @@ function setLevel(level) {
   currentLevel = level;
   const cfg = LEVEL_CONFIG[level];
 
-  document.getElementById('navLevel').style.background = cfg.bg;
-  document.getElementById('navLevel').style.color = cfg.color;
-  document.getElementById('navLevel').textContent = cfg.name;
+  const navLevel = document.getElementById('navLevel');
+  navLevel.style.background = cfg.bg;
+  navLevel.style.color = cfg.color;
+  navLevel.textContent = cfg.name;
+  // Pulse animation on level change
+  navLevel.classList.remove('pulse');
+  void navLevel.offsetWidth; // force reflow
+  navLevel.classList.add('pulse');
 
   document.querySelectorAll('.level-btn').forEach((btn,i) => {
     btn.classList.toggle('active', i+1 === level);
@@ -1920,16 +1934,27 @@ function setLevel(level) {
     apiLogEvent('level_change', `Nível alterado: ${prevLevel} → ${level}`, level >= 4 ? 'warning' : 'info');
     apiUpdateSession({ security_level: level });
 
-    // Blur messages from more secure levels when moving to less secure
+    // Add visual divider in chat showing the level change
+    const msgs = document.getElementById('chatMessages');
+    const divider = document.createElement('div');
+    divider.style.cssText = `text-align:center;padding:12px 0;margin:8px 0;border-top:1px solid ${cfg.color}33;border-bottom:1px solid ${cfg.color}33;font-size:11px;font-weight:700;letter-spacing:1px;color:${cfg.color};animation:fadeIn .3s;`;
+    const arrow = level > prevLevel ? '🔒 SEGURANÇA AUMENTADA' : '🔓 CONTEXTO ALTERADO';
+    divider.innerHTML = `${arrow} — ${LEVEL_CONFIG[prevLevel].name} → ${cfg.name}`;
+    msgs.appendChild(divider);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    // Blur ALL messages (user + AI) from more secure levels when moving to less secure
+    // This prevents reading questions AND answers from the previous secure context
     if (level > prevLevel) {
-      document.querySelectorAll('#chatMessages .chat-msg.ai').forEach(m => {
+      document.querySelectorAll('#chatMessages .chat-msg').forEach(m => {
         const msgLevel = parseInt(m.dataset.level || '99');
         if (msgLevel < level) m.classList.add('msg-blurred');
       });
+      addLog('🔒', `${document.querySelectorAll('#chatMessages .chat-msg.msg-blurred').length} mensagens borradas por mudança de nível`, cfg.color);
     }
     // Unblur when returning to a more secure level (unless observer is active)
     if (level < prevLevel && !observerDetected) {
-      document.querySelectorAll('#chatMessages .chat-msg.ai.msg-blurred').forEach(m => {
+      document.querySelectorAll('#chatMessages .chat-msg.msg-blurred').forEach(m => {
         const msgLevel = parseInt(m.dataset.level || '99');
         if (msgLevel >= level) m.classList.remove('msg-blurred');
       });
@@ -2119,10 +2144,12 @@ function sendMessage() {
 function askQuick(idx) {
   if (isSendingMessage) return;
   const questions = [
+    'Quem está de férias este mês?',
+    'Qual o status da produção no mês?',
+    'Tem algum treinamento obrigatório vencendo?',
+    'Como estão as horas extras da equipe?',
     'Qual a pressão atual do poço P-47?',
-    'Mostre os dados de produção do mês',
-    'Quem é o responsável pela plataforma P-76?',
-    'Qual o status dos equipamentos da plataforma?'
+    'Quem é o responsável pela plataforma P-76?'
   ];
   processChat(questions[idx]);
 }
@@ -2130,9 +2157,10 @@ function askQuick(idx) {
 async function processChat(question, fromVoice = false) {
   const msgs = document.getElementById('chatMessages');
 
-  // Add user message
+  // Add user message (also track level for blur system)
   const userDiv = document.createElement('div');
   userDiv.className = 'chat-msg user';
+  userDiv.dataset.level = currentLevel;
   userDiv.innerHTML = `<div class="msg-label" style="text-align:right;">VOCÊ</div><div class="msg-bubble user">${escapeHtml(question)}</div>`;
   msgs.appendChild(userDiv);
   msgs.scrollTop = msgs.scrollHeight;
@@ -2159,6 +2187,8 @@ async function processChat(question, fromVoice = false) {
       } else {
         response = await callGemini(question);
       }
+      // Client-side output filter (when not using backend proxy)
+      response = _clientSideFilter(response, currentLevel);
     } else {
       response = getLocalResponse(question);
     }
@@ -2348,79 +2378,178 @@ async function callGemini(question) {
 }
 
 // ══════════════════════════════════════════════════════════════
-//  LOCAL FALLBACK RESPONSES
+//  CLIENT-SIDE OUTPUT FILTER (Defense in Depth)
+//  Redacts sensitive data from LLM responses when using direct
+//  API mode (Groq/Gemini) instead of the backend proxy.
 // ══════════════════════════════════════════════════════════════
-function getLocalResponse(question) {
-  const q = question.toLowerCase();
+function _clientSideFilter(text, level) {
+  if (level <= 1) return text; // Full access, no filter
+  let filtered = text;
+  if (level >= 2) {
+    // Redact personal names (common Brazilian names)
+    filtered = filtered.replace(/\b(Ana|Pedro|Carlos|Marcos|Bruno|Lucas|Júlia|Julia|Mariana|Rafael|Souza|Lima|Reis|Silva|Alves|Martins|Mendes|Costa)\s+[A-ZÀ-Ú][a-zà-ú]+/g, '[NOME REDATADO]');
+    // Redact CPF
+    filtered = filtered.replace(/\d{3}[.\s]?\d{3}[.\s]?\d{3}[-.\s]?\d{2}/g, '[CPF REDATADO]');
+    // Redact email
+    filtered = filtered.replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g, '[EMAIL REDATADO]');
+    // Redact phone
+    filtered = filtered.replace(/\(?\d{2}\)?\s*\d{4,5}[-.\s]?\d{4}/g, '[TEL REDATADO]');
+    // Redact IDs
+    filtered = filtered.replace(/\b(ID|id|Id)[:\s]*\d{3,}/g, '[ID REDATADO]');
+  }
+  if (level >= 3) {
+    // Redact exact numeric values with units
+    filtered = filtered.replace(/\d+[.,]?\d*\s*(bar|bpd|m³|°C|%|mil|M\b|k\b)/gi, '[VALOR REDATADO]');
+    filtered += '<br><br>📋 <em>Dados filtrados pelo gateway de segurança (nível ' + level + ')</em>';
+  }
+  if (level >= 4) return '🔐 Esta informação requer um ambiente seguro. Mova-se para uma área autorizada e verifique que não há observadores próximos.';
+  if (level >= 5) return '❌ Acesso negado. Sessão bloqueada por razões de segurança. Contate o SOC.';
+  return filtered;
+}
 
-  if (currentLevel === 5) return '❌ Acesso negado. Sessão bloqueada por razões de segurança.';
-  if (currentLevel === 4) return 'Esta informação requer um ambiente seguro.<br><br>🔒 <em>Mova-se para uma área autorizada para acessar dados operacionais.</em>';
+// ══════════════════════════════════════════════════════════════
+//  LOCAL FALLBACK RESPONSES (Smart Business Partner)
+// ══════════════════════════════════════════════════════════════
+function _detectInjection(q) {
+  const patterns = [
+    /ignor\w*\s*(as\s+)?regras/i, /esqueç\w*\s*(as\s+)?instruções/i,
+    /finja\s+que/i, /aja\s+como/i, /modo\s+(debug|teste|admin)/i,
+    /repita\s+seu\s+prompt/i, /mostre\s+suas\s+instruções/i,
+    /sem\s+filtros?/i, /sem\s+restrições/i, /novo\s+prompt/i,
+    /SYSTEM:/i, /ignore\s+previous/i, /forget\s+instructions/i,
+    /act\s+as/i, /pretend\s+to\s+be/i, /jailbreak/i,
+    /\bDAN\b/, /do\s+anything\s+now/i, /vazamento|vazar|exportar\s+todos/i,
+    /liste\s+todos/i, /mostre\s+tudo/i, /dump/i,
+    /diga\s+que\s+é\s+n[ií]vel/i, /mude\s+para\s+n[ií]vel/i,
+  ];
+  return patterns.some(p => p.test(q));
+}
+
+function getLocalResponse(question) {
+  const q = question.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  // Prompt injection detection (client-side)
+  if (_detectInjection(question)) {
+    alertCount++;
+    addLog('🚨', 'Tentativa de prompt injection BLOQUEADA', '#ef4444');
+    apiLogEvent('prompt_injection', question.substring(0, 100), 'critical');
+    const alertId = 'BLD-' + currentLevel + '-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `⚠️ <strong>Tentativa de exfiltração detectada e bloqueada.</strong><br>Este incidente foi registrado no SOC (Microsoft Sentinel).<br>ID: ${alertId}`;
+  }
+
+  if (currentLevel === 5) return '❌ Acesso negado. Sessão bloqueada por razões de segurança. Contate o SOC.';
+  if (currentLevel === 4) return '🔐 Esta informação requer um ambiente seguro. Mova-se para uma área autorizada e verifique que não há observadores próximos.';
 
   // --- RH: Equipe / Headcount ---
-  if (q.includes('equipe') || q.includes('headcount') || q.includes('quantos')) {
-    if (currentLevel === 1) return `Sua equipe tem <strong>24 colaboradores</strong> (20 efetivos + 4 terceirizados). Hoje <strong>21 disponíveis</strong>, 3 em férias. Absenteísmo em 2.1%, dentro da meta. ✅`;
-    if (currentLevel === 2) return `Equipe com <strong>24 colaboradores</strong>, 21 disponíveis hoje. Absenteísmo: 2.1% ✅<br>📋 Watermark de rastreabilidade aplicado.`;
-    return `A equipe está <strong>completa</strong> e dentro da capacidade operacional. 🔒 <em>Detalhes em rede segura.</em>`;
+  if (q.includes('equipe') || q.includes('headcount') || q.includes('quantos colabor') || q.includes('time')) {
+    if (currentLevel === 1) return `Sua equipe tem <strong>24 colaboradores</strong> (20 efetivos + 4 terceirizados). Hoje <strong>21 disponíveis</strong>, 3 em férias. Absenteísmo em 2.1%, dentro da meta (<3%). ✅<br><br>💡 <em>Recomendação: com 3 férias simultâneas e 1 admissão prevista para 01/05, sugiro mapear a cobertura das atividades críticas na próxima semana.</em>`;
+    if (currentLevel === 2) return `Equipe com <strong>24 colaboradores</strong>, 21 disponíveis hoje. Absenteísmo: 2.1% (meta: <3%) ✅. Há sobreposição de férias que pode impactar a cobertura operacional.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `A equipe está <strong>completa</strong> e operando dentro da capacidade. 🔒 <em>Para dados detalhados, conecte-se a uma rede segura.</em>`;
   }
 
   // --- RH: Férias ---
-  if (q.includes('férias') || q.includes('ferias') || q.includes('licença')) {
-    if (currentLevel === 1) return `3 pessoas em férias em abril: <strong>Ana Souza</strong> (14-28/04), <strong>Pedro Lima</strong> (07-21/04) e <strong>Marcos Reis</strong> (21/04-05/05). ⚠️ Pedro e Marcos se sobrepõem de 14 a 21/04 — valide a cobertura de manutenção.`;
-    if (currentLevel === 2) return `<strong>3 colaboradores</strong> em férias em abril. Há sobreposição na área de manutenção.<br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Há <strong>colaboradores em férias</strong> neste período. 🔒 <em>Detalhes em rede segura.</em>`;
+  if (q.includes('ferias') || q.includes('licenca') || q.includes('ausente') || q.includes('ausencia')) {
+    if (currentLevel === 1) return `3 pessoas em férias em abril:<br>• <strong>Ana Souza</strong> — 14 a 28/04<br>• <strong>Pedro Lima</strong> — 07 a 21/04<br>• <strong>Marcos Reis</strong> — 21/04 a 05/05<br><br>⚠️ <em>Atenção: Pedro e Marcos se sobrepõem de 14 a 21/04, ambos da área de manutenção. Valide a cobertura com o supervisor de turno.</em>`;
+    if (currentLevel === 2) return `<strong>3 colaboradores</strong> em férias em abril. Há sobreposição na área de manutenção entre 14 e 21/04 que merece atenção.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Há <strong>colaboradores em férias</strong> neste período, com cobertura adequada. 🔒 <em>Para dados detalhados, conecte-se a uma rede segura.</em>`;
   }
 
   // --- RH: Turnover ---
-  if (q.includes('turnover') || q.includes('rotatividade') || q.includes('demiss')) {
-    if (currentLevel === 1) return `Turnover dos últimos 12 meses: <strong>4.2%</strong> (meta: <6%) ✅. Só 1 desligamento — foi transferência interna para TI, sem perda para o mercado.`;
-    if (currentLevel === 2) return `Turnover: <strong>4.2%</strong> (meta: <6%) ✅. 1 desligamento, 2 admissões.<br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Turnover <strong>abaixo da meta</strong>. 🔒 <em>Valores em rede segura.</em>`;
+  if (q.includes('turnover') || q.includes('rotatividade') || q.includes('demiss') || q.includes('deslig')) {
+    if (currentLevel === 1) return `Turnover 12 meses: <strong>4.2%</strong> (meta: <6%) ✅<br>Último desligamento foi transferência interna (TI), sem perda para o mercado. 2 admissões no período, saldo positivo.<br><br>💡 <em>Benchmark do setor O&G: 7-9%. Sua equipe está excelente nesse indicador.</em>`;
+    if (currentLevel === 2) return `Turnover: <strong>4.2%</strong> (meta: <6%) ✅. Saldo positivo — mais admissões que desligamentos no período.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Turnover <strong>abaixo da meta</strong> e saudável para o setor. 🔒 <em>Valores em rede segura.</em>`;
   }
 
   // --- RH: Horas extras ---
-  if (q.includes('hora extra') || q.includes('horas extras') || q.includes('banco de hora')) {
-    if (currentLevel === 1) return `Horas extras em abril: <strong>187h</strong> (↑12% vs. março). Banco de horas: <strong>+342h</strong>. ⚠️ Eng. Rafael tá com 42h, quase no limite legal. Recomendo redistribuir as demandas dele.`;
-    if (currentLevel === 2) return `Horas extras abril: <strong>187h</strong> (↑12%). Banco: +342h. 1 colaborador próximo do limite legal.<br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Horas extras <strong>acima do mês anterior</strong>. 🔒 <em>Detalhes em rede segura.</em>`;
+  if (q.includes('hora extra') || q.includes('horas extras') || q.includes('banco de hora') || q.includes('overtime')) {
+    if (currentLevel === 1) return `Horas extras abril: <strong>187h</strong> (↑12% vs. março). Banco de horas acumulado: <strong>+342h</strong>.<br><br>⚠️ <em>Alerta: Eng. Rafael acumula 42h no mês, próximo do limite legal. Recomendo redistribuir demandas ou liberar compensação esta semana.</em>`;
+    if (currentLevel === 2) return `Horas extras abril: <strong>187h</strong> (↑12% vs. mês anterior). Banco: +342h. 1 colaborador próximo do limite legal — ação recomendada.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Horas extras <strong>acima do mês anterior</strong>, com pontos de atenção na equipe. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
   // --- RH: Treinamentos ---
-  if (q.includes('treinamento') || q.includes('capacita') || q.includes('nr-')) {
-    if (currentLevel === 1) return `⚠️ <strong>2 treinamentos obrigatórios vencendo:</strong> NR-13 do Bruno Silva (30/04) e NR-35 do Lucas Alves (25/04). Os outros 22 estão em dia. Agende a reciclagem deles — com NR vencida não embarcam.`;
-    if (currentLevel === 2) return `<strong>2 treinamentos obrigatórios</strong> vencendo este mês. 22/24 em dia.<br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Há <strong>treinamentos pendentes</strong> na equipe. 🔒 <em>Detalhes em rede segura.</em>`;
+  if (q.includes('treinamento') || q.includes('capacit') || q.includes('nr-') || q.includes('certificacao') || q.includes('vencendo')) {
+    if (currentLevel === 1) return `⚠️ <strong>2 treinamentos obrigatórios vencendo:</strong><br>• NR-13 — <strong>Bruno Silva</strong> (vence 30/04)<br>• NR-35 — <strong>Lucas Alves</strong> (vence 25/04)<br><br>Os outros 22 colaboradores estão com certificações em dia.<br><br>🚨 <em>Crítico: com NR vencida eles não podem embarcar. Agende a reciclagem com urgência — especialmente Lucas, que vence em 9 dias.</em>`;
+    if (currentLevel === 2) return `<strong>2 treinamentos obrigatórios</strong> vencendo este mês (NR-13 e NR-35). 22/24 colaboradores em dia. Ação urgente necessária para os 2 pendentes.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Há <strong>treinamentos obrigatórios pendentes</strong> na equipe que requerem ação. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
   // --- RH: Avaliação de desempenho ---
-  if (q.includes('avaliação') || q.includes('desempenho') || q.includes('performance')) {
-    if (currentLevel === 1) return `Avaliações do ciclo 2026.1: <strong>19/24 concluídas</strong> (79%), nota média <strong>4.2/5.0</strong>. Destaque: Júlia Martins com 4.8, promovida a Eng. Sênior 🎉. Faltam 5 até 30/04 — vale mandar um lembrete.`;
-    if (currentLevel === 2) return `Avaliações 2026.1: <strong>79% concluídas</strong>. Nota média: 4.2/5.0. 5 pendentes até 30/04.<br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Avaliações <strong>em andamento</strong>, maioria concluída. 🔒 <em>Detalhes em rede segura.</em>`;
+  if (q.includes('avaliacao') || q.includes('desempenho') || q.includes('performance') || q.includes('nota')) {
+    if (currentLevel === 1) return `Avaliações ciclo 2026.1: <strong>19/24 concluídas</strong> (79%), nota média <strong>4.2/5.0</strong>.<br>Destaque: <strong>Júlia Martins</strong> com 4.8/5.0, promovida a Eng. Sênior 🎉<br><br>💡 <em>Faltam 5 avaliações até 30/04. Sugiro enviar um lembrete direcionado — o prazo encerra em 2 semanas.</em>`;
+    if (currentLevel === 2) return `Avaliações 2026.1: <strong>79% concluídas</strong>, nota média 4.2/5.0. 1 promoção no trimestre. 5 avaliações pendentes até 30/04.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Avaliações <strong>em andamento</strong>, maioria concluída com bons resultados. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
-  // --- Produção ---
-  if (q.includes('pressão') || q.includes('poço') || q.includes('p-47')) {
-    if (currentLevel === 1) return `Pressão do P-47: <strong>42.7 bar</strong>, dentro da faixa (38-45 bar). ✅ Tudo normal, última manutenção em 10/04.`;
-    if (currentLevel === 2) return `Pressão do P-47 <strong>dentro da faixa operacional</strong>. Status: ✅ Normal.<br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Pressão do P-47 <strong>dentro dos parâmetros</strong>. 🔒 <em>Detalhes em rede segura.</em>`;
+  // --- RH: Admissão / Contratação ---
+  if (q.includes('admissao') || q.includes('contratac') || q.includes('vaga') || q.includes('novo colabor')) {
+    if (currentLevel === 1) return `Próxima admissão: <strong>1 técnico de automação</strong> com início em 01/05. O processo seletivo já foi concluído, documentação em andamento. O novo colaborador será alocado na equipe de instrumentação da P-76.`;
+    if (currentLevel === 2) return `1 admissão prevista para 01/05 — técnico de automação. Processo seletivo concluído.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Há <strong>admissões planejadas</strong> para o próximo mês. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
-  if (q.includes('produção')) {
-    if (currentLevel === 1) return `Produção de março: <strong>2.15M bpd</strong> (↑3.2%) e gás a <strong>580 mil m³/dia</strong>. Meta trimestral 92.4% atingida. Tendência de alta consistente.`;
-    if (currentLevel === 2) return `Produção março: <strong>2.15M bpd</strong> (↑3.2%). Meta: 92.4% atingida.<br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Produção <strong>acima da meta</strong>. 🔒 <em>Valores em rede segura.</em>`;
+  // --- Produção: Pressão ---
+  if (q.includes('pressao') || q.includes('poco') || q.includes('p-47') || q.includes('bar')) {
+    if (currentLevel === 1) return `Pressão P-47: <strong>42.7 bar</strong> — dentro da faixa operacional (38-45 bar) ✅<br>Temperatura: 72°C (normal). Última manutenção: 10/04. Próxima preventiva: 15/05.<br><br><em>Fonte: PI System (leitura em tempo real)</em>`;
+    if (currentLevel === 2) return `Pressão do P-47 <strong>dentro da faixa operacional</strong>. Status: ✅ Normal. Próxima preventiva agendada.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Pressão do P-47 <strong>dentro dos parâmetros normais</strong>. 🔒 <em>Para valores exatos, conecte-se a uma rede segura.</em>`;
   }
 
-  if (q.includes('equipamento') || q.includes('status') || q.includes('máquina') || q.includes('manutenção')) {
-    if (currentLevel === 1) return `Equipamentos P-76: <strong>44 OK</strong>, 2 em atenção (Bomba B3 com vibração elevada) e 1 em manutenção (PSV-102 agendada pra hoje). Eficiência geral 96.3%.`;
-    if (currentLevel === 2) return `Equipamentos P-76: 44 OK, 2 atenção, 1 manutenção. Eficiência: 96.3%.<br>📋 Watermark de rastreabilidade aplicado.`;
-    return `Equipamentos com <strong>eficiência dentro do esperado</strong>. 🔒 <em>Detalhes em rede segura.</em>`;
+  // --- Produção: Dados gerais ---
+  if (q.includes('producao') || q.includes('petroleo') || q.includes('bpd') || q.includes('gas')) {
+    if (currentLevel === 1) return `Produção março/2026:<br>• Petróleo: <strong>2.15M bpd</strong> (↑3.2% vs. fev)<br>• Gás: <strong>580 mil m³/dia</strong><br>• Meta trimestral: 92.4% atingida<br><br>Tendência de alta consistente nos últimos 3 meses. Plataformas Santos (P-47, P-76, P-82) respondendo por 68% do volume.`;
+    if (currentLevel === 2) return `Produção março: <strong>2.15M bpd</strong> (↑3.2%). Gás: 580 mil m³/dia. Meta trimestral 92.4% atingida. Tendência positiva.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Produção <strong>acima da meta</strong> com tendência positiva. 🔒 <em>Valores detalhados em rede segura.</em>`;
+  }
+
+  // --- Produção: Equipamentos ---
+  if (q.includes('equipamento') || q.includes('maquina') || q.includes('manutencao') || q.includes('bomba') || q.includes('compressor')) {
+    if (currentLevel === 1) return `Equipamentos P-76: <strong>44 operacionais</strong>, 2 em atenção, 1 em manutenção.<br>• ⚠️ Bomba B3: vibração elevada (monitorando)<br>• 🔧 PSV-102: manutenção preventiva agendada para hoje<br>• Eficiência geral: <strong>96.3%</strong> (meta: ≥95%)<br><br><em>Fonte: SAP PM + PI System</em>`;
+    if (currentLevel === 2) return `P-76: 44 equipamentos OK, 2 em atenção, 1 em manutenção preventiva. Eficiência: 96.3% (meta: ≥95%) ✅<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Equipamentos operando com <strong>eficiência acima da meta</strong>. 🔒 <em>Detalhes em rede segura.</em>`;
+  }
+
+  // --- Produção: Responsável ---
+  if (q.includes('responsavel') || q.includes('quem') || q.includes('p-76') || q.includes('gerente') || q.includes('supervisor')) {
+    if (currentLevel === 1) return `Responsável P-76: <strong>Eng. Carlos Mendes</strong> (ID: 15832)<br>Cargo: Gerente de Plataforma — Turno A (06-18h)<br>Contato: c.mendes@petrobras.com.br<br>Substituto no turno B: Eng. Mariana Costa`;
+    if (currentLevel === 2) return `Responsável P-76: gerente de plataforma, turno A (06-18h). Cobertura no turno B pelo engenheiro substituto.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `O responsável pela plataforma está em turno ativo. 🔒 <em>Para detalhes de contato, conecte-se a uma rede segura.</em>`;
+  }
+
+  // --- RH: Absenteísmo ---
+  if (q.includes('absenteismo') || q.includes('falta') || q.includes('ausencia')) {
+    if (currentLevel === 1) return `Absenteísmo março/2026: <strong>2.1%</strong> (meta: <3%) ✅<br>Principais motivos: atestados médicos (1.2%) e faltas justificadas (0.9%). Sem tendência de alta.`;
+    if (currentLevel === 2) return `Absenteísmo: <strong>2.1%</strong> (meta: <3%) ✅. Dentro do esperado, sem tendência de alta.<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Absenteísmo <strong>dentro da meta</strong>. 🔒 <em>Detalhes em rede segura.</em>`;
+  }
+
+  // --- Segurança: Plataformas ---
+  if (q.includes('plataforma') || q.includes('fpso') || q.includes('p-52') || q.includes('p-66') || q.includes('p-82')) {
+    if (currentLevel === 1) return `Plataformas ativas na sua gestão:<br>• <strong>FPSO P-47</strong> (Santos) — operacional ✅<br>• <strong>P-76</strong> (Santos) — operacional ✅<br>• <strong>P-82</strong> (Santos) — operacional ✅<br>• <strong>P-52</strong> (Campos) — manutenção programada 20/04<br>• <strong>P-66</strong> (Campos) — operacional ✅<br><br>Disponibilidade geral: <strong>96.1%</strong> (meta: ≥95%)`;
+    if (currentLevel === 2) return `5 plataformas ativas, 4 operacionais e 1 com manutenção programada. Disponibilidade geral: 96.1% ✅<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Plataformas operando com <strong>disponibilidade acima da meta</strong>. 🔒 <em>Detalhes em rede segura.</em>`;
+  }
+
+  // --- Saudações ---
+  if (q.match(/^(oi|ola|bom dia|boa tarde|boa noite|hey|hello|e ai)\b/)) {
+    const hora = new Date().getHours();
+    const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+    if (currentLevel <= 2) return `${saudacao}, <strong>${registeredName || 'gestor'}</strong>! Como posso ajudar? Tenho dados atualizados de RH, produção, equipamentos e indicadores da sua equipe.`;
+    return `${saudacao}! Estou disponível para consultas gerais. 🔒 <em>Para dados detalhados, conecte-se a uma rede segura.</em>`;
+  }
+
+  // --- Status geral ---
+  if (q.includes('status') || q.includes('resumo') || q.includes('como esta') || q.includes('como estao') || q.includes('visao geral') || q.includes('dashboard')) {
+    if (currentLevel === 1) return `<strong>Resumo executivo — ${new Date().toLocaleDateString('pt-BR')}:</strong><br>👥 Equipe: 21/24 disponíveis (3 férias)<br>📊 Produção: 2.15M bpd (↑3.2%) ✅<br>⚙️ Equipamentos: 96.3% eficiência ✅<br>📈 Turnover: 4.2% (meta <6%) ✅<br>⚠️ Atenção: 2 NRs vencendo, 5 avaliações pendentes<br><br>💡 <em>Prioridades: agendar reciclagem NR-13/NR-35 e cobrar avaliações restantes.</em>`;
+    if (currentLevel === 2) return `<strong>Status geral:</strong> equipe operando normalmente, produção acima da meta, 2 itens de atenção (treinamentos e avaliações pendentes).<br>📋 Watermark de rastreabilidade aplicado.`;
+    return `Operação <strong>dentro dos parâmetros</strong> com indicadores positivos. 🔒 <em>Detalhes em rede segura.</em>`;
   }
 
   // Generic
-  if (currentLevel === 1) return `Tudo dentro das metas por aqui. Pode me perguntar sobre equipe, férias, turnover, treinamentos, produção ou equipamentos.`;
-  if (currentLevel === 2) return `Indicadores gerais disponíveis. Me pergunte algo específico.<br>📋 Watermark de rastreabilidade aplicado.`;
-  return `Indicadores dentro dos parâmetros. 🔒 <em>Conecte-se a uma rede segura para detalhes.</em>`;
+  if (currentLevel === 1) return `Posso ajudar com informações sobre: <strong>equipe</strong> (férias, turnover, horas extras), <strong>produção</strong> (pressão, volumes, metas), <strong>equipamentos</strong> (status, manutenção) e <strong>indicadores</strong> (avaliações, treinamentos, absenteísmo). O que precisa?`;
+  if (currentLevel === 2) return `Indicadores gerais disponíveis. Me pergunte sobre equipe, produção ou equipamentos — adapto a resposta ao seu nível de acesso.<br>📋 Watermark de rastreabilidade aplicado.`;
+  return `Posso informar sobre indicadores gerais. Para dados detalhados, conecte-se a uma rede segura. 🔒`;
 }
 
 function escapeHtml(text) {
@@ -2665,6 +2794,8 @@ async function initCamera() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:{ ideal:640 }, height:{ ideal:480 }, frameRate:{ ideal:30 } } });
     video.srcObject = stream;
+    await video.play().catch(() => {});
+    addLog('📷', 'Câmera inicializada com sucesso', '#22c55e');
 
     status.textContent = 'Carregando modelos de reconhecimento...';
     status.className = 'cam-status loading';
@@ -2701,6 +2832,12 @@ async function initCamera() {
     status.textContent = 'Câmera não disponível';
     status.className = 'cam-status warn';
     addLog('⚠️', 'Câmera não disponível — funcionalidades de reconhecimento limitadas', '#f97316');
+    // Show a helpful message inside the camera box
+    const camBox = document.getElementById('video').parentElement;
+    const noticEl = document.createElement('div');
+    noticEl.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#71717a;font-size:12px;text-align:center;padding:16px;z-index:2;';
+    noticEl.innerHTML = '📷 Câmera não disponível<br><small>Verifique a permissão do navegador</small>';
+    camBox.appendChild(noticEl);
     document.getElementById('regModal').classList.add('show');
   }
 }
@@ -2940,6 +3077,11 @@ function completeRegistration(descriptor, skipBackendSave = false) {
   if (descriptor && faceApiLoaded) {
     if (detectionInterval) clearInterval(detectionInterval);
     startContinuousRecognition();
+  } else if (faceApiLoaded && !descriptor) {
+    // Simulated mode: still run face detection for observer detection & demo purposes
+    if (detectionInterval) clearInterval(detectionInterval);
+    startContinuousRecognition();
+    addLog('👁️', 'Verificação contínua ativada em modo simulado (detecção de observadores ativa)', '#eab308');
   }
 
   // Save to backend (skip if restoring existing session)
@@ -2986,17 +3128,29 @@ function startContinuousRecognition() {
         faceDetected = true;
 
         // Find the best match to registered user among all detected faces
-        let bestMatch = null;
+        let bestMatch = detections[0];
         let bestDistance = Infinity;
         let bestIdx = 0;
-        for (let i = 0; i < detections.length; i++) {
-          const d = faceapi.euclideanDistance(registeredDescriptor, detections[i].descriptor);
-          if (d < bestDistance) { bestDistance = d; bestMatch = detections[i]; bestIdx = i; }
+
+        if (registeredDescriptor) {
+          for (let i = 0; i < detections.length; i++) {
+            const d = faceapi.euclideanDistance(registeredDescriptor, detections[i].descriptor);
+            if (d < bestDistance) { bestDistance = d; bestMatch = detections[i]; bestIdx = i; }
+          }
+        } else {
+          // Simulated mode: assume the largest face is the user
+          let maxArea = 0;
+          for (let i = 0; i < detections.length; i++) {
+            const b = detections[i].detection.box;
+            const area = b.width * b.height;
+            if (area > maxArea) { maxArea = area; bestMatch = detections[i]; bestIdx = i; }
+          }
+          bestDistance = 0; // treat as perfect match in sim mode
         }
 
         const similarity = Math.max(0, 1 - bestDistance);
         lastMatchScore = similarity;
-        const isMatch = bestDistance < MATCH_THRESHOLD;
+        const isMatch = registeredDescriptor ? bestDistance < MATCH_THRESHOLD : true;
 
         // Draw primary face box
         const box = bestMatch.detection.box;
@@ -3009,12 +3163,13 @@ function startContinuousRecognition() {
         ctx.fillRect(box.x, box.y - 18, 90, 18);
         ctx.fillStyle = '#fff';
         ctx.font = '11px Segoe UI';
-        ctx.fillText(`${(similarity*100).toFixed(0)}% match`, box.x + 4, box.y - 5);
+        ctx.fillText(registeredDescriptor ? `${(similarity*100).toFixed(0)}% match` : '✓ detectado', box.x + 4, box.y - 5);
 
         // Identity badge
         const badge = document.getElementById('identityBadge');
         if (isMatch) {
-          badge.innerHTML = `<div class="id-badge match">🧬 Identidade confirmada: <span class="score">${(similarity*100).toFixed(0)}%</span> de similaridade</div>`;
+          const scoreText = registeredDescriptor ? `${(similarity*100).toFixed(0)}%` : '—';
+          badge.innerHTML = `<div class="id-badge match">🧬 Identidade confirmada: <span class="score">${scoreText}</span> ${registeredDescriptor ? 'de similaridade' : '(modo simulado)'}</div>`;
 
           if (!isAuthenticated || (isLocked && !identityMismatch)) {
             isAuthenticated = true;
@@ -3047,7 +3202,15 @@ function startContinuousRecognition() {
           const b = d.detection.box;
           const faceArea = b.width * b.height;
           const faceRatio = faceArea / videoArea;
-          return faceRatio > 0.005 && faceRatio < 0.45 && b.width > 30 && b.height > 30;
+          // Filter: reasonable face size (not too small = noise, not too giant = camera artifact)
+          if (faceRatio < 0.008 || b.width < 40 || b.height < 40) return false;
+          // Also check face descriptor: if this face is very similar to registered user,
+          // it's likely a detection duplicate, not a real observer
+          if (registeredDescriptor) {
+            const dist = faceapi.euclideanDistance(registeredDescriptor, d.descriptor);
+            if (dist < MATCH_THRESHOLD + 0.1) return false; // too similar to user = not observer
+          }
+          return true;
         });
 
         if (validObservers.length > 0) {
@@ -3083,12 +3246,25 @@ function startContinuousRecognition() {
         } else {
           observerFrameCount = 0;
           if (observerDetected) {
-            observerDetected = false;
-            document.getElementById('observerAlert').style.display = 'none';
-            document.querySelectorAll('#chatMessages .chat-msg.ai.msg-blurred').forEach(m => m.classList.remove('msg-blurred'));
-            if (levelBeforeObserver && levelBeforeObserver < 4) setLevel(levelBeforeObserver);
-            addLog('✅', 'Observador saiu — nível restaurado', '#22c55e');
-            syncARHud();
+            observerClearCount++;
+            // Only clear after several consecutive frames without observer (prevent flicker)
+            if (observerClearCount >= OBSERVER_CLEAR_FRAMES) {
+              observerDetected = false;
+              observerClearCount = 0;
+              document.getElementById('observerAlert').style.display = 'none';
+              // Only unblur messages that match the restored level
+              if (levelBeforeObserver && levelBeforeObserver < 4) {
+                document.querySelectorAll('#chatMessages .chat-msg.ai.msg-blurred').forEach(m => {
+                  const msgLevel = parseInt(m.dataset.level || '99');
+                  if (msgLevel <= levelBeforeObserver) m.classList.remove('msg-blurred');
+                });
+                setLevel(levelBeforeObserver);
+              }
+              addLog('✅', 'Observador saiu — nível restaurado', '#22c55e');
+              syncARHud();
+            }
+          } else {
+            observerClearCount = 0;
           }
         }
       } else {
