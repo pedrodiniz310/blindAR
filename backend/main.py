@@ -34,7 +34,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 JWT_SECRET = os.getenv("JWT_SECRET", secrets.token_hex(32))
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
 
@@ -848,42 +848,39 @@ async def dashboard():
 
 
 # ──────────────────────────────────────────────────────────────
-#  Routes — Text-to-Speech (ElevenLabs + Edge TTS fallback)
+#  Routes — Text-to-Speech (OpenAI TTS + Edge TTS fallback)
 # ──────────────────────────────────────────────────────────────
 class TTSRequest(BaseModel):
     text: str = Field(..., max_length=500)
-    voice_id: str = Field(default="cjVigY5qzO86Huf0OWal")  # Eric — Smooth, Trustworthy
+    voice: str = Field(default="onyx")  # onyx=male deep, nova=female warm, alloy=neutral
 
 
-async def _tts_elevenlabs(text: str, voice_id: str) -> bytes:
-    """Try ElevenLabs TTS. Raises on failure."""
+async def _tts_openai(text: str, voice: str) -> bytes:
+    """OpenAI TTS. Raises on failure."""
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}",
+            "https://api.openai.com/v1/audio/speech",
             headers={
-                "xi-api-key": ELEVENLABS_API_KEY,
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
                 "Content-Type": "application/json",
             },
             json={
-                "text": text,
-                "model_id": "eleven_multilingual_v2",
-                "voice_settings": {
-                    "stability": 0.4,
-                    "similarity_boost": 0.8,
-                    "style": 0.15,
-                },
+                "model": "tts-1",
+                "input": text,
+                "voice": voice,
+                "response_format": "mp3",
             },
             timeout=30.0,
         )
     if resp.status_code != 200:
-        raise RuntimeError(f"ElevenLabs {resp.status_code}")
+        raise RuntimeError(f"OpenAI TTS {resp.status_code}: {resp.text[:200]}")
     return resp.content
 
 
 async def _tts_edge(text: str) -> bytes:
-    """Free fallback TTS via Microsoft Edge neural voices."""
+    """Free fallback TTS via Microsoft Edge multilingual neural voices."""
     import edge_tts
-    communicate = edge_tts.Communicate(text, voice="pt-BR-AntonioNeural")
+    communicate = edge_tts.Communicate(text, voice="en-US-AndrewMultilingualNeural")
     buf = io.BytesIO()
     async for chunk in communicate.stream():
         if chunk["type"] == "audio":
@@ -893,23 +890,23 @@ async def _tts_edge(text: str) -> bytes:
 
 @app.post("/api/tts")
 async def text_to_speech(req: TTSRequest):
-    """TTS with automatic fallback: ElevenLabs → Edge TTS."""
+    """TTS with automatic fallback: OpenAI → Edge TTS."""
     if not req.text.strip():
         raise HTTPException(400, "Empty text")
 
     clean = req.text.strip()
 
-    # 1) Try ElevenLabs (premium)
-    if ELEVENLABS_API_KEY:
+    # 1) Try OpenAI TTS (premium)
+    if OPENAI_API_KEY:
         try:
-            audio = await _tts_elevenlabs(clean, req.voice_id)
+            audio = await _tts_openai(clean, req.voice)
             return Response(
                 content=audio,
                 media_type="audio/mpeg",
-                headers={"Cache-Control": "public, max-age=3600", "X-TTS-Engine": "elevenlabs"},
+                headers={"Cache-Control": "public, max-age=3600", "X-TTS-Engine": "openai"},
             )
-        except Exception:
-            pass  # fall through to Edge TTS
+        except Exception as e:
+            print(f"[TTS] OpenAI failed: {e} — falling back to Edge TTS")
 
     # 2) Fallback: Edge TTS (free, unlimited)
     try:

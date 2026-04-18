@@ -1607,13 +1607,13 @@ async function voiceProcessCommand(command) {
   await processChat(command, true); // true = from voice, trigger TTS
 }
 
-let _ttsAudio = null; // current ElevenLabs audio element
+let _ttsAudio = null; // current TTS audio element
 let _ttsWarmedUp = false;
 
 function warmUpTTS() {
   if (_ttsWarmedUp) return;
   _ttsWarmedUp = true;
-  // Fire-and-forget: wake up Render + pre-load ElevenLabs connection
+  // Fire-and-forget: wake up Render + pre-load TTS connection
   fetch(`${backendUrl}/api/tts`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1624,7 +1624,7 @@ function warmUpTTS() {
     _ttsWarmedUp = false; // allow retry
     addLog('⏳', 'Backend ainda acordando... voz neural carregará na 1ª fala', '#f59e0b');
   });
-  addLog('🔥', 'Pré-aquecendo voz neural (ElevenLabs/Edge)...', '#a78bfa');
+  addLog('🔥', 'Pré-aquecendo voz neural (OpenAI/Edge)...', '#a78bfa');
 }
 
 function speakResponse(text) {
@@ -1648,7 +1648,7 @@ function speakResponse(text) {
   voiceState = 'speaking';
   updateVoiceUI();
 
-  // Try neural TTS via backend (ElevenLabs → Edge TTS), fallback to browser
+  // Try neural TTS via backend (OpenAI → Edge TTS), fallback to browser
   _speakNeural(clean).catch(err => {
     addLog('⚠️', `Backend TTS falhou: ${err.message} — usando voz do navegador`, '#f59e0b');
     _speakBrowserTTS(clean);
@@ -1688,7 +1688,7 @@ async function _speakNeural(clean, attempt = 1) {
       _onSpeechDone();
     };
     await _ttsAudio.play();
-    addLog('🔊', `TTS ${engine === 'elevenlabs' ? 'ElevenLabs (Eric)' : 'Edge (Antonio)'} — voz neural`, '#a78bfa');
+    addLog('🔊', `TTS ${engine === 'openai' ? 'OpenAI (Onyx)' : 'Edge (Andrew)'} — voz neural`, '#a78bfa');
   } catch (err) {
     clearTimeout(timeout);
     // Retry once (handles Render cold-start ~30s)
