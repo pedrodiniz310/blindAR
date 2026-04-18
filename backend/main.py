@@ -34,7 +34,6 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 JWT_SECRET = os.getenv("JWT_SECRET", secrets.token_hex(32))
 CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",")]
 
@@ -848,24 +847,24 @@ async def dashboard():
 
 
 # ──────────────────────────────────────────────────────────────
-#  Routes — Text-to-Speech (OpenAI TTS + Edge TTS fallback)
+#  Routes — Text-to-Speech (Groq PlayAI + Edge TTS + gTTS fallback)
 # ──────────────────────────────────────────────────────────────
 class TTSRequest(BaseModel):
     text: str = Field(..., max_length=500)
-    voice: str = Field(default="onyx")  # onyx=male deep, nova=female warm, alloy=neutral
+    voice: str = Field(default="Fritz-PlayAI")  # Arista-PlayAI, Fritz-PlayAI, Atlas-PlayAI
 
 
-async def _tts_openai(text: str, voice: str) -> bytes:
-    """OpenAI TTS. Raises on failure."""
+async def _tts_groq(text: str, voice: str) -> bytes:
+    """Groq TTS (PlayAI model) — free tier, high quality. Raises on failure."""
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            "https://api.openai.com/v1/audio/speech",
+            "https://api.groq.com/openai/v1/audio/speech",
             headers={
-                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Authorization": f"Bearer {GROQ_API_KEY}",
                 "Content-Type": "application/json",
             },
             json={
-                "model": "tts-1",
+                "model": "playai-tts",
                 "input": text,
                 "voice": voice,
                 "response_format": "mp3",
@@ -873,7 +872,7 @@ async def _tts_openai(text: str, voice: str) -> bytes:
             timeout=30.0,
         )
     if resp.status_code != 200:
-        raise RuntimeError(f"OpenAI TTS {resp.status_code}: {resp.text[:200]}")
+        raise RuntimeError(f"Groq TTS {resp.status_code}: {resp.text[:200]}")
     return resp.content
 
 
@@ -900,23 +899,23 @@ async def _tts_gtts(text: str) -> bytes:
 
 @app.post("/api/tts")
 async def text_to_speech(req: TTSRequest):
-    """TTS with automatic fallback: OpenAI → Edge TTS → gTTS."""
+    """TTS with automatic fallback: Groq → Edge TTS → gTTS."""
     if not req.text.strip():
         raise HTTPException(400, "Empty text")
 
     clean = req.text.strip()
 
-    # 1) Try OpenAI TTS (premium)
-    if OPENAI_API_KEY:
+    # 1) Try Groq TTS (free, high quality — PlayAI model)
+    if GROQ_API_KEY:
         try:
-            audio = await _tts_openai(clean, req.voice)
+            audio = await _tts_groq(clean, req.voice)
             return Response(
                 content=audio,
                 media_type="audio/mpeg",
-                headers={"Cache-Control": "public, max-age=3600", "X-TTS-Engine": "openai"},
+                headers={"Cache-Control": "public, max-age=3600", "X-TTS-Engine": "groq"},
             )
         except Exception as e:
-            print(f"[TTS] OpenAI failed: {e} — falling back to Edge TTS")
+            print(f"[TTS] Groq failed: {e} — falling back to Edge TTS")
 
     # 2) Fallback: Edge TTS (free, neural)
     try:

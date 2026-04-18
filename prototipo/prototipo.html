@@ -1624,7 +1624,7 @@ function warmUpTTS() {
     _ttsWarmedUp = false; // allow retry
     addLog('⏳', 'Backend ainda acordando... voz neural carregará na 1ª fala', '#f59e0b');
   });
-  addLog('🔥', 'Pré-aquecendo voz neural (OpenAI/Edge)...', '#a78bfa');
+  addLog('🔥', 'Pré-aquecendo voz neural (Groq/Edge)...', '#a78bfa');
 }
 
 function speakResponse(text) {
@@ -1648,7 +1648,7 @@ function speakResponse(text) {
   voiceState = 'speaking';
   updateVoiceUI();
 
-  // Try neural TTS via backend (OpenAI → Edge TTS), fallback to browser
+  // Try neural TTS via backend (Groq → Edge TTS), fallback to browser
   _speakNeural(clean).catch(err => {
     addLog('⚠️', `Backend TTS falhou: ${err.message} — usando voz do navegador`, '#f59e0b');
     _speakBrowserTTS(clean);
@@ -1688,7 +1688,7 @@ async function _speakNeural(clean, attempt = 1) {
       _onSpeechDone();
     };
     await _ttsAudio.play();
-    addLog('🔊', `TTS ${engine === 'openai' ? 'OpenAI (Onyx)' : engine === 'edge' ? 'Edge (Andrew)' : 'Google TTS'} — voz neural`, '#a78bfa');
+    addLog('🔊', `TTS ${engine === 'groq' ? 'Groq PlayAI (Fritz)' : engine === 'edge' ? 'Edge (Andrew)' : 'Google TTS'} — voz neural`, '#a78bfa');
   } catch (err) {
     clearTimeout(timeout);
     // Retry once (handles Render cold-start ~30s)
