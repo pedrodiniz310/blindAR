@@ -888,9 +888,19 @@ async def _tts_edge(text: str) -> bytes:
     return buf.getvalue()
 
 
+async def _tts_gtts(text: str) -> bytes:
+    """Last-resort fallback TTS via Google Translate."""
+    from gtts import gTTS
+    buf = io.BytesIO()
+    tts = gTTS(text=text, lang="pt-br")
+    tts.write_to_fp(buf)
+    buf.seek(0)
+    return buf.read()
+
+
 @app.post("/api/tts")
 async def text_to_speech(req: TTSRequest):
-    """TTS with automatic fallback: OpenAI → Edge TTS."""
+    """TTS with automatic fallback: OpenAI → Edge TTS → gTTS."""
     if not req.text.strip():
         raise HTTPException(400, "Empty text")
 
@@ -908,13 +918,24 @@ async def text_to_speech(req: TTSRequest):
         except Exception as e:
             print(f"[TTS] OpenAI failed: {e} — falling back to Edge TTS")
 
-    # 2) Fallback: Edge TTS (free, unlimited)
+    # 2) Fallback: Edge TTS (free, neural)
     try:
         audio = await _tts_edge(clean)
         return Response(
             content=audio,
             media_type="audio/mpeg",
             headers={"Cache-Control": "public, max-age=3600", "X-TTS-Engine": "edge"},
+        )
+    except Exception as e:
+        print(f"[TTS] Edge TTS failed: {e} — falling back to gTTS")
+
+    # 3) Last resort: gTTS (Google Translate TTS — always works)
+    try:
+        audio = await _tts_gtts(clean)
+        return Response(
+            content=audio,
+            media_type="audio/mpeg",
+            headers={"Cache-Control": "public, max-age=3600", "X-TTS-Engine": "gtts"},
         )
     except Exception as e:
         raise HTTPException(502, f"All TTS engines failed: {e}")

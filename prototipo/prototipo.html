@@ -1688,7 +1688,7 @@ async function _speakNeural(clean, attempt = 1) {
       _onSpeechDone();
     };
     await _ttsAudio.play();
-    addLog('🔊', `TTS ${engine === 'openai' ? 'OpenAI (Onyx)' : 'Edge (Andrew)'} — voz neural`, '#a78bfa');
+    addLog('🔊', `TTS ${engine === 'openai' ? 'OpenAI (Onyx)' : engine === 'edge' ? 'Edge (Andrew)' : 'Google TTS'} — voz neural`, '#a78bfa');
   } catch (err) {
     clearTimeout(timeout);
     // Retry once (handles Render cold-start ~30s)
